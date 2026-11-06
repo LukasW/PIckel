@@ -1,21 +1,27 @@
 ---
-# Schalter für die Hooks des Plugins flow (Tools/claude-flow)
+# Schalter für die Hooks unter .claude/flow/scripts/
 spelling: swiss
 guard-env: true
 test-guard: true
 base-branch: main
+# Story-Drift: check-story-drift.sh meldet Code-Änderungen ohne Story oder Delta
+stories: spec/user-stories
+deltas: spec/changes
 ---
 
 # Ablauf für PIkel
 
-Projektangaben für `/flow:task`, `/flow:plan`, `/flow:implement`, `/flow:ship`, `/flow:fast`, `/flow:grill-me`,
-`/flow:fix-build` und die Agenten `flow:test-author` und `flow:test-reviewer`. Architektur und Code-Konventionen
-stehen in `CLAUDE.md`, der Ablauf selbst im Plugin.
+Projektangaben für `/flow-task`, `/flow-plan`, `/flow-implement`, `/flow-ship`, `/flow-fast`, `/flow-grill-me`,
+`/flow-fix-build`, `/flow-night-batch` und die Agenten. Architektur, Testpyramide und Konventionen stehen in
+`CLAUDE.md` und `.claude/rules/`, der Ablauf selbst in `.claude/skills/flow-*` und `.claude/flow/`. Jede Regel steht
+an genau einem Ort; hier nur, was der Ablauf zusätzlich braucht.
 
 ## Repository
 
-- Issues und PRs: GitHub (`github.com/LukasW/PIkel`) über `gh` bzw. `mcp__github__*`. Workflows unter
-  `.github/workflows/`
+- Issues und PRs: GitHub (`github.com/LukasW/PIkel`) über `gh`. Workflows unter `.github/workflows/`
+- Label `spec-unchanged` setzt nur ein Mensch: übersteuert den CI-Job «Spec-Drift» (der Agent nie)
+- Label `needs-human-review` setzt CI bei Risiko-Pfaden (Migrationen, `.github/`, `.claude/`, `CLAUDE.md`,
+  Abhängigkeiten); solche PRs merged `/flow-ship` nur nach ausdrücklicher Freigabe, der Nachtlauf nie
 - Labels: `enhancement` (User Story), `bug`, `maintenance` (Task); bei Bedarf `refactor`, `security`, `test`,
   `documentation`
 - Nutzer: Lukas
@@ -26,7 +32,10 @@ stehen in `CLAUDE.md`, der Ablauf selbst im Plugin.
 - Technisch: `spec/technische-spezifikation.md`
 - Entscheide: `docs/adr/NNNN-<slug>.md`
 - Schnittstelle: JAX-RS-Resources unter `adapter/in/rest/`, OpenAPI zur Laufzeit unter `/q/openapi`
-- Pläne: `plan/` (in `.gitignore`, bleibt lokal)
+- **Change-Ordner je Issue:** `spec/changes/<nr>-<slug>/` mit `delta.md`, `entscheide.md`, `plan.md`, `notes.md`
+  (`.claude/flow/shared/story-delta.md` → «Ort»). Alles davon kommt mit dem Code in denselben PR
+- **Das Repository führt, das Issue verweist** (`.claude/flow/shared/project.md`): Akzeptanzkriterien, Szenarien,
+  Entscheide und Plan stehen nur im Change-Ordner und in der Story, nie im Issue
 
 ## User Stories
 
@@ -34,8 +43,9 @@ stehen in `CLAUDE.md`, der Ablauf selbst im Plugin.
 
 - Titel `US-<issue-nr>: …`. Issue mit Platzhalter `US: …` anlegen, Nummer lesen, Titel auf `US-<nr>: …` ändern.
   Nie vorab raten
-- Datei `spec/user-stories/<nr>-<slug>.md` mit H1 `US-<nr>: …`, `**ID:**`, `**Status:**`, `**Priorität:**`,
-  `**Schätzung:**`, danach Beschreibung, Akzeptanzkriterien, BDD-Szenarien, technische Notizen, Aufgaben
+- Datei `spec/user-stories/<nr>-<slug>.md` mit H1 `US-<nr>: …`, `**ID:**`, `**Issue:**`, `**Status:**`
+  (`Entwurf` → `In Arbeit` → `Umgesetzt`), `**Priorität:**`, `**Schätzung:**`, danach Beschreibung,
+  Akzeptanzkriterien, BDD-Szenarien (Verweis auf die `.feature`-Datei), technische Notizen, Aufgaben, Änderungen
 - BDD-Szenarien gleichlautend in `src/test/resources/features/<bereich>/<nr>-<slug>.feature` (`# language: de`,
   Titel `US-<nr> <Kurztitel>`); die Story verweist darauf
 - Vitest-Testnamen tragen das Suffix `(US-<nr>)`; Java-Methoden kein Suffix, der Bezug steht im Feature als
@@ -45,51 +55,50 @@ stehen in `CLAUDE.md`, der Ablauf selbst im Plugin.
 ## Build
 
 Ein Maven-Modul mit Backend und Frontend (Quinoa). Ausgabe immer in eine Datei, z. B.
-`> "${TMPDIR:-/tmp}/pikel-build.log" 2>&1; echo "exit $?"`.
+`> "${TMPDIR:-/tmp}/pikel-build.log" 2>&1; echo "exit $?"` — sonst füllt das Maven-Log den Kontext.
 
 **Voraussetzung Frontend:** Node aus `.nvmrc` und npm 11 (`packageManager` in `package.json`). Nach einem frischen
 Klon einmal `cd src/main/webapp && npm ci`.
 
-- Formatieren: `cd src/main/webapp && npm run format`; `npm run format:check` ist CI-Gate im PR
-- Im Loop, nur Backend: `./mvnw test -B -DskipFrontendTests=true`; eine Klasse mit `-Dtest='<Klasse>'`
-- Im Loop, nur Frontend: `cd src/main/webapp && npm test`
-- Schnell (wie CI im PR): `./mvnw test -B` — JUnit und Vitest
-- Abschluss: `./mvnw verify -B` — zusätzlich `CucumberIT` und `SmokeIT` gegen Dev-Services-PostgreSQL. Braucht
-  Podman oder Docker
-- Ausgabe auswerten:
-  `grep -E '\[ERROR\]|FAIL|Tests run:.*(Failures|Errors): [1-9]|Test Files|BUILD' "${TMPDIR:-/tmp}/pikel-build.log" | head -60`
+- **Formatieren:** `./mvnw -B -q spotless:apply` und `cd src/main/webapp && npm run format`
+- **Im Loop** (Backend): `./mvnw test -B -DskipFrontendTests=true`, eine Klasse mit `-Dtest='<Klasse>'`;
+  (Frontend): `cd src/main/webapp && npm test`
+- **Schnell** (wie der Unit-Job in CI): `scripts/gate.sh --fast` — Prettier, Spotless, JUnit inkl. ArchUnit, Vitest,
+  PIT
+- **Integration:** `./mvnw verify -B -DskipFrontendTests=true` — `CucumberIT` und `SmokeIT` gegen
+  Dev-Services-PostgreSQL. Braucht Podman oder Docker
+- **Abschluss ohne Fail-Fast:** `scripts/gate.sh` — alles oben in einer Kette; muss vor jedem Push grün sein
+- **Mutation allein:** `./mvnw test-compile -B -Pmutation`, Bericht unter `target/pit-reports/index.html`.
+  Überlebende Mutanten heissen: Ein Test fehlt, nicht die Schwelle senken
+- **Ausgabe auswerten:**
+  `grep -E '\[ERROR\]|FAIL|Tests run:.*(Failures|Errors): [1-9]|Test Files|below threshold|Violation|BUILD' "${TMPDIR:-/tmp}/pikel-build.log" | head -60`
 
 ## Tests
 
-| Ebene | Werkzeug | Wann | Ort |
-|-------|----------|------|-----|
-| Unit Backend | JUnit 5 + Mockito (Ports gemockt) | Domänenregeln, Use-Case-Services | `src/test/java/**/*Test.java` |
-| Unit Frontend | Vitest (`ng test`), Mock-Repositories | Services (Signals), Komponenten (DOM) | `src/main/webapp/src/app/**/*.spec.ts` |
-| Integration | `CucumberIT` (Cucumber JVM + REST-assured, Dev Services) | REST-Verträge, Persistenz | Steps unter `cucumber/steps/` |
-| Smoke | `SmokeIT` (`@QuarkusIntegrationTest`) | gepacktes JAR bootet, UI wird ausgeliefert | `src/test/java/**/SmokeIT.java` |
+Ebenen und Tag-Routing: `CLAUDE.md` → «Testpyramide». Orte:
 
-- Unit ist der Default; nach oben nur, was darunter nicht beweisbar ist
-- Tag-Routing: ohne Tag → `CucumberIT`; `@Unit` → JUnit/Vitest mit Verweis-Kommentar; `@E2E` → Browser-Runner
-  (noch nicht eingerichtet, erst mit der ersten Story, die ihn braucht); `@Pending` → nicht umgesetzt, **kein
-  Abschlusszustand**
-- Neuer oder geänderter REST-Endpunkt oder Persistenz: `CucumberIT`-Szenario
-- Bei Tag-Routing und Gherkin hilft der Agent `bdd-cucumber-author`
+- Unit Backend: `src/test/java/**/*Test.java`, Ports mit Mockito gemockt
+- Unit Frontend: `src/main/webapp/src/app/**/*.spec.ts`, Mock-Repositories
+- Integration: Steps unter `src/test/java/**/cucumber/steps/`, Features unter `src/test/resources/features/`
+- `@Pending` ist **kein Abschlusszustand**; bei Tag-Routing und Gherkin hilft der Agent `bdd-cucumber-author`
 
 ## Regeln beim Implementieren
 
-- `CLAUDE.md` einhalten (hexagonal, Angular mit Signals, OnPush, `inject()`, `@if`/`@for`, Design-Tokens)
-- Schemaänderung nur über eine neue Liquibase-Migration unter `src/main/resources/db/migration/` samt Eintrag in
-  `db/changeLog.xml`; bestehende Migrationen nie ändern
-- Texte der Oberfläche Deutsch mit echten Umlauten, Schweizer Schreibweise (`ss` statt `ß`), Du-Form;
-  Bezeichner Englisch
-- Frontend vor dem Commit formatieren (`npm run format`)
+`CLAUDE.md` → «Wichtigste Regeln» und die passende Datei unter `.claude/rules/`. Zusätzlich für den Ablauf:
+
+- Überraschungen, ungeplante Entscheidungen und Annahmen laufend in die Notizen-Datei zum Plan schreiben, nicht erst
+  im Handoff — sie überleben `/clear` und sind das Futter für «Lernen» in `/flow-ship`
 
 ## Reviewer
 
 - Java unter `src/main/java/ch/grudligstrasse/pikel/**` → `hexagonal-reviewer`
 - Angular unter `src/main/webapp/src/app/**` → `angular-signals-reviewer`
 - `.feature`-Dateien → `bdd-cucumber-author`
-- Tests unter `src/test/**` oder `*.spec.ts` → `flow:test-reviewer`
+- Tests unter `src/test/**` oder `*.spec.ts` → `test-reviewer`
+- Jede Story und jeder Bugfix → `spec-reviewer` (Diff gegen die Akzeptanzkriterien, frischer Kontext)
+
+Reviewer-Befunde nicht blind anwenden: Jeder Befund wird geprüft, übernommen oder mit Grund verworfen. Nach zwei
+Runden ohne Einigung entscheidet der Nutzer.
 
 Der Hook `.claude/hooks/reviewer-reminder.sh` nennt die Agenten nach jedem Edit.
 
@@ -98,15 +107,15 @@ Der Hook `.claude/hooks/reviewer-reminder.sh` nennt die Agenten nach jedem Edit.
 - [ ] `.feature`-Datei vorhanden, gleichlautend mit der Story, jedes Szenario grün oder als `@Unit` belegt,
   kein `@Pending`
 - [ ] Story: Verweis auf die `.feature`-Datei, Aufgaben abgehakt, Status nachgeführt
-- [ ] `npm run format:check` grün
-- [ ] `./mvnw verify -B` grün
+- [ ] Delta eingepflegt, `check-story-drift.sh` ohne Meldung (CI-Gate, eine Begründung ersetzt es nicht)
+- [ ] `scripts/gate.sh` grün (Format, Unit, ArchUnit, Mutation, Integration, Smoke)
 
 ## Rückfragen
 
-Plan auch in `/flow:fast` vorlegen bei: mehr als 3 Akzeptanzkriterien, mehr als einer Schicht, Liquibase-Migration,
+Plan auch in `/flow-fast` vorlegen bei: mehr als 3 Akzeptanzkriterien, mehr als einer Schicht, Liquibase-Migration,
 Auth/Security oder Breaking Changes der REST-API.
 
-Typische offene Äste für `/flow:grill-me` und `/flow:task`:
+Typische offene Äste für `/flow-grill-me` und `/flow-task`:
 
 - **Fachlich (SAFe):** ART, Teams, PI, Iterationen, Features, Stories, Abhängigkeiten, PI-Ziele, Kapazität —
   welche Begriffe braucht die Story wirklich?
@@ -117,10 +126,22 @@ Typische offene Äste für `/flow:grill-me` und `/flow:task`:
 
 ## Anhalten
 
-Zusätzlich zu den Fällen des Plugins immer fragen, bevor es weitergeht, wenn die Änderung:
+Zusätzlich zu den Fällen aus `.claude/flow/shared/stop-conditions.md` immer fragen, bevor es weitergeht, wenn die Änderung:
 
 - eine Liquibase-Migration bringt, die bestehende Daten umschreibt oder löscht
 - Anmeldung, Sessions oder Rollen einführt oder ändert
+
+## Nachtlauf
+
+Angaben für `/flow-night-batch` und `.claude/flow/scripts/night-batch.sh`. Nacht-PRs sind Vorschläge, keine Merges.
+
+- Vorbedingung: `podman info >/dev/null 2>&1 || docker info >/dev/null 2>&1`
+- Warm-up: `./mvnw -B -q dependency:go-offline && (cd src/main/webapp && npm ci)`
+- Pool: 1 (Issues einer Welle nacheinander; mehr nur ohne gemeinsame Migrationen und Konfiguration)
+- Merge: nein (die PRs bleiben zum Review am Morgen offen)
+- Nie im Nachtlauf: Liquibase-Migrationen, die Daten ändern; Auth, Sessions, Rollen; `.github/`, `.claude/`,
+  `pom.xml`, `package.json`; Issues, die nicht du selbst angelegt hast
+- Rechte: nur `.claude/settings.json` (`--permission-mode acceptEdits`), Kostendeckel `FLOW_MAX_BUDGET_USD` je Phase
 
 ## Abschluss
 

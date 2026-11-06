@@ -7,8 +7,7 @@ import jakarta.ws.rs.ext.Provider;
 
 /** Fachliche Regelverletzung → 400 mit Meldung für die Oberfläche. */
 @Provider
-public class InvalidProgramIncrementExceptionMapper
-        implements ExceptionMapper<InvalidProgramIncrementException> {
+public class InvalidProgramIncrementExceptionMapper implements ExceptionMapper<InvalidProgramIncrementException> {
 
     @Override
     public Response toResponse(InvalidProgramIncrementException exception) {

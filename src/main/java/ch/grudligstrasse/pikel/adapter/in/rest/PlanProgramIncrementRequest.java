@@ -6,4 +6,6 @@ import java.time.LocalDate;
 
 /** Anfrage zum Anlegen eines PI. */
 public record PlanProgramIncrementRequest(
-        @NotBlank String name, @NotNull LocalDate startDate, @NotNull LocalDate endDate) {}
+        @NotBlank String name,
+        @NotNull LocalDate startDate,
+        @NotNull LocalDate endDate) {}

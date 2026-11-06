@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# Schnelle Prüfungen vor jedem Commit: Secrets und Formatierung der gestagten Dateien. Ein Hook lässt sich mit
+# --no-verify umgehen, deshalb laufen dieselben Prüfungen auch in CI. Aktivieren: git config core.hooksPath .githooks
+set -euo pipefail
+
+staged=$(git diff --cached --name-only --diff-filter=ACMR)
+[ -n "$staged" ] || exit 0
+
+if command -v gitleaks >/dev/null 2>&1; then
+  gitleaks git --pre-commit --staged --no-banner --redact || { echo "pre-commit: gitleaks hat ein Secret gefunden."; exit 1; }
+else
+  echo "pre-commit: gitleaks nicht installiert (brew install gitleaks), Secret-Scan nur in CI."
+fi
+
+web=$(printf '%s\n' "$staged" | grep -E '^src/main/webapp/.*\.(ts|html|css|scss|json|md)$' | sed 's#^src/main/webapp/##' || true)
+if [ -n "$web" ]; then
+  (cd src/main/webapp && printf '%s\n' "$web" | xargs npx --no-install prettier --check) \
+    || { echo "pre-commit: Prettier — cd src/main/webapp && npm run format"; exit 1; }
+fi
+
+if printf '%s\n' "$staged" | grep -qE '\.java$'; then
+  ./mvnw -B -q spotless:check >/dev/null 2>&1 || { echo "pre-commit: Spotless — ./mvnw spotless:apply"; exit 1; }
+fi

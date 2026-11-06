@@ -38,4 +38,4 @@ java -jar target/quarkus-app/quarkus-run.jar
 ## Mit Claude Code arbeiten
 
 Siehe [`CLAUDE.md`](CLAUDE.md) (Architektur, Konventionen) und [`claude-guide.md`](claude-guide.md) (Ablauf mit
-dem Plugin `flow`, Reviewer, Hooks).
+den Skills `/flow-*`, Reviewer, Hooks).

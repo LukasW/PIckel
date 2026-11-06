@@ -42,7 +42,7 @@ esac
 
 case "$file_path" in
   */src/test/*|*.spec.ts)
-    reminders+=("flow:test-reviewer — Tests geändert, prüfe Absicht aus der Spezifikation, Fehlerfinder, Abschwächungen.")
+    reminders+=("test-reviewer — Tests geändert, prüfe Absicht aus der Spezifikation, Fehlerfinder, Abschwächungen.")
     ;;
 esac
 

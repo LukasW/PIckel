@@ -9,13 +9,27 @@ CI. Fachliche Breite kommt Story für Story.
 
 Ein Maven-Modul: Quarkus-Backend und Angular-SPA (über Quinoa) in einem deploybaren JAR.
 
+## Wichtigste Regeln
+
+1. **Abhängigkeiten zeigen nur nach innen, `domain/` ist framework-frei** — sonst ist die Fachlogik nicht ohne
+   Quarkus testbar. `ArchitectureTest` (ArchUnit) bricht den Build bei einem Verstoss
+2. **Tests vor dem Code, aus der Spezifikation** — ein Test, der aus dem Code abgeleitet ist, findet dessen Fehler
+   nicht. Einen bestehenden Test abschwächen, abschalten oder löschen nur, wenn sich die Spezifikation geändert hat
+3. **Schema nur über eine neue Liquibase-Migration**, bestehende Migrationen nie ändern — Liquibase prüft
+   Checksummen, eine geänderte Migration bricht jede bestehende Datenbank
+4. **Vor jedem Push `scripts/gate.sh` grün** — dieselben Prüfungen wie CI; CI ist kein Debugger
+5. **Oberfläche Deutsch, Schweizer Schreibweise (`ss` statt Eszett), Du-Form; Bezeichner Englisch** — Zielgruppe sind
+   Schweizer Teams; SAFe-Begriffe (Program Increment, ART, Feature, PI Objective) bleiben im Code englisch
+
+Sprachspezifische Konventionen laden bei Bedarf aus `.claude/rules/java.md` und `.claude/rules/angular.md`.
+
 ## Tech Stack
 
 - **Backend**: Java 25, Quarkus 3.40, Hibernate ORM mit Panache, PostgreSQL, Liquibase, SmallRye Health/OpenAPI
 - **Frontend**: Angular 22 (standalone, Signals, zoneless), TypeScript 6, Tailwind CSS 4 mit Design-Tokens
-- **Build**: Maven (`./mvnw`), npm 11, Quinoa
-- **Tests**: JUnit 5 + Mockito, Cucumber JVM + REST-assured (`CucumberIT`), `@QuarkusIntegrationTest` (`SmokeIT`),
-  Vitest (über `ng test`)
+- **Build**: Maven (`./mvnw`), npm 11, Quinoa; Spotless (Palantir) und Prettier als Formatierer
+- **Tests**: JUnit 5 + Mockito, ArchUnit, PIT (Mutation), Cucumber JVM + REST-assured (`CucumberIT`),
+  `@QuarkusIntegrationTest` (`SmokeIT`), Vitest (über `ng test`)
 - **Auth**: noch keine — kommt als eigene Story (OIDC/Keycloak wie in Brainy, Session-Cookies, kein JWT im Browser)
 
 ## Hexagonal Architecture
@@ -36,12 +50,10 @@ ch.grudligstrasse.pikel/
     └── out/persistence/       # JPA-Entities, Panache-Repository-Adapter, Mapping
 ```
 
-**Regeln:**
-- `domain/` hat **keine** Framework-Abhängigkeiten (kein Quarkus, JPA, Jackson, Jakarta)
-- JPA-Entities nur in `adapter/out/persistence/`; Mapping Entity ↔ Domain im Adapter
-- REST-Resources delegieren an Use-Case-Ports, keine Repository-Zugriffe, keine Fachlogik
-- Domain-Exceptions → HTTP-Status über `ExceptionMapper` im REST-Adapter
-- Abhängigkeiten zeigen nur nach innen
+- JPA-Entities nur in `adapter/out/persistence/`, Mapping Entity ↔ Domain im Adapter — damit ein Schemawechsel die
+  Domain nicht berührt
+- REST-Resources delegieren an Use-Case-Ports, ohne Repository-Zugriff und ohne Fachlogik — sonst gibt es zwei Orte
+  für dieselbe Regel; Domain-Exceptions → HTTP-Status über `ExceptionMapper`
 
 ### Frontend (Angular)
 
@@ -64,73 +76,40 @@ Tests ersetzen den Port durch ein Mock-Objekt.
 ```bash
 ./mvnw quarkus:dev          # Dev-Modus mit Hot-Reload (Java + Angular), http://localhost:8080
 ./mvnw package              # Produktiv-Build → target/quarkus-app/quarkus-run.jar
+scripts/gate.sh [--fast]    # alle Prüfungen wie CI; --fast ohne Integration
 ```
 
 Dev Services starten PostgreSQL automatisch (Podman oder Docker nötig). Swagger UI: `/q/swagger-ui`,
-Health: `/q/health`.
+Health: `/q/health`. Weitere Befehle (Loop, Formatieren, Mutation): `.claude/flow.md` → «Build».
 
-## Testing
-
-```bash
-./mvnw test -B                              # JUnit + Vitest
-./mvnw verify -B                            # + CucumberIT und SmokeIT (Dev-Services-PostgreSQL)
-./mvnw test -B -DskipFrontendTests=true     # nur Backend
-cd src/main/webapp && npm test              # nur Frontend (Vitest)
-```
-
-### Testpyramide (verbindlich)
+## Testpyramide (verbindlich)
 
 | Ebene | Werkzeug | Testet |
 |-------|----------|--------|
 | Unit | JUnit 5 + Mockito, Vitest | Domänenregeln, Use Cases mit gemockten Ports, Komponenten mit Mock-Repositories |
+| Architektur | ArchUnit (`ArchitectureTest`) | Schichtregeln, läuft mit den Unit-Tests |
+| Mutation | PIT (`-Pmutation`) | ob die Unit-Tests in `domain/` und `application/` Fehler finden (≥ 80 %) |
 | Integration | `CucumberIT` (REST-assured gegen Dev-Services-PostgreSQL) | REST-Verträge, Persistenz |
 | Smoke | `SmokeIT` | gepacktes JAR bootet, Liquibase + Hibernate-Validate, UI wird ausgeliefert |
 | E2E | — (noch nicht eingerichtet) | erst, wenn eine Story einen echten Browser zwingend braucht |
 
-- **Unit ist der Default.** Nach oben geht nur, was darunter nicht beweisbar ist
+- **Unit ist der Default.** Nach oben geht nur, was darunter nicht beweisbar ist — höhere Ebenen sind langsamer und
+  bremsen den Loop des Agenten
 - Gherkin unter `src/test/resources/features/` ist die Spezifikation. Tags: ohne Tag → `CucumberIT`; `@Unit` →
   belegt durch JUnit/Vitest mit Kommentar `# JUnit: <Pfad>/<Klasse> → <methode>` bzw.
   `# Vitest: <spec> → <testname>`; `@E2E` → Browser; `@Pending` → nicht umgesetzt
-- Vitest-Testnamen mit Suffix `(US-<nr>)`
-- **Definition of Done:** neue Logik → Unit-Test; neuer/geänderter Endpunkt oder Persistenz → `CucumberIT`-Szenario
+- Neue Logik → Unit-Test; neuer/geänderter Endpunkt oder Persistenz → `CucumberIT`-Szenario
 
-## Code Conventions
+## Allgemeine Code-Konventionen
 
-### Allgemein
-- KISS, keine spekulativen Abstraktionen; DRY erst ab echter Duplikation
-- Fail fast an den Systemgrenzen (REST, Formular), intern vertrauen
+- KISS, keine spekulativen Abstraktionen; DRY erst ab echter Duplikation — jede Abstraktion kostet Lesezeit
+- Fail fast an den Systemgrenzen (REST, Formular), intern vertrauen — doppelte Prüfungen widersprechen sich irgendwann
 - Nur öffentliche APIs dokumentieren (Ports, Services, Resources); Kommentare erklären **warum**
 - Kein toter oder auskommentierter Code, keine TODOs ohne Issue-Referenz, keine Magic Numbers
-- Keine `null`-Rückgaben — `Optional` (Java) bzw. `undefined` (TypeScript)
-
-### Java
-- Records für Domain-Modelle und DTOs; Constructor Injection
-- `@ApplicationScoped` für Services und Adapter; `@Transactional` im Application-Service
-- DB-Spalten snake_case; Schema nur über neue Liquibase-Migration (`db/migration/V<n>__<slug>.sql` + `changeLog.xml`),
-  bestehende Migrationen nie ändern
-- 4 Leerzeichen Einzug
-
-### Angular
-- Standalone (nie `standalone: true` setzen), `ChangeDetectionStrategy.OnPush`, Selector-Prefix `app-`
-- Signals für State (`signal`, `computed`, `linkedSignal`, `effect`), `inject()` statt Constructor-Injection
-- `input()`/`output()` statt Decorators; `@if`/`@for`/`@switch` statt `*ngIf`/`*ngFor`
-- Reactive Forms; strict TypeScript, kein `any`
-- **Design-Tokens statt Tailwind-Paletten:** `bg-surface`, `bg-background`, `text-foreground`, `text-muted`,
-  `border-border`, `bg-accent`, `text-danger` (definiert in `src/styles.css`). Verboten: `bg-blue-600` usw.
-- Prettier (Breite 100, Single Quotes), `npm run format` vor dem Commit; `format:check` ist CI-Gate
-
-### Sprache
-- Oberfläche Deutsch mit echten Umlauten, Schweizer Schreibweise (`ss` statt `ß`), Du-Form
-- Bezeichner Englisch; Fachbegriffe aus SAFe (Program Increment, ART, Feature, PI Objective) im Code englisch
+- Keine `null`-Rückgaben — `Optional` (Java) bzw. `undefined` (TypeScript), damit der Typ das Fehlen ausdrückt
 
 ## Arbeitsablauf mit Claude
 
-- Der Ablauf kommt aus dem Plugin `flow` (`Tools/claude-flow`, in `.claude/settings.json` eingetragen und auf ein
-  Tag gepinnt); was PIkel daran anders macht, steht in [`.claude/flow.md`](.claude/flow.md). Issues und PRs über
-  GitHub: `/flow:task <beschreibung>` → `/flow:plan <nr>` → `/clear` → `/flow:implement <nr>` → `/flow:ship`.
-  Dazu `/flow:grill-me <nr>`, `/flow:fast <beschreibung>`, `/flow:fix-build`. Einzelheiten in
-  [`claude-guide.md`](claude-guide.md)
-- **Tests sind die Spezifikation:** `/flow:implement` lässt sie vor dem Code von `flow:test-author` schreiben.
-  Einen bestehenden Test abschwächen, abschalten oder löschen nur mit Begründung
-- `.claude/hooks/reviewer-reminder.sh` schlägt nach einem Edit die passenden Reviewer vor (`hexagonal-reviewer`,
-  `angular-signals-reviewer`, `bdd-cucumber-author`, `flow:test-reviewer`). Vor dem Commit laufen lassen
+Ablauf, Agenten und Hooks liegen im Repository unter `.claude/`, Projektangaben in
+[`.claude/flow.md`](.claude/flow.md), Überblick in [`claude-guide.md`](claude-guide.md):
+`/flow-task <beschreibung>` → `/flow-plan <nr>` → `/clear` → `/flow-implement <nr>` → `/flow-ship`.

@@ -1,6 +1,6 @@
 ---
 name: bdd-cucumber-author
-description: Authors or reviews Cucumber `.feature` files for PIkel with correct tag routing (untagged → Java `CucumberIT`, `@Unit` → covered by JUnit/Vitest, `@E2E` → browser runner, `@Pending` → not implemented). Use when creating features, writing scenarios or classifying existing ones.
+description: Schreibt und prüft Cucumber-Feature-Dateien mit korrektem Tag-Routing (ohne Tag → CucumberIT, @Unit → JUnit/Vitest-Verweis, @E2E → Browser, @Pending → nicht umgesetzt) und Szenario-Titeln wie im Delta. Einsetzen beim Anlegen oder Ändern von .feature-Dateien.
 tools: Glob, Grep, Read, Write, Edit, Bash
 model: sonnet
 ---
@@ -40,3 +40,5 @@ Funktionalität: US-<nr> <Kurztitel>
 - [ ] Bestehende Steps wiederverwendet (`src/test/java/**/cucumber/steps/`)
 - [ ] Keine technischen Details in Gherkin ausser HTTP-nahen Backend-Meldungen
 - [ ] Szenarien isoliert und idempotent (eindeutige Namen, keine Abhängigkeit von der Reihenfolge)
+
+**Passt alles, sag das in einem Satz und hör auf. Erfinde keine Befunde.**

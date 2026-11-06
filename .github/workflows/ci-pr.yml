@@ -3,8 +3,78 @@ name: CI (PR)
 on:
   pull_request:
     branches: [main]
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+
+concurrency:
+  group: ci-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
+  secrets:
+    name: Secret-Scan (Gitleaks)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+
+      - uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Pfade mit hohem Risiko (Schema, Pipeline, Agenten-Konfiguration, Abhängigkeiten) bekommen das Label
+  # needs-human-review. /flow-ship merged solche PRs nie ohne ausdrückliche Freigabe, der Nachtlauf gar nicht.
+  risk-paths:
+    name: Risiko-Pfade
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+
+      - name: Label needs-human-review setzen
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ github.event.pull_request.number }}
+          BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          changed=$(git diff --name-only "$BASE"...HEAD)
+          risky=$(printf '%s\n' "$changed" | grep -E '^(src/main/resources/db/|\.github/|\.claude/|CLAUDE\.md$|pom\.xml$|src/main/webapp/package(-lock)?\.json$)' || true)
+          if [ -n "$risky" ]; then
+            echo "Risiko-Pfade geändert:"; printf '  %s\n' $risky
+            gh label create needs-human-review --color B60205 \
+              --description "Risiko-Pfad geändert, Merge nur nach menschlichem Review" 2>/dev/null || true
+            gh pr edit "$PR" --add-label needs-human-review
+          fi
+
+  # Code ohne nachgeführte Story, nicht eingepflegtes Delta oder Szenarien, die nicht zur .feature-Datei passen:
+  # rot. Nur ein Mensch übersteuert mit dem Label spec-unchanged.
+  spec-drift:
+    name: Spec-Drift
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+
+      - name: Story, Delta und Features gegen den Code prüfen
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'spec-unchanged') }}
+        run: bash .claude/flow/scripts/check-story-drift.sh
+
+      - name: Übersteuert mit Label spec-unchanged
+        if: ${{ contains(github.event.pull_request.labels.*.name, 'spec-unchanged') }}
+        run: echo "Spec-Drift-Prüfung durch Label spec-unchanged übersteuert."
+
   test-unit:
     name: Unit Tests
     runs-on: ubuntu-latest
@@ -36,8 +106,14 @@ jobs:
         working-directory: src/main/webapp
         run: npm run format:check
 
-      - name: Backend + Frontend unit tests
+      - name: Backend format check (Spotless)
+        run: ./mvnw spotless:check -B
+
+      - name: Backend + Frontend unit tests (inkl. ArchUnit)
         run: ./mvnw test -B
+
+      - name: Mutation Testing domain/ + application/ (PIT)
+        run: ./mvnw test-compile -B -Pmutation
 
   integration:
     name: Integration + Smoke
