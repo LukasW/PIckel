@@ -1,0 +1,38 @@
+{
+  "name": "PIkel",
+  "image": "mcr.microsoft.com/devcontainers/base:bookworm",
+  "features": {
+    "ghcr.io/devcontainers/features/java:1": {
+      "version": "25",
+      "jdkDistro": "tem"
+    },
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "24.19.0"
+    },
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/anthropics/devcontainer-features/claude-code:1.0": {},
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {}
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "vscjava.vscode-java-pack",
+        "redhat.vscode-quarkus",
+        "Angular.ng-template",
+        "esbenp.prettier-vscode",
+        "anthropic.claude-code"
+      ]
+    }
+  },
+  "forwardPorts": [8080, 4200],
+  "mounts": [
+    "source=pikel-node-modules,target=${containerWorkspaceFolder}/src/main/webapp/node_modules,type=volume"
+  ],
+  "containerEnv": {
+    "WORKSPACE": "${containerWorkspaceFolder}",
+    "LANG": "C.UTF-8",
+    "LC_ALL": "C.UTF-8"
+  },
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+  "remoteUser": "vscode"
+}

@@ -1,0 +1,34 @@
+@import 'tailwindcss';
+
+/*
+ * Design-Tokens: Komponenten verwenden nur diese Tokens (bg-surface, text-foreground, …),
+ * nie Tailwind-Paletten wie bg-blue-600. Dunkelmodus über prefers-color-scheme.
+ */
+@theme {
+  --color-background: #fafafa;
+  --color-surface: #ffffff;
+  --color-foreground: #171717;
+  --color-muted: #6b6b6b;
+  --color-border: #e5e5e5;
+  --color-accent: #2f5bd3;
+  --color-accent-foreground: #ffffff;
+  --color-danger: #c62828;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-background: #121212;
+    --color-surface: #1c1c1c;
+    --color-foreground: #ededed;
+    --color-muted: #a3a3a3;
+    --color-border: #2e2e2e;
+    --color-accent: #7c9cf5;
+    --color-accent-foreground: #0b0b0b;
+    --color-danger: #ef9a9a;
+  }
+}
+
+body {
+  @apply bg-background text-foreground antialiased;
+  font-family: system-ui, sans-serif;
+}
