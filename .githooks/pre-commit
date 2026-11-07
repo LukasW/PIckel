@@ -12,6 +12,10 @@ else
   echo "pre-commit: gitleaks nicht installiert (brew install gitleaks), Secret-Scan nur in CI."
 fi
 
+if printf '%s\n' "$staged" | grep -qE '^docs/adr/'; then
+  scripts/adr-index.sh --check >/dev/null || { echo "pre-commit: ADR-Index — scripts/adr-index.sh, dann docs/adr/README.md stagen"; exit 1; }
+fi
+
 web=$(printf '%s\n' "$staged" | grep -E '^src/main/webapp/.*\.(ts|html|css|scss|json|md)$' | sed 's#^src/main/webapp/##' || true)
 if [ -n "$web" ]; then
   (cd src/main/webapp && printf '%s\n' "$web" | xargs npx --no-install prettier --check) \

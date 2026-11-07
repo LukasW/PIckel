@@ -105,6 +105,9 @@ jobs:
       - name: Skills gegen agentskills.io prüfen
         run: bash scripts/check-skills.sh
 
+      - name: ADR-Index aktuell
+        run: bash scripts/adr-index.sh --check
+
       - name: Label- und Push-Guard gegen bekannte Umgehungen prüfen
         run: |
           bash .claude/flow/scripts/test-guard-labels.sh

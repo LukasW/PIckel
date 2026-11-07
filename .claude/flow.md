@@ -30,7 +30,8 @@ an genau einem Ort; hier nur, was der Ablauf zusätzlich braucht.
 
 - Fachlich: `spec/fachliche-spezifikation.md`, Stories unter `spec/user-stories/`
 - Architektur und Technik (arc42): `docs/arc42.md`
-- Entscheide: `docs/adr/NNNN-<slug>.md`
+- Entscheide: `docs/adr/NNNN-<slug>.md`; zuerst den Index `docs/adr/README.md` lesen, dann nur die passenden ADRs.
+  Den Index erzeugt `scripts/adr-index.sh` aus den ADR-Köpfen, nie von Hand ändern
 - Schnittstelle: JAX-RS-Resources unter `adapter/in/rest/`, OpenAPI zur Laufzeit unter `/q/openapi`
 - **Change-Ordner je Issue:** `spec/changes/<nr>-<slug>/` mit `delta.md`, `entscheide.md`, `plan.md`, `notes.md`
   (`.claude/flow/shared/story-delta.md` → «Ort»). Alles davon kommt mit dem Code in denselben PR
