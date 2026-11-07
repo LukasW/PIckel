@@ -72,3 +72,47 @@ flow_need_jq() {
   echo "flow: jq fehlt, $1 kann nicht prüfen und hält deshalb an. Installieren: brew install jq bzw. sudo apt-get install -y jq" >&2
   exit 2
 }
+
+# Eingabe und Ausgabe der Hooks für Claude Code und die Copilot CLI (ADR 0007). Copilot übersetzt seine Eingabe ins
+# Format von Claude Code, liefert Edits aber je nach Modell als Patch-Text in `tool_input` statt mit `file_path`, und
+# es zeigt nur, was als JSON auf stdout steht; Claude Code liest bei Exit 2 nur stderr.
+
+# Befehl eines Terminal-Aufrufs aus der Eingabe ($1). Exit 1, wenn keiner erkennbar ist: Ein Wächter lehnt dann ab.
+flow_tool_command() {
+  local cmd
+  cmd=$(printf '%s' "$1" | jq -r 'if (.tool_input | type) == "object" then .tool_input.command // empty else empty end' 2>/dev/null) || return 1
+  [ -n "$cmd" ] || return 1
+  printf '%s\n' "$cmd"
+}
+
+# Absolute Pfade der Dateien, die ein Edit aus der Eingabe ($1) berührt, einer pro Zeile und ohne Dubletten; leer,
+# wenn keiner erkennbar ist. Quellen: tool_input.file_path, tool_input.path, tool_response.filePath und die Kopfzeilen
+# eines Patches (`*** Update File:`, `*** Add File:`; gelöschte Dateien nicht). Endet immer mit 0: Ein Hinweis-Hook
+# ohne Pfad endet still.
+flow_tool_files() {
+  printf '%s' "$1" | jq -r '
+    [ (if (.tool_input | type) == "object" then (.tool_input.file_path, .tool_input.path) else empty end),
+      (if (.tool_response | type) == "object" then .tool_response.filePath else empty end),
+      (if (.tool_input | type) == "string" then
+         .tool_input | split("\n")[] | sub("[[:space:]]+$"; "")
+         | capture("^\\*\\*\\* ((Update|Add) File|Move to): (?<p>.+)$").p
+       else empty end)
+    ] | map(select(type == "string" and . != "")) | unique[]' 2>/dev/null
+  return 0
+}
+
+# Lehnt einen Tool-Aufruf mit Grund ($1) ab: stderr für Claude Code, permissionDecision als JSON auf stdout für
+# Copilot, Exit 2. Claude Code wertet stdout bei Exit 2 nicht aus.
+flow_deny() {
+  printf '%s\n' "$1" >&2
+  jq -n --arg r "$1" '{permissionDecision: "deny", permissionDecisionReason: $r}'
+  exit 2
+}
+
+# Meldet dem Modell nach einem Tool-Aufruf einen Hinweis ($1): stderr für Claude Code, additionalContext als JSON auf
+# stdout für Copilot (es reicht nur dieses Feld ans Modell weiter, auch bei Exit 2), Exit 2. Die Änderung bleibt.
+flow_hint() {
+  printf '%s\n' "$1" >&2
+  jq -n --arg c "$1" '{additionalContext: $c}'
+  exit 2
+}

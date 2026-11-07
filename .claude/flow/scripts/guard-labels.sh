@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # PreToolUse-Hook (Bash): Der Agent setzt das Label spec-unchanged nie und entfernt needs-human-review nie. Beide
 # Labels sind menschliche Entscheide über ein Gate (Spec-Drift bzw. Risiko-Pfad); eine Textregel allein hält das
-# nicht zuverlässig. Exit 2 = Befehl wird nicht ausgeführt, die Meldung geht an Claude.
+# nicht zuverlässig. Ablehnung über flow_deny: Befehl wird nicht ausgeführt, die Meldung geht an den Agenten.
 # Bewusst grob: Jeder Bash-Befehl, der spec-unchanged nennt, wird abgelehnt (gh pr edit, gh api, gh label …), auch
 # Text in Heredocs oder `git commit -m`. Solchen Text mit Write/Edit schreiben bzw. `git commit -F <datei>` nehmen.
 set -u
@@ -9,16 +9,15 @@ set -u
 [ -f "$(flow_root)/.claude/flow.md" ] || exit 0
 flow_need_jq guard-labels
 
-cmd=$(jq -r '.tool_input.command // empty')
-[ -n "$cmd" ] || exit 0
+payload=$(cat)
+cmd=$(flow_tool_command "$payload") \
+  || flow_deny "guard-labels: Kein Befehl in der Eingabe erkannt; ohne Befehl lässt der Wächter nichts durch (ADR 0007)."
 
 if printf '%s' "$cmd" | grep -q 'spec-unchanged'; then
-  echo "guard-labels: Das Label spec-unchanged übersteuert das Spec-Drift-Gate und setzt nur ein Mensch. Drift beheben (Delta einpflegen, Feature nachziehen, «Delta: keines — <Grund>» im plan.md) oder den Nutzer fragen." >&2
-  exit 2
+  flow_deny "guard-labels: Das Label spec-unchanged übersteuert das Spec-Drift-Gate und setzt nur ein Mensch. Drift beheben (Delta einpflegen, Feature nachziehen, «Delta: keines — <Grund>» im plan.md) oder den Nutzer fragen."
 fi
 deny_review() {
-  echo "guard-labels: needs-human-review entfernt nur ein Mensch nach dem Review des Risiko-Pfads ($1)." >&2
-  exit 2
+  flow_deny "guard-labels: needs-human-review entfernt nur ein Mensch nach dem Review des Risiko-Pfads ($1)."
 }
 method='(-X|--method)[[:space:]=]*'
 # Direkt: Label nennen und entfernen (gh pr/issue edit, gh label, REST DELETE auf das Label)
@@ -41,7 +40,6 @@ fi
 # ein direkt gemeldeter Status wäre ein grüner Check ohne Prüfung (ADR 0004)
 if printf '%s' "$cmd" | grep -Eq 'statuses/' \
   && printf '%s' "$cmd" | grep -Eqi -- "${method}(POST|PUT|PATCH)|(^|[[:space:]])(-f|-F|--field|--raw-field|--input)([[:space:]=]|$)"; then
-  echo "guard-labels: Einen Commit-Status meldet nur scripts/ci-local.sh, nach den Prüfungen. Das Skript starten statt den Status selbst zu setzen." >&2
-  exit 2
+  flow_deny "guard-labels: Einen Commit-Status meldet nur scripts/ci-local.sh, nach den Prüfungen. Das Skript starten statt den Status selbst zu setzen."
 fi
 exit 0

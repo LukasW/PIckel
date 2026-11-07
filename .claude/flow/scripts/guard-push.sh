@@ -2,21 +2,22 @@
 # PreToolUse-Hook (Bash): kein Push auf den Hauptzweig und kein Force-Push. Ersetzt Branch Protection, solange GitHub
 # sie für dieses private Repository nicht anbietet; die Präfix-Regeln in settings.json allein lassen sich mit
 # `HEAD:refs/heads/main`, `+refspec` oder einem Push ohne Refspec auf main umgehen.
-# Exit 2 = Befehl wird nicht ausgeführt, die Meldung geht an Claude.
+# Ablehnung über flow_deny: Befehl wird nicht ausgeführt, die Meldung geht an Claude Code bzw. Copilot.
 set -u
 . "$(dirname "$0")/lib.sh"
 root=$(flow_root)
 [ -f "$root/.claude/flow.md" ] || exit 0
 flow_need_jq guard-push
 
-cmd=$(jq -r '.tool_input.command // empty')
+payload=$(cat)
+cmd=$(flow_tool_command "$payload") \
+  || flow_deny "guard-push: Kein Befehl in der Eingabe erkannt; ohne Befehl lässt der Wächter nichts durch (ADR 0007)."
 printf '%s' "$cmd" | grep -Eq '(^|[^[:alnum:]_-])git([[:space:]]+-C[[:space:]]+[^[:space:]]+)?[[:space:]]+push([[:space:]]|$)' || exit 0
 
 main=$(flow_base_branch "$root")
 current=$(git -C "$root" symbolic-ref --quiet --short HEAD 2>/dev/null)
 deny() {
-  echo "guard-push: $1. Änderungen kommen per PR auf $main; Force-Push nur durch einen Menschen." >&2
-  exit 2
+  flow_deny "guard-push: $1. Änderungen kommen per PR auf $main; Force-Push nur durch einen Menschen."
 }
 
 # Jedes `git push …` bis zum nächsten ; & | einzeln prüfen

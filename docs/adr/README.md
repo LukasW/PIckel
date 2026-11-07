@@ -13,6 +13,7 @@ ADR ausschliesst, ist entschieden; eine Änderung braucht eine neue ADR, die die
 | [0004](0004-ci-lokal.md) | Pflicht-Checks auch lokal erfüllbar | Angenommen | 2026-11-07 |
 | [0005](0005-aggregatschnitt-mvp.md) | Ein impliziter ART, Teams am ART, Kapazität und Board am PI | Angenommen | 2026-11-07 |
 | [0006](0006-kapazitaet-story-points.md) | Kapazität und Schätzung in Story Points, Iterationen aus fester Länge | Angenommen | 2026-11-07 |
+| [0007](0007-copilot-als-zweiter-agent.md) | Copilot CLI als zweiter Agent neben Claude Code | Angenommen | 2026-11-07 |
 
 Neue ADR: nächste freie Nummer gegen `origin/main` prüfen, Datei `NNNN-<slug>.md` mit dem Kopf aus
 `scripts/adr-index.sh` anlegen. Den Index führt der Claude-Hook `.claude/hooks/adr-index.sh` nach; ohne Claude

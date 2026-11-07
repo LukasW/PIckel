@@ -155,6 +155,35 @@ Zusätzlich zu den Fällen aus `.claude/flow/shared/stop-conditions.md` immer fr
 - eine Liquibase-Migration bringt, die bestehende Daten umschreibt oder löscht
 - Anmeldung, Sessions oder Rollen einführt oder ändert
 
+## Agent wechseln
+
+Jeder Schritt läuft mit Claude Code oder der Copilot CLI, gewechselt wird nur zwischen zwei Schritten (ADR 0007). Der
+Zustand liegt im Repository (Issue, Change-Ordner, Branch, Labels), nicht im Werkzeug. Claude Code bleibt die
+Referenz.
+
+| Skill | Claude Code | Copilot CLI | VS Code Agent-Modus |
+|-------|-------------|-------------|---------------------|
+| `flow-task` | ja | ja | nein (nicht gemessen) |
+| `flow-grill-me` | ja | ja | nein (nicht gemessen) |
+| `flow-plan` | ja | ja | nein (nicht gemessen) |
+| `flow-implement` | ja | nein (Subagenten) | nein |
+| `flow-fast` | ja | nein (Subagenten) | nein |
+| `flow-ship` | ja | ja | nein (nicht gemessen) |
+| `flow-fix-build` | ja | ja | nein (nicht gemessen) |
+| `flow-night-batch` | ja | nein (Nachtlauf nur mit Claude Code) | nein |
+
+Bedingungen für die Copilot CLI:
+
+- Der Ordner ist vertraut (`trustedFolders` in `~/.copilot/config.json`). Sonst lädt die CLI keine Repository-Hooks,
+  und kein Guard greift
+- Vor dem ersten Schreibzugriff einer Session prüfen, dass die Hooks greifen: `git push --dry-run origin HEAD:main`
+  ausführen lassen; erwartet ist «Denied by preToolUse hook: guard-push: …»
+- Copilot liest dieselben Dateien wie Claude Code (`CLAUDE.md`, `.claude/rules/`, `.claude/settings.json`,
+  `.agents/skills/`); es gibt keine Copilot-Kopien. Ob Copilot die Erlaubnis-Regeln aus `settings.json`
+  (`permissions`) beachtet, ist nicht gemessen; als Schutz zählen unter Copilot nur die Hooks. Das Leseverbot für
+  die Geheimnis-Datei setzt `guard-env` deshalb auch bei Lese- und Suchwerkzeugen durch (ausser bei einer Suche über
+  einen ganzen Ordner)
+
 ## Nachtlauf
 
 Angaben für `/flow-night-batch` und `.claude/flow/scripts/night-batch.sh`. Nacht-PRs sind Vorschläge, keine Merges.

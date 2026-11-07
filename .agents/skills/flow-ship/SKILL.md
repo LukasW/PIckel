@@ -1,7 +1,7 @@
 ---
 name: flow-ship
 description: Schliesst ein Issue ab — DoD, Spec-Drift und CI prüfen, PR squash-mergen, aufräumen, Lernfragen. Einsetzen nach /flow-implement, wenn der PR freigegeben ist.
-compatibility: Claude Code im Repository PIkel. Braucht git, gh (GitHub), den Maven Wrapper und die Subagenten unter .claude/agents; Projektangaben in .claude/flow.md.
+compatibility: Claude Code oder Copilot CLI (in einem vertrauten Ordner, ADR 0007) im Repository PIkel. Braucht git, gh (GitHub) und den Maven Wrapper; Projektangaben in .claude/flow.md.
 argument-hint: "[--nachtlauf]"
 disable-model-invocation: true
 model: sonnet
@@ -115,5 +115,5 @@ kann, gehört nicht in den Kontext des Modells. Hat sich nichts gezeigt, genügt
 Ausgeben: Issue-Nummer, PR-Nummer, Merge-Status, Branch-Löschung, dazu den Hinweis aus `flow.md` → «Abschluss»
 (etwa: Was es braucht, bis die Änderung live ist). Nichts davon selbst auslösen.
 
-Zum Schluss `/clear` empfehlen: Das nächste Issue beginnt in einer frischen Session. Im Nachtlauf stattdessen die
+Zum Schluss eine frische Session empfehlen (`/clear`): Das nächste Issue beginnt in einer frischen Session. Im Nachtlauf stattdessen die
 Zeile `NACHTLAUF: FERTIG` (oder `NACHTLAUF: ABGEBROCHEN — <grund>`).

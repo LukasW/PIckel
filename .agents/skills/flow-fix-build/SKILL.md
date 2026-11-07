@@ -1,7 +1,7 @@
 ---
 name: flow-fix-build
 description: Bringt den Build iterativ auf grün — Gate fail-fast starten, ersten Fehler im Code beheben (nie den Test abschwächen), neu starten. Einsetzen, wenn scripts/gate.sh oder CI rot ist.
-compatibility: Claude Code im Repository PIkel. Braucht git, gh (GitHub), den Maven Wrapper und die Subagenten unter .claude/agents; Projektangaben in .claude/flow.md.
+compatibility: Claude Code oder Copilot CLI (in einem vertrauten Ordner, ADR 0007) im Repository PIkel. Braucht git, gh (GitHub) und den Maven Wrapper; Projektangaben in .claude/flow.md.
 argument-hint: "[modul oder testklasse]"
 disable-model-invocation: true
 model: sonnet

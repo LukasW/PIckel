@@ -108,10 +108,12 @@ jobs:
       - name: ADR-Index aktuell
         run: bash scripts/adr-index.sh --check
 
-      - name: Label- und Push-Guard gegen bekannte Umgehungen prüfen
+      - name: Hooks gegen bekannte Umgehungen und beide Eingabeformate prüfen (Claude Code, Copilot CLI)
         run: |
           bash .claude/flow/scripts/test-guard-labels.sh
           bash .claude/flow/scripts/test-guard-push.sh
+          bash .claude/flow/scripts/test-guard-env.sh
+          bash .claude/flow/scripts/test-hook-input.sh
 
       - name: Bekannte Schwachstellen in npm-Abhängigkeiten (Laufzeit, ab high)
         working-directory: src/main/webapp
