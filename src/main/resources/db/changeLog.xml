@@ -9,4 +9,8 @@
         <sqlFile path="db/migration/V1__create_program_increments.sql"/>
     </changeSet>
 
+    <changeSet id="2" author="pikel">
+        <sqlFile path="db/migration/V2__add_iteration_length.sql"/>
+    </changeSet>
+
 </databaseChangeLog>

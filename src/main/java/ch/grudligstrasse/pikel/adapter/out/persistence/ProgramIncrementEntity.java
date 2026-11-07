@@ -22,4 +22,7 @@ public class ProgramIncrementEntity {
 
     @Column(name = "end_date", nullable = false)
     public LocalDate endDate;
+
+    @Column(name = "iteration_length_weeks", nullable = false)
+    public int iterationLengthWeeks;
 }

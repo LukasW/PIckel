@@ -11,6 +11,7 @@ Funktionalität: US-1 PI anlegen
   Szenario: PI wird angelegt und erscheint in der Liste
     Wenn ich das PI "PI 27.1" vom "2027-01-04" bis "2027-03-26" anlege
     Dann wird das PI mit einer ID angelegt
+    Und verweist die Antwort im Header `Location` auf das neue PI
     Und erscheint "PI 27.1" in der Liste der PIs
 
   Szenario: Liste ist aufsteigend nach Startdatum sortiert

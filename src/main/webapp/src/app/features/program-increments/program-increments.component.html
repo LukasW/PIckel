@@ -4,7 +4,7 @@
   [formGroup]="form"
   (ngSubmit)="submit()"
   novalidate
-  class="mb-6 grid gap-3 rounded-lg border border-border bg-surface p-4 sm:grid-cols-4 sm:items-start"
+  class="mb-6 grid gap-3 rounded-lg border border-border bg-surface p-4 sm:grid-cols-5 sm:items-start"
   aria-label="Neues PI anlegen"
 >
   <label class="flex flex-col gap-1 text-sm">
@@ -47,6 +47,17 @@
       <span class="text-danger">Das Enddatum ist Pflicht.</span>
     }
   </label>
+  <label class="flex flex-col gap-1 text-sm">
+    Iterationslänge
+    <select
+      formControlName="iterationLengthWeeks"
+      class="rounded border border-border bg-background px-2 py-1"
+    >
+      @for (weeks of iterationLengths; track weeks) {
+        <option [ngValue]="weeks">{{ weeks }} {{ weeks === 1 ? 'Woche' : 'Wochen' }}</option>
+      }
+    </select>
+  </label>
   <button type="submit" class="rounded bg-accent px-3 py-1.5 text-accent-foreground sm:mt-6">
     PI anlegen
   </button>
@@ -62,7 +73,11 @@
   <ul class="divide-y divide-border rounded-lg border border-border bg-surface">
     @for (pi of service.programIncrements(); track pi.id) {
       <li class="flex justify-between px-4 py-3" data-testid="pi-row">
-        <span class="font-medium">{{ pi.name }}</span>
+        <a
+          [routerLink]="['/program-increments', pi.id]"
+          class="font-medium text-accent hover:underline"
+          >{{ pi.name }}</a
+        >
         <span class="text-sm text-muted"
           >{{ pi.startDate | date: 'dd.MM.yyyy' }} – {{ pi.endDate | date: 'dd.MM.yyyy' }}</span
         >

@@ -1,12 +1,14 @@
 package ch.grudligstrasse.pikel.application.service;
 
 import ch.grudligstrasse.pikel.domain.model.ProgramIncrement;
+import ch.grudligstrasse.pikel.domain.model.ProgramIncrementNotFoundException;
 import ch.grudligstrasse.pikel.domain.port.in.ProgramIncrementUseCase;
 import ch.grudligstrasse.pikel.domain.port.out.ProgramIncrementRepository;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 
 @ApplicationScoped
 public class ProgramIncrementService implements ProgramIncrementUseCase {
@@ -24,9 +26,14 @@ public class ProgramIncrementService implements ProgramIncrementUseCase {
 
     @Override
     @Transactional
-    public ProgramIncrement plan(String name, LocalDate startDate, LocalDate endDate) {
-        ProgramIncrement programIncrement = ProgramIncrement.plan(name, startDate, endDate);
+    public ProgramIncrement plan(String name, LocalDate startDate, LocalDate endDate, Integer iterationLengthWeeks) {
+        ProgramIncrement programIncrement = ProgramIncrement.plan(name, startDate, endDate, iterationLengthWeeks);
         repository.save(programIncrement);
         return programIncrement;
+    }
+
+    @Override
+    public ProgramIncrement get(UUID id) {
+        return repository.findOne(id).orElseThrow(ProgramIncrementNotFoundException::new);
     }
 }
