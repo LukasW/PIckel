@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { appConfig } from '../../app.config';
 import { ProgramIncrement } from '../../core/models/program-increment.model';
+import { FeaturesRepository } from '../../core/ports/features.repository';
 import { ProgramIncrementsRepository } from '../../core/ports/program-increments.repository';
 
 /** PI 27.1 (04.01.–26.03.2027) mit Iterationen zu 2 Wochen, wie es der Server liefert (US-5). */
@@ -41,6 +42,7 @@ describe('ProgramIncrementDetailComponent', () => {
   let addLink: ReturnType<typeof vi.fn>;
   let removeLink: ReturnType<typeof vi.fn>;
   let harness: RouterTestingHarness;
+  let listFeatures: ReturnType<typeof vi.fn>;
 
   /** Öffnet die Detailseite über die echte Route, damit die ID aus der URL kommt wie in der App. */
   async function open(url: string): Promise<HTMLElement> {
@@ -58,6 +60,8 @@ describe('ProgramIncrementDetailComponent', () => {
             removeLink,
           },
         },
+        // Das eingebettete Backlog (US-9) darf im Test keinen HTTP-Aufruf machen.
+        { provide: FeaturesRepository, useValue: { list: listFeatures, add: vi.fn() } },
       ],
     });
     harness = await RouterTestingHarness.create();
@@ -133,6 +137,16 @@ describe('ProgramIncrementDetailComponent', () => {
     updateBusinessContext = vi.fn();
     addLink = vi.fn();
     removeLink = vi.fn();
+    listFeatures = vi.fn().mockResolvedValue([]);
+  });
+
+  it('zeigt das Feature-Backlog des geöffneten PI (US-9)', async () => {
+    get.mockResolvedValue({ ...PI_27_1, id: '42' });
+
+    const el = await open('/program-increments/42');
+
+    expect(el.querySelector('app-feature-backlog')).not.toBeNull();
+    expect(listFeatures).toHaveBeenCalledWith('42');
   });
 
   it('lädt das PI mit der ID aus der URL (US-5)', async () => {

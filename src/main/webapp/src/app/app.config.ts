@@ -10,6 +10,8 @@ import { ProgramIncrementsRepository } from './core/ports/program-increments.rep
 import { ProgramIncrementsHttpAdapter } from './core/api/program-increments-http.adapter';
 import { TeamsRepository } from './core/ports/teams.repository';
 import { TeamsHttpAdapter } from './core/api/teams-http.adapter';
+import { FeaturesRepository } from './core/ports/features.repository';
+import { FeaturesHttpAdapter } from './core/api/features-http.adapter';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -19,5 +21,6 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(withFetch()),
     { provide: ProgramIncrementsRepository, useExisting: ProgramIncrementsHttpAdapter },
     { provide: TeamsRepository, useExisting: TeamsHttpAdapter },
+    { provide: FeaturesRepository, useExisting: FeaturesHttpAdapter },
   ],
 };

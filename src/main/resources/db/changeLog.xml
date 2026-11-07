@@ -21,4 +21,8 @@
         <sqlFile path="db/migration/V4__add_business_context.sql"/>
     </changeSet>
 
+    <changeSet id="5" author="pikel">
+        <sqlFile path="db/migration/V5__create_features.sql"/>
+    </changeSet>
+
 </databaseChangeLog>

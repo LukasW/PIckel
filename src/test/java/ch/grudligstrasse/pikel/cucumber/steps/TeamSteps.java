@@ -25,6 +25,10 @@ public class TeamSteps {
     @Inject
     TeamRepositoryAdapter repository;
 
+    // «wird das Erfassen … abgelehnt» teilen sich Teams und Features (US-9); die Antwort liegt darum dort.
+    @Inject
+    ScenarioContext context;
+
     private Response response;
 
     // Name → ID der Teams, die das Szenario angelegt hat; Umbenennen und Entfernen gehen über die ID.
@@ -47,6 +51,7 @@ public class TeamSteps {
     public void ichDasTeamErfasse(String name) {
         response =
                 given().contentType(ContentType.JSON).body(Map.of("name", name)).post(PATH);
+        context.response(response);
     }
 
     @Wenn("ich ein Team mit {int} Zeichen im Namen erfasse")
@@ -94,11 +99,6 @@ public class TeamSteps {
     @Dann("ist die Teamliste leer")
     public void istDieTeamlisteLeer() {
         given().get(PATH).then().statusCode(200).body("$", is(empty()));
-    }
-
-    @Dann("wird das Erfassen mit der Meldung {string} abgelehnt")
-    public void wirdDasErfassenAbgelehnt(String message) {
-        response.then().statusCode(400).contentType(ContentType.JSON).body("message", is(message));
     }
 
     @Dann("antwortet das Umbenennen mit dem Team {string}")
