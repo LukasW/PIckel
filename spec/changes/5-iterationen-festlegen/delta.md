@@ -1,6 +1,6 @@
 # Delta US-5 — Iterationen eines PI mit IP-Iteration festlegen (Issue #5)
 
-Story: `spec/user-stories/5-iterationen-festlegen.md` (neu) · Status: bestätigt
+Story: `spec/user-stories/5-iterationen-festlegen.md` (neu) · Status: eingepflegt
 
 ## Warum
 
@@ -44,6 +44,12 @@ Zeitraum aus einer festen Länge aufgeteilt, entstehen weder Lücken noch Überl
 - **Und** beginnt "Iteration 1" am "2027-01-04" und endet am "2027-01-17"
 - **Und** beginnt "IP" am "2027-03-15" und endet am "2027-03-26"
 
+### Szenario: Iterationen folgen der gewählten Länge
+- **Gegeben sei** eine leere Liste der PIs
+- **Wenn** ich das PI "PI 27.1" vom "2027-01-04" bis "2027-03-26" mit Iterationen zu 3 Wochen anlege
+- **Dann** hat das PI 4 Iterationen
+- **Und** beginnt "IP" am "2027-03-08" und endet am "2027-03-26"
+
 ### Szenario: Ohne Iterationslänge gelten 2 Wochen
 - **Wenn** ich das PI "PI 27.1" vom "2027-01-04" bis "2027-03-26" ohne Iterationslänge anlege
 - **Dann** hat das PI 6 Iterationen
@@ -65,6 +71,10 @@ Zeitraum aus einer festen Länge aufgeteilt, entstehen weder Lücken noch Überl
 - **Wenn** ich ein PI mit einer unbekannten ID abfrage
 - **Dann** wird die Abfrage mit dem Status 404 und der Meldung "Das PI gibt es nicht." abgelehnt
 
+### Szenario: PI mit ungültiger ID wird nicht gefunden
+- **Wenn** ich das PI mit der ID "keine-uuid" abfrage
+- **Dann** wird die Abfrage mit dem Status 404 und der Meldung "Das PI gibt es nicht." abgelehnt
+
 ### Szenario: Detailseite zeigt die Iterationen mit markierter IP-Iteration
 - **Gegeben sei** das PI "PI 27.1" vom "2027-01-04" bis "2027-03-26" mit Iterationen zu 2 Wochen
 - **Wenn** ich die Detailseite von "PI 27.1" öffne
@@ -81,7 +91,7 @@ keine
 
 # Delta US-1 — PI anlegen: Antwort mit Iterationen und `Location` (Issue #5)
 
-Story: `spec/user-stories/1-pi-anlegen.md` (bestehend) · Status: bestätigt
+Story: `spec/user-stories/1-pi-anlegen.md` (bestehend) · Status: eingepflegt
 
 ## Warum
 

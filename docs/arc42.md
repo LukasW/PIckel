@@ -216,9 +216,16 @@ Ein Deployment-Ziel ist noch nicht festgelegt (Abschnitt 11).
 
 Eine Fachregel gilt an genau einem Ort, im Domain-Objekt ([`.claude/rules/java.md`](../.claude/rules/java.md)).
 Die REST-Schicht prüft keine Felder, sie liest nur JSON. `ExceptionMapper` im REST-Adapter übersetzen fachliche
-Exceptions, fehlenden Inhalt, kaputtes JSON und unpassende Werte in HTTP 400 mit `{ "message": … }` (Vertrag:
+Exceptions, fehlenden Inhalt, kaputtes JSON und unpassende Werte in HTTP 400 mit `{ "message": … }`, ein
+unbekanntes PI in HTTP 404 mit demselben Körper (Vertrag:
 [`spec/fachliche-spezifikation.md`](../spec/fachliche-spezifikation.md) → «REST-API», Entscheid:
-[ADR 0003](adr/0003-fehlervertrag.md)). Das Formular prüft Pflichtfelder und Länge nur, um früher zu melden. Die Datenbank sichert zusätzlich mit Constraints ab (`NOT NULL`, `CHECK (end_date > start_date)`).
+[ADR 0003](adr/0003-fehlervertrag.md)). Das Formular prüft Pflichtfelder und Länge nur, um früher zu melden. Die Datenbank sichert zusätzlich mit Constraints ab (`NOT NULL`, `CHECK (end_date > start_date)`,
+`CHECK (iteration_length_weeks BETWEEN 1 AND 4)`).
+
+Abgeleitetes wird berechnet, nicht gespeichert: Von den Iterationen eines PI speichert PIkel nur die Länge, die
+Domain berechnet daraus die Iterationen ([ADR 0006](adr/0006-kapazitaet-story-points.md)). Andere Objekte
+verweisen auf eine Iteration über PI und Nummer; das trägt, solange Länge und Zeitraum eines PI unveränderlich sind.
+Wird beides änderbar, braucht es eine Migration der Verweise.
 
 ### Persistenz und Transaktionen
 

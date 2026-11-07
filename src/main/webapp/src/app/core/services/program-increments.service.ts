@@ -29,6 +29,19 @@ export class ProgramIncrementsService {
   }
 
   /**
+   * Lädt ein PI mit seinen Iterationen; liefert `undefined` und setzt `error`, wenn es das PI nicht gibt.
+   */
+  async get(id: string): Promise<ProgramIncrement | undefined> {
+    this.error.set(undefined);
+    try {
+      return await this.repository.get(id);
+    } catch (e: unknown) {
+      this.error.set(toMessage(e));
+      return undefined;
+    }
+  }
+
+  /**
    * Legt ein PI an und lädt danach die Liste in der Reihenfolge des Servers; liefert `true` bei Erfolg, sonst steht
    * die Meldung in `error`.
    */

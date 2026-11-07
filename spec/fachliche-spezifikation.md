@@ -35,13 +35,31 @@ Fachlicher Gesamtstand: Begriffe, Datenmodell mit Regeln, API. Zweck und Stakeho
 | `name` | Text | Pflicht, getrimmt, höchstens 100 Zeichen |
 | `startDate` | Datum | Pflicht |
 | `endDate` | Datum | Pflicht, nach `startDate` |
+| `iterationLengthWeeks` | Ganzzahl | 1 bis 4, ohne Angabe 2; der Zeitraum ergibt mindestens zwei Iterationen |
+| `iterations` | Liste von Iteration | berechnet, nicht gespeichert (siehe unten) |
+
+### Iteration (abgeleitet)
+
+Die Domain teilt den Zeitraum eines PI ab `startDate` in Iterationen zu `iterationLengthWeeks` Wochen. Jede endet am
+Tag vor dem Beginn der nächsten, die letzte am `endDate` des PI und ist bei einem Rest kürzer. Spätere Stories
+verweisen auf eine Iteration über PI und `number`; das bleibt stabil, weil Länge und Zeitraum eines PI nicht
+änderbar sind.
+
+| Feld | Typ | Regel |
+|------|-----|-------|
+| `number` | Ganzzahl | 1, 2, … lückenlos |
+| `name` | Text | «Iteration 1», «Iteration 2» …; die letzte heisst «IP» |
+| `startDate` | Datum | Startdatum des PI plus (`number` − 1) Iterationslängen |
+| `endDate` | Datum | Tag vor der nächsten Iteration, bei der letzten das Enddatum des PI |
+| `innovationAndPlanning` | Wahrheitswert | nur bei der letzten Iteration (IP-Iteration) |
 
 ## REST-API (aktueller Stand)
 
 | Methode | Pfad | Beschreibung |
 |---------|------|--------------|
 | `GET` | `/api/v1/program-increments` | Alle PIs, aufsteigend nach Startdatum |
-| `POST` | `/api/v1/program-increments` | PI anlegen → 201 mit dem neuen PI (ohne `Location`); 400 mit `{ "message": … }` bei Regelverletzung, fehlendem Inhalt, ungültigem JSON oder ungültigem Wert |
+| `GET` | `/api/v1/program-increments/{id}` | Ein PI mit Iterationen; 404 mit `{ "message": … }`, wenn es die ID nicht gibt |
+| `POST` | `/api/v1/program-increments` | PI anlegen (`iterationLengthWeeks` optional) → 201 mit dem neuen PI und `Location`; 400 mit `{ "message": … }` bei Regelverletzung, fehlendem Inhalt, ungültigem JSON oder ungültigem Wert |
 
 ## MVP-Umfang (noch nicht spezifiziert)
 

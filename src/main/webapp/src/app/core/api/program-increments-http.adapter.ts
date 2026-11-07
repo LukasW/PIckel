@@ -14,6 +14,10 @@ export class ProgramIncrementsHttpAdapter extends ProgramIncrementsRepository {
     return firstValueFrom(this.http.get<ProgramIncrement[]>(BASE_URL));
   }
 
+  get(id: string): Promise<ProgramIncrement> {
+    return firstValueFrom(this.http.get<ProgramIncrement>(`${BASE_URL}/${id}`));
+  }
+
   plan(request: PlanProgramIncrement): Promise<ProgramIncrement> {
     return firstValueFrom(this.http.post<ProgramIncrement>(BASE_URL, request));
   }

@@ -34,3 +34,4 @@ Siehe [`src/test/resources/features/program-increments/1-pi-anlegen.feature`](..
 ## Änderungen
 
 - Chore Projekt-Review: Fehlervertrag, fehlende Szenarien, Formular — `spec/changes/chore-review-massnahmen/delta.md`
+- #5: PI anlegen: Antwort mit Iterationen und `Location` — `spec/changes/5-iterationen-festlegen/delta.md`

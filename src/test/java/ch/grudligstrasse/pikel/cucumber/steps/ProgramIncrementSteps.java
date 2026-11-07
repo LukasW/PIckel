@@ -1,8 +1,11 @@
 package ch.grudligstrasse.pikel.cucumber.steps;
 
 import static io.restassured.RestAssured.given;
+import static io.restassured.RestAssured.withArgs;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.endsWith;
 import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 
@@ -15,6 +18,7 @@ import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import jakarta.inject.Inject;
 import java.util.Map;
+import java.util.UUID;
 
 public class ProgramIncrementSteps {
 
@@ -44,6 +48,19 @@ public class ProgramIncrementSteps {
                 .post(PATH);
     }
 
+    @Wenn("ich das PI {string} vom {string} bis {string} mit Iterationen zu {int} Wochen anlege")
+    public void ichDasPiMitIterationslaengeAnlege(String name, String start, String end, int weeks) {
+        response = given().contentType(ContentType.JSON)
+                .body(Map.of("name", name, "startDate", start, "endDate", end, "iterationLengthWeeks", weeks))
+                .post(PATH);
+    }
+
+    // Derselbe Request wie in US-1: Das Feld fehlt ganz, es wird nicht als null geschickt.
+    @Wenn("ich das PI {string} vom {string} bis {string} ohne Iterationslänge anlege")
+    public void ichDasPiOhneIterationslaengeAnlege(String name, String start, String end) {
+        ichDasPiAnlege(name, start, end);
+    }
+
     @Wenn("ich das PI {string} ohne Enddatum anlege")
     public void ichDasPiOhneEnddatumAnlege(String name) {
         response = given().contentType(ContentType.JSON)
@@ -61,9 +78,27 @@ public class ProgramIncrementSteps {
         response = given().contentType(ContentType.JSON).post(PATH);
     }
 
+    @Wenn("ich ein PI mit einer unbekannten ID abfrage")
+    public void ichEinPiMitUnbekannterIdAbfrage() {
+        response = given().get(PATH + "/" + UUID.randomUUID());
+    }
+
+    @Wenn("ich das PI mit der ID {string} abfrage")
+    public void ichDasPiMitDerIdAbfrage(String id) {
+        response = given().get(PATH + "/" + id);
+    }
+
     @Dann("wird das PI mit einer ID angelegt")
     public void wirdDasPiAngelegt() {
         response.then().statusCode(201).body("id", notNullValue());
+    }
+
+    @Dann("verweist die Antwort im Header `Location` auf das neue PI")
+    public void verweistLocationAufDasNeuePi() {
+        String id = response.then().statusCode(201).extract().path("id");
+        response.then().header("Location", endsWith(PATH + "/" + id));
+
+        given().get(response.header("Location")).then().statusCode(200).body("id", is(id));
     }
 
     @Dann("erscheint {string} in der Liste der PIs")
@@ -79,5 +114,32 @@ public class ProgramIncrementSteps {
     @Dann("wird das Anlegen mit der Meldung {string} abgelehnt")
     public void wirdAbgelehnt(String message) {
         response.then().statusCode(400).contentType(ContentType.JSON).body("message", is(message));
+    }
+
+    // Prüft Antwort und gespeicherten Stand: Die Iterationen von GET /{id} entstehen aus der gespeicherten Länge.
+    @Dann("hat das PI {int} Iterationen")
+    public void hatDasPiIterationen(int count) {
+        response.then().statusCode(201).body("iterations", hasSize(count));
+        storedProgramIncrement().then().body("iterations", hasSize(count));
+    }
+
+    @Dann("beginnt {string} am {string} und endet am {string}")
+    public void beginntUndEndet(String iteration, String start, String end) {
+        storedProgramIncrement()
+                .then()
+                .body("iterations.find { it.name == '%s' }.startDate", withArgs(iteration), is(start))
+                .body("iterations.find { it.name == '%s' }.endDate", withArgs(iteration), is(end));
+    }
+
+    @Dann("wird die Abfrage mit dem Status {int} und der Meldung {string} abgelehnt")
+    public void wirdDieAbfrageAbgelehnt(int status, String message) {
+        response.then().statusCode(status).contentType(ContentType.JSON).body("message", is(message));
+    }
+
+    private Response storedProgramIncrement() {
+        String id = response.then().statusCode(201).extract().path("id");
+        Response stored = given().get(PATH + "/" + id);
+        stored.then().statusCode(200);
+        return stored;
     }
 }

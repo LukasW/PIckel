@@ -1,0 +1,38 @@
+<a routerLink="/" class="mb-4 inline-block text-sm text-accent hover:underline">← Alle PIs</a>
+
+@if (programIncrement(); as pi) {
+  <h1 class="mb-1 text-2xl font-semibold">{{ pi.name }}</h1>
+  <p class="mb-4 text-sm text-muted">
+    {{ pi.startDate | date: 'dd.MM.yyyy' }} – {{ pi.endDate | date: 'dd.MM.yyyy' }}
+  </p>
+
+  <table class="w-full rounded-lg border border-border bg-surface text-left">
+    <thead class="text-sm text-muted">
+      <tr>
+        <th class="px-4 py-2 font-medium">Iteration</th>
+        <th class="px-4 py-2 font-medium">Start</th>
+        <th class="px-4 py-2 font-medium">Ende</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-border">
+      @for (iteration of pi.iterations; track iteration.number) {
+        <tr [class.bg-background]="iteration.innovationAndPlanning">
+          <td class="px-4 py-2">
+            <span class="font-medium">{{ iteration.name }}</span>
+            @if (iteration.innovationAndPlanning) {
+              <span class="ml-2 rounded bg-accent px-1.5 py-0.5 text-xs text-accent-foreground"
+                >IP-Iteration</span
+              >
+            }
+          </td>
+          <td class="px-4 py-2">{{ iteration.startDate | date: 'dd.MM.yyyy' }}</td>
+          <td class="px-4 py-2">{{ iteration.endDate | date: 'dd.MM.yyyy' }}</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+} @else if (service.error(); as error) {
+  <p role="alert" class="text-danger">{{ error }}</p>
+} @else {
+  <p class="text-muted">Lade …</p>
+}

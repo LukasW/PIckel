@@ -3,5 +3,6 @@ import { PlanProgramIncrement, ProgramIncrement } from '../models/program-increm
 /** Driven Port: woher die PIs kommen (heute REST, später ggf. offline-fähig). */
 export abstract class ProgramIncrementsRepository {
   abstract list(): Promise<ProgramIncrement[]>;
+  abstract get(id: string): Promise<ProgramIncrement>;
   abstract plan(request: PlanProgramIncrement): Promise<ProgramIncrement>;
 }
