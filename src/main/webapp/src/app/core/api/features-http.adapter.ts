@@ -18,4 +18,12 @@ export class FeaturesHttpAdapter extends FeaturesRepository {
   add(programIncrementId: string, feature: NewFeature): Promise<Feature> {
     return firstValueFrom(this.http.post<Feature>(url(programIncrementId), feature));
   }
+
+  update(programIncrementId: string, id: string, feature: NewFeature): Promise<Feature> {
+    return firstValueFrom(this.http.put<Feature>(`${url(programIncrementId)}/${id}`, feature));
+  }
+
+  async remove(programIncrementId: string, id: string): Promise<void> {
+    await firstValueFrom(this.http.delete<void>(`${url(programIncrementId)}/${id}`));
+  }
 }

@@ -5,6 +5,7 @@ import ch.grudligstrasse.pikel.domain.port.out.FeatureRepository;
 import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
 import jakarta.enterprise.context.ApplicationScoped;
 import java.util.List;
+import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.UUID;
 
@@ -16,6 +17,16 @@ public class FeatureRepositoryAdapter implements FeatureRepository, PanacheRepos
         return list("programIncrementId", programIncrementId).stream()
                 .map(this::toDomain)
                 .toList();
+    }
+
+    @Override
+    public Optional<Feature> findOne(UUID id) {
+        return findByIdOptional(id).map(this::toDomain);
+    }
+
+    @Override
+    public boolean remove(UUID id) {
+        return deleteById(id);
     }
 
     @Override

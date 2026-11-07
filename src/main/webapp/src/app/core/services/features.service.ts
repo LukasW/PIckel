@@ -5,7 +5,7 @@ import { FeaturesRepository } from '../ports/features.repository';
 
 const GENERIC_ERROR = 'Das hat nicht geklappt. Bitte versuche es nochmals.';
 
-/** Use Case: Backlog eines PI laden und Features erfassen; hält den Zustand als Signals. */
+/** Use Case: Backlog eines PI laden, Features erfassen, bearbeiten und löschen; hält den Zustand als Signals. */
 @Injectable({ providedIn: 'root' })
 export class FeaturesService {
   private readonly repository = inject(FeaturesRepository);
@@ -29,10 +29,33 @@ export class FeaturesService {
   }
 
   /** Liefert `true` bei Erfolg und lädt dann das Backlog neu, sonst steht die Meldung in `error`. */
-  async add(programIncrementId: string, feature: NewFeature): Promise<boolean> {
+  add(programIncrementId: string, feature: NewFeature): Promise<boolean> {
+    return this.changeAndReload(programIncrementId, () =>
+      this.repository.add(programIncrementId, feature),
+    );
+  }
+
+  /** Wie `add`: `true` bei Erfolg und das Backlog wird neu geladen, sonst steht die Meldung in `error`. */
+  update(programIncrementId: string, id: string, feature: NewFeature): Promise<boolean> {
+    return this.changeAndReload(programIncrementId, () =>
+      this.repository.update(programIncrementId, id, feature),
+    );
+  }
+
+  /** Wie `add`: `true` bei Erfolg und das Backlog wird neu geladen, sonst steht die Meldung in `error`. */
+  remove(programIncrementId: string, id: string): Promise<boolean> {
+    return this.changeAndReload(programIncrementId, () =>
+      this.repository.remove(programIncrementId, id),
+    );
+  }
+
+  private async changeAndReload(
+    programIncrementId: string,
+    change: () => Promise<unknown>,
+  ): Promise<boolean> {
     this.error.set(undefined);
     try {
-      await this.repository.add(programIncrementId, feature);
+      await change();
       await this.load(programIncrementId);
       return true;
     } catch (e: unknown) {

@@ -27,4 +27,28 @@ public interface FeatureUseCase {
             Integer wsjfRank,
             String owner,
             Integer estimate);
+
+    /**
+     * Ändert ein Feature des PI mit denselben Regeln wie beim Erfassen.
+     *
+     * @throws ch.grudligstrasse.pikel.domain.model.ProgramIncrementNotFoundException wenn es das PI nicht gibt
+     * @throws ch.grudligstrasse.pikel.domain.model.FeatureNotFoundException wenn es das Feature im PI nicht gibt
+     * @throws ch.grudligstrasse.pikel.domain.model.InvalidFeatureException bei ungültigen Angaben
+     */
+    Feature update(
+            UUID programIncrementId,
+            UUID featureId,
+            String title,
+            String description,
+            Integer wsjfRank,
+            String owner,
+            Integer estimate);
+
+    /**
+     * Löscht ein Feature des PI.
+     *
+     * @throws ch.grudligstrasse.pikel.domain.model.ProgramIncrementNotFoundException wenn es das PI nicht gibt
+     * @throws ch.grudligstrasse.pikel.domain.model.FeatureNotFoundException wenn es das Feature im PI nicht gibt
+     */
+    void remove(UUID programIncrementId, UUID featureId);
 }
