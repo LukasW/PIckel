@@ -33,14 +33,24 @@
   },
   "forwardPorts": [8080, 4200],
   "mounts": [
-    "source=pikel-node-modules,target=${containerWorkspaceFolder}/src/main/webapp/node_modules,type=volume"
+    "source=pikel-node-modules,target=${containerWorkspaceFolder}/src/main/webapp/node_modules,type=volume",
+    // Quinoa lädt Node plattformabhängig nach .quinoa/node; das macOS-Binary vom Host läuft hier nicht
+    "source=pikel-quinoa,target=${containerWorkspaceFolder}/.quinoa,type=volume",
+    // Logins von Claude Code und gh überleben Neustart und Rebuild
+    "source=pikel-claude-config,target=/home/vscode/.claude,type=volume",
+    "source=pikel-gh-config,target=/home/vscode/.config/gh,type=volume"
   ],
   "containerEnv": {
     "WORKSPACE": "${containerWorkspaceFolder}",
+    // Damit auch .claude.json (Onboarding, Projekt-Vertrauen) im Volume liegt statt in ~
+    "CLAUDE_CONFIG_DIR": "/home/vscode/.claude",
     "LANG": "C.UTF-8",
     "LC_ALL": "C.UTF-8"
   },
+  // Unter Podman hinterlässt das Java-Feature /tmp im Image mit 0755 statt 1777. Der VS-Code-Server
+  // legt seine Sockets dort an, bevor ein Lifecycle-Hook ein chmod nachholen kann; darum ein tmpfs.
+  // Das Java-Feature installiert zuletzt, damit apt in den übrigen Features noch ein intaktes /tmp hat.
+  "runArgs": ["--tmpfs", "/tmp:rw,exec,nosuid,nodev,mode=1777"],
   "postCreateCommand": "bash .devcontainer/post-create.sh",
-  "postStartCommand": "sudo chmod 1777 /tmp",
   "remoteUser": "vscode"
 }
