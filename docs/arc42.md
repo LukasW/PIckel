@@ -261,6 +261,7 @@ Testpyramide, Werkzeuge und Tag-Routing der Gherkin-Szenarien: [`CLAUDE.md`](../
 | ADR | Titel | Status |
 |-----|-------|--------|
 | [0001](adr/0001-walking-skeleton.md) | Walking Skeleton mit dem Stack von Brainy | Angenommen |
+| [0002](adr/0002-agent-skills-standard.md) | Skills nach dem Agent-Skills-Standard | Angenommen |
 
 Neue Entscheide als `docs/adr/NNNN-<slug>.md`; Entscheide zu einer einzelnen Story im Change-Ordner
 (`spec/changes/<nr>-<slug>/entscheide.md`).

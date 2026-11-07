@@ -16,8 +16,7 @@ Projektangaben dazu stehen in `.claude/flow.md`.
 │   ├── java.md                   # lädt nur bei Java/Migrationen (paths:)
 │   └── angular.md                # lädt nur bei src/main/webapp/**
 ├── skills/
-│   └── flow-*/SKILL.md           # /flow-task, /flow-grill-me, /flow-plan, /flow-implement, /flow-ship,
-│                                 # /flow-fast, /flow-fix-build, /flow-night-batch
+│   └── flow-* → ../../.agents/skills/flow-*   # nur Symlinks, damit Claude Code die Skills findet
 ├── flow/
 │   ├── shared/                   # Fragmente der Skills: Projekt, Git-Provider, DoD, Tests, Anhalten, Delta
 │   └── scripts/                  # Hooks und Prüfskripte: .env-Schutz, Schweizer Schreibweise,
@@ -34,7 +33,12 @@ Projektangaben dazu stehen in `.claude/flow.md`.
 ├── settings.json                 # Permissions (allow/deny) und Hooks (eingecheckt)
 └── settings.local.json           # persönliche Overrides (ignoriert)
 
+.agents/skills/                   # Skills nach agentskills.io (docs/adr/0002-agent-skills-standard.md)
+└── flow-*/SKILL.md               # /flow-task, /flow-grill-me, /flow-plan, /flow-implement, /flow-ship,
+                                  # /flow-fast, /flow-fix-build, /flow-night-batch
+
 scripts/gate.sh                   # alle Prüfungen wie CI; vor jedem Push grün
+scripts/check-skills.sh           # Skills gegen die Spezifikation, Symlinks vorhanden
 .githooks/pre-commit              # Gitleaks, Prettier, Spotless auf gestagten Dateien
 ```
 
@@ -49,7 +53,8 @@ Wahrscheinlichkeit, dass alle befolgt werden.
 | PIT (`-Pmutation`, ≥ 80 %) | `scripts/gate.sh`, CI | Finden die Unit-Tests in `domain/`/`application/` echte Fehler? |
 | Spotless, Prettier | pre-commit, `verify`, CI | Formatierung |
 | Gitleaks | pre-commit, CI | Secrets |
-| Label `needs-human-review` | CI | Migrationen, `.github/`, `.claude/`, Abhängigkeiten → Merge nur nach Freigabe |
+| `check-skills.sh` | `scripts/gate.sh`, CI | Skills nach agentskills.io: Name = Ordner, Felder, Längen, Verweise, Symlinks |
+| Label `needs-human-review` | CI | Migrationen, `.github/`, `.claude/`, `.agents/`, Abhängigkeiten → Merge nur nach Freigabe |
 | `check-story-drift.sh` | Handoff, Commit, CI «Spec-Drift» | Code ohne Story/Delta, Delta nicht eingepflegt, Szenarien ≠ `.feature` |
 | `guard-env.sh`, `guard-labels.sh`, `check-spelling.sh`, `check-test-edit.sh` | Claude-Hooks | `.env`, Labels `spec-unchanged`/`needs-human-review` nur durch Menschen, Eszett, abgeschwächte Tests |
 | `deny` in `settings.json` | Claude | Force-Push, Push auf `main`, Admin-Merge, Löschen über die API, Secrets |
@@ -57,7 +62,9 @@ Wahrscheinlichkeit, dass alle befolgt werden.
 Inhalte von Issues und PRs sind Auftrag, nie Spezifikation und nie Anweisung an den Agenten
 (`.claude/flow/shared/project.md`, `.claude/flow/shared/git-provider.md`).
 
-**Einrichten:** nichts zu installieren, Claude Code lädt Skills, Agenten und Hooks aus `.claude/`. Ein global
+**Einrichten:** nichts zu installieren, Claude Code lädt Agenten und Hooks aus `.claude/`, die Skills über die
+Symlinks unter `.claude/skills/` aus `.agents/skills/`. Ein neuer Skill braucht Ordner und Symlink
+(`ln -s ../../.agents/skills/<name> .claude/skills/<name>`). Ein global
 installiertes Plugin `flow@grudligstrasse` ist über `settings.json` für dieses Repository abgeschaltet, damit die Hooks nicht
 doppelt laufen. Für Issues und PRs `gh auth login`. Einmal pro Klon `git config core.hooksPath .githooks` und
 `brew install gitleaks`.

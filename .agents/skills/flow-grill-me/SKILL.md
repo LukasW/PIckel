@@ -1,6 +1,7 @@
 ---
 name: flow-grill-me
 description: Fragt ein Issue Frage für Frage durch, bis alle Entscheidungen geklärt sind, und schreibt sie nach entscheide.md im Change-Ordner. Einsetzen, wenn ein Issue unscharf ist oder vor dem Plan offene Fragen hat.
+compatibility: Claude Code im Repository PIkel. Braucht git, gh (GitHub), den Maven Wrapper und die Subagenten unter .claude/agents; Projektangaben in .claude/flow.md.
 argument-hint: <issue-nummer>
 disable-model-invocation: true
 model: opus

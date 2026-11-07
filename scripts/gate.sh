@@ -2,7 +2,8 @@
 # Lokales Gate: dieselben Prüfungen wie CI, in einer Kette. Agent und Mensch lassen es vor jedem Push grün laufen,
 # damit der Agent sein eigener erster Reviewer ist und CI nicht als Fehlersuche dient.
 #
-#   scripts/gate.sh          Format (Prettier, Spotless), Unit inkl. ArchUnit, Vitest, Mutation, CucumberIT, SmokeIT
+#   scripts/gate.sh          Skills (agentskills.io), Format (Prettier, Spotless), Unit inkl. ArchUnit, Vitest,
+#                            Mutation, CucumberIT, SmokeIT
 #   scripts/gate.sh --fast   ohne Integration (keine Container nötig), wie der Unit-Job in CI
 #
 # Ausgabe je Schritt in ${TMPDIR:-/tmp}/pikel-gate-<schritt>.log; angezeigt werden nur Fehlerzeilen.
@@ -27,6 +28,7 @@ step() {
   fi
 }
 
+step skills    scripts/check-skills.sh
 step prettier  bash -c 'cd src/main/webapp && npm run format:check'
 step spotless  ./mvnw -B spotless:check
 step unit      ./mvnw -B test

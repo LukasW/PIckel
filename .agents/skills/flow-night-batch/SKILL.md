@@ -1,6 +1,7 @@
 ---
 name: flow-night-batch
 description: Bereitet einen Nachtlauf vor, holt die Freigabe und startet ihn — bereite Teil-Issues eines Epics werden in Wellen unbeaufsichtigt umgesetzt, die PRs bleiben zum Review am Morgen offen. Mit «status» der Stand am Morgen, mit «stop» abbrechen.
+compatibility: Claude Code im Repository PIkel. Braucht git, gh (GitHub), den Maven Wrapper und die Subagenten unter .claude/agents; Projektangaben in .claude/flow.md.
 argument-hint: <epic-nummer | issue-nummern…> | status | stop
 disable-model-invocation: true
 model: sonnet

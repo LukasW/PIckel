@@ -110,6 +110,7 @@ Health: `/q/health`. Weitere Befehle (Loop, Formatieren, Mutation): `.claude/flo
 
 ## Arbeitsablauf mit Claude
 
-Ablauf, Agenten und Hooks liegen im Repository unter `.claude/`, Projektangaben in
+Agenten und Hooks liegen im Repository unter `.claude/`, die Skills nach [agentskills.io](https://agentskills.io)
+unter `.agents/skills/` (ADR 0002), Projektangaben in
 [`.claude/flow.md`](.claude/flow.md), Überblick in [`claude-guide.md`](claude-guide.md):
 `/flow-task <beschreibung>` → `/flow-plan <nr>` → `/clear` → `/flow-implement <nr>` → `/flow-ship`.

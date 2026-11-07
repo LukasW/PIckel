@@ -13,7 +13,7 @@ deltas: spec/changes
 
 Projektangaben für `/flow-task`, `/flow-plan`, `/flow-implement`, `/flow-ship`, `/flow-fast`, `/flow-grill-me`,
 `/flow-fix-build`, `/flow-night-batch` und die Agenten. Architektur, Testpyramide und Konventionen stehen in
-`CLAUDE.md` und `.claude/rules/`, der Ablauf selbst in `.claude/skills/flow-*` und `.claude/flow/`. Jede Regel steht
+`CLAUDE.md` und `.claude/rules/`, der Ablauf selbst in `.agents/skills/flow-*` und `.claude/flow/`. Jede Regel steht
 an genau einem Ort; hier nur, was der Ablauf zusätzlich braucht.
 
 ## Repository

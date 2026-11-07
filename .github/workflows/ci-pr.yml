@@ -49,7 +49,7 @@ jobs:
           BASE: ${{ github.event.pull_request.base.sha }}
         run: |
           changed=$(git diff --name-only "$BASE"...HEAD)
-          risky=$(printf '%s\n' "$changed" | grep -E '^(src/main/resources/db/|\.github/|\.claude/|CLAUDE\.md$|pom\.xml$|src/main/webapp/package(-lock)?\.json$)' || true)
+          risky=$(printf '%s\n' "$changed" | grep -E '^(src/main/resources/db/|\.github/|\.claude/|\.agents/|CLAUDE\.md$|pom\.xml$|src/main/webapp/package(-lock)?\.json$)' || true)
           if [ -n "$risky" ]; then
             echo "Risiko-Pfade geändert:"; printf '  %s\n' $risky
             gh label create needs-human-review --color B60205 \
@@ -101,6 +101,9 @@ jobs:
       - name: Install frontend dependencies
         working-directory: src/main/webapp
         run: npm ci
+
+      - name: Skills gegen agentskills.io prüfen
+        run: bash scripts/check-skills.sh
 
       - name: Frontend format check (Prettier)
         working-directory: src/main/webapp

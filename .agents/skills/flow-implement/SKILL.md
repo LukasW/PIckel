@@ -1,6 +1,7 @@
 ---
 name: flow-implement
 description: Setzt ein Issue aus seinem Change-Ordner um — Branch, Delta in die Story einpflegen, Tests vom test-author, Code, Gate, Reviewer, Handoff mit Pflicht-Pause, Commit und PR. Einsetzen, wenn Delta bzw. Plan bereit sind.
+compatibility: Claude Code im Repository PIkel. Braucht git, gh (GitHub), den Maven Wrapper und die Subagenten unter .claude/agents; Projektangaben in .claude/flow.md.
 argument-hint: <issue-nummer> [--worktree] [--nachtlauf <hinweis>]
 disable-model-invocation: true
 model: sonnet

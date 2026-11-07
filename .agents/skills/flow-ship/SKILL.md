@@ -1,6 +1,7 @@
 ---
 name: flow-ship
 description: Schliesst ein Issue ab — DoD, Spec-Drift und CI prüfen, PR squash-mergen, aufräumen, Lernfragen. Einsetzen nach /flow-implement, wenn der PR freigegeben ist.
+compatibility: Claude Code im Repository PIkel. Braucht git, gh (GitHub), den Maven Wrapper und die Subagenten unter .claude/agents; Projektangaben in .claude/flow.md.
 argument-hint: "[--nachtlauf]"
 disable-model-invocation: true
 model: sonnet
@@ -88,7 +89,7 @@ Implementierungsnotizen (`notes.md` im Change-Ordner) und die verworfenen Review
 
 Zeig die Antworten knapp und **schlag** Änderungen vor, jede mit Ziel und Begründung: Story oder Spezifikation,
 `CLAUDE.md`, `.claude/rules/`, `flow.md`, Reviewer-Agent, oder eine Änderung am Ablauf unter `.claude/flow/` bzw.
-`.claude/skills/flow-*`. Nichts davon ohne
+`.agents/skills/flow-*`. Nichts davon ohne
 Freigabe ändern; der Nutzer entscheidet.
 
 **Nach der Freigabe** steht die Session schon auf dem Hauptzweig (Schritt 6). Deshalb:
@@ -98,7 +99,7 @@ Freigabe ändern; der Nutzer entscheidet.
   Hauptzweig**. Mehrere freigegebene Kleinigkeiten dürfen in einen PR
 - Punkte mit eigenem Umfang (Code, neue Prüfung, mehr als eine Regel) werden als Issue angelegt, wie in
   `/flow-task`, statt sofort umgesetzt
-- Änderungen am Ablauf (`.claude/flow/`, `.claude/skills/`, `.claude/agents/`, `.claude/rules/`) gehen wie Doku
+- Änderungen am Ablauf (`.claude/flow/`, `.agents/skills/`, `.claude/agents/`, `.claude/rules/`) gehen wie Doku
   und Regeln über einen eigenen `chore/<slug>`-PR mit Change-Ordner `spec/changes/chore-<slug>/`
 - Danach Schritt 8, mit den neuen PR- und Issue-Nummern
 

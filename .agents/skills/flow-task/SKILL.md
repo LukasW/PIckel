@@ -1,6 +1,7 @@
 ---
 name: flow-task
 description: Legt aus einer Beschreibung ein Issue (nur Auftrag und Verweis) und bei einer Story den Delta-Entwurf mit Akzeptanzkriterien und Szenarien im Change-Ordner an. Einsetzen, wenn eine neue Idee, Story oder ein technischer Task erfasst werden soll.
+compatibility: Claude Code im Repository PIkel. Braucht git, gh (GitHub), den Maven Wrapper und die Subagenten unter .claude/agents; Projektangaben in .claude/flow.md.
 argument-hint: <beschreibung>
 disable-model-invocation: true
 model: opus

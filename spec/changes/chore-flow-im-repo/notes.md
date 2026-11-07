@@ -9,6 +9,11 @@
 - Der global installierte Plugin-Hook `guard-env.sh` lief in derselben Session noch mit und blockierte Befehle,
   die `.env` nur im Text nennen
 
+- Skills nach agentskills.io (ADR 0002): `skills-ref validate` lehnt jedes Feld ausserhalb der Spezifikation ab,
+  Claude Code ignoriert unbekannte Felder. Darum eigenes `scripts/check-skills.sh` mit erlaubter Ausnahme für
+  `argument-hint`, `disable-model-invocation`, `model`. Claude Code liest nur `.claude/skills/`, folgt aber Symlinks
+  je Skill-Ordner
+
 ## Reviewer-Befunde
 
 - hexagonal-reviewer: ArchitectureTest hatte Lücken (Denylist statt Allowlist für die Domain, `@Transactional`,

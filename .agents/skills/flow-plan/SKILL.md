@@ -1,6 +1,7 @@
 ---
 name: flow-plan
 description: Analysiert ein Issue gegen Spezifikation und Code und schreibt plan.md und das Delta in den Change-Ordner, ohne Code zu ändern. Einsetzen vor grösseren Features oder wenn die Umsetzung Abwägungen braucht.
+compatibility: Claude Code im Repository PIkel. Braucht git, gh (GitHub), den Maven Wrapper und die Subagenten unter .claude/agents; Projektangaben in .claude/flow.md.
 argument-hint: <issue-nummer>
 disable-model-invocation: true
 model: opus
