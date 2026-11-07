@@ -5,11 +5,13 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import ch.grudligstrasse.pikel.domain.model.InvalidProgramIncrementException;
 import ch.grudligstrasse.pikel.domain.model.ProgramIncrement;
 import ch.grudligstrasse.pikel.domain.port.out.ProgramIncrementRepository;
 import java.time.LocalDate;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -26,9 +28,17 @@ class ProgramIncrementServiceTest {
     ProgramIncrementService service;
 
     @Test
+    void listAllReturnsProgramIncrementsInRepositoryOrder() {
+        ProgramIncrement first = ProgramIncrement.plan("PI 27.1", LocalDate.of(2027, 1, 4), LocalDate.of(2027, 3, 26));
+        ProgramIncrement second = ProgramIncrement.plan("PI 27.2", LocalDate.of(2027, 4, 5), LocalDate.of(2027, 6, 25));
+        when(repository.findAllOrderedByStartDate()).thenReturn(List.of(first, second));
+
+        assertEquals(List.of(first, second), service.listAll());
+    }
+
+    @Test
     void planSavesAndReturnsNewProgramIncrement() {
-        ProgramIncrement created =
-                service.plan("PI 27.1", LocalDate.of(2027, 1, 4), LocalDate.of(2027, 3, 26));
+        ProgramIncrement created = service.plan("PI 27.1", LocalDate.of(2027, 1, 4), LocalDate.of(2027, 3, 26));
 
         verify(repository).save(created);
         assertEquals("PI 27.1", created.name());

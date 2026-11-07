@@ -33,6 +33,5 @@ release.properties
 .claude/scheduled_tasks.lock
 .claude/settings.local.json
 
-# Pläne und Worktrees — nur lokal
-/plan/
+# Worktrees — nur lokal (Pläne liegen versioniert unter spec/changes/)
 .trees/
