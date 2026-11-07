@@ -9,8 +9,13 @@ command -v jq >/dev/null 2>&1 || { sudo apt-get update && sudo apt-get install -
 # pre-commit-Hook (Gitleaks, Prettier, Spotless) aktivieren
 git -C "${WORKSPACE}" config core.hooksPath .githooks
 
-sudo chown "$(id -u):$(id -g)" "${WORKSPACE}/src/main/webapp/node_modules"
-sudo npm install -g npm@11.17.0
+sudo chown "$(id -u):$(id -g)" "${WORKSPACE}/src/main/webapp/node_modules" "${WORKSPACE}/.quinoa"
+
+# Volumes und die von Docker angelegten Elternverzeichnisse gehören zuerst root
+sudo chown "$(id -u):$(id -g)" "${HOME}/.config" "${HOME}/.config/gh" "${HOME}/.claude"
+# Ohne sudo: sudo setzt PATH auf secure_path zurück und findet das npm aus nvm nicht. Das Node-Feature
+# nimmt den Benutzer in die Gruppe nvm auf, globale Installationen gehen deshalb ohne root.
+npm install -g npm@11.17.0
 npm --prefix "${WORKSPACE}/src/main/webapp" ci
 
 # Claude Code auf den nativen Installer umstellen, damit Updates ohne sudo gehen.

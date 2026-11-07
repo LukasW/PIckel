@@ -251,10 +251,8 @@ Testpyramide, Werkzeuge und Tag-Routing der Gherkin-Szenarien: [`CLAUDE.md`](../
 
 ## 9. Architekturentscheidungen
 
-| ADR | Titel | Status |
-|-----|-------|--------|
-| [0001](adr/0001-walking-skeleton.md) | Walking Skeleton mit dem Stack von Brainy | Angenommen |
-| [0002](adr/0002-agent-skills-standard.md) | Skills nach dem Agent-Skills-Standard | Angenommen |
+Alle Entscheide mit Titel, Status und Datum: [`docs/adr/README.md`](adr/README.md). Der Index wird aus den
+ADR-Köpfen erzeugt (`scripts/adr-index.sh`) und nie von Hand gepflegt.
 
 Neue Entscheide als `docs/adr/NNNN-<slug>.md`; Entscheide zu einer einzelnen Story im Change-Ordner
 (`spec/changes/<nr>-<slug>/entscheide.md`).

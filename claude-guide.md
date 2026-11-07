@@ -29,7 +29,8 @@ Projektangaben dazu stehen in `.claude/flow.md`.
 │   ├── angular-signals-reviewer.md  # Angular: Signals, OnPush, Control Flow, Tokens
 │   └── bdd-cucumber-author.md    # Gherkin und Tag-Routing
 ├── hooks/
-│   └── reviewer-reminder.sh      # PostToolUse → schlägt Reviewer vor
+│   ├── reviewer-reminder.sh      # PostToolUse → schlägt Reviewer vor
+│   └── adr-index.sh              # PostToolUse → führt docs/adr/README.md nach einer ADR-Änderung nach
 ├── settings.json                 # Permissions (allow/deny) und Hooks (eingecheckt)
 └── settings.local.json           # persönliche Overrides (ignoriert)
 
@@ -39,6 +40,7 @@ Projektangaben dazu stehen in `.claude/flow.md`.
 
 scripts/gate.sh                   # alle Prüfungen wie CI; vor jedem Push grün
 scripts/check-skills.sh           # Skills gegen die Spezifikation, Symlinks vorhanden
+scripts/adr-index.sh [--check]    # ADR-Index aus den ADR-Köpfen erzeugen bzw. prüfen
 .githooks/pre-commit              # Gitleaks, Prettier, Spotless auf gestagten Dateien
 ```
 
@@ -54,6 +56,7 @@ Wahrscheinlichkeit, dass alle befolgt werden.
 | Spotless, Prettier | pre-commit, `verify`, CI | Formatierung |
 | Gitleaks | pre-commit, CI | Secrets |
 | `check-skills.sh` | `scripts/gate.sh`, CI | Skills nach agentskills.io: Name = Ordner, Felder, Längen, Verweise, Symlinks |
+| `adr-index.sh` | Claude-Hook schreibt; pre-commit, `scripts/gate.sh`, CI prüfen | ADR-Kopf (Titel, Status, Datum), Nummer eindeutig, `docs/adr/README.md` aktuell |
 | Label `needs-human-review` | CI | Migrationen, `.github/`, `.claude/`, `.agents/`, Abhängigkeiten → Merge nur nach Freigabe |
 | `check-story-drift.sh` | Handoff, Commit, CI «Spec-Drift» | Code ohne Story/Delta, Delta nicht eingepflegt, Szenarien ≠ `.feature` |
 | `guard-env.sh`, `guard-labels.sh`, `check-spelling.sh`, `check-test-edit.sh` | Claude-Hooks | `.env`, Labels `spec-unchanged`/`needs-human-review` nur durch Menschen, Eszett, abgeschwächte Tests |
@@ -75,7 +78,7 @@ Einmal pro Klon `git config core.hooksPath .githooks` und `brew install gitleaks
 | Frage | Datei |
 |-------|-------|
 | Was soll PIkel fachlich können? | `spec/fachliche-spezifikation.md`, `spec/user-stories/` |
-| Wie ist es gebaut? | `docs/arc42.md`, `docs/adr/` |
+| Wie ist es gebaut? | `docs/arc42.md`; Entscheide über den Index `docs/adr/README.md` |
 | Welche Regeln gelten im Code? | `CLAUDE.md`, `.claude/rules/` |
 | Was ändert ein Issue, und wie wird es umgesetzt? | `spec/changes/<nr>-<slug>/` — Delta, Entscheide, Plan, Notizen (versioniert) |
 | Was steht im Issue? | nur Auftrag und Verweis auf den Change-Ordner; massgebend ist das Repository |
