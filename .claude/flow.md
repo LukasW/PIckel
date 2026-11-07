@@ -30,6 +30,7 @@ an genau einem Ort; hier nur, was der Ablauf zusätzlich braucht.
 
 - Fachlich: `spec/fachliche-spezifikation.md`, Stories unter `spec/user-stories/`
 - Technisch: `spec/technische-spezifikation.md`
+- Architektur (arc42): `docs/arc42.md`
 - Entscheide: `docs/adr/NNNN-<slug>.md`
 - Schnittstelle: JAX-RS-Resources unter `adapter/in/rest/`, OpenAPI zur Laufzeit unter `/q/openapi`
 - **Change-Ordner je Issue:** `spec/changes/<nr>-<slug>/` mit `delta.md`, `entscheide.md`, `plan.md`, `notes.md`
