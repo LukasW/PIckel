@@ -20,9 +20,13 @@ Annahmen im Nachtlauf (Delta schweigt, vertretbar):
 
 Unterwegs:
 
+- Migration als V4 (changeSet 4): Während des Laufs kam #6 mit `V3__create_teams.sql` auf `main`.
+- Integration im Devcontainer: Der erste Lauf hing 30 Minuten beim Verbindungsaufbau zum Dev-Services-Postgres
+  (Testcontainers über `host.docker.internal`), der zweite lief ohne Änderung am Code grün. Umgebungsthema.
+
 - Adapter-`save` ist jetzt ein Upsert. Bestehende Link-Entities werden über die ID wiederverwendet: Hibernate fügt
   beim Flush vor dem Löschen ein, ein neues Objekt mit derselben ID verletzte sonst den Primärschlüssel.
-- Kein `UNIQUE (program_increment_id, position)` in V3: Beim Entfernen in der Mitte schreibt Hibernate die Positionen
+- Kein `UNIQUE (program_increment_id, position)` in V4: Beim Entfernen in der Mitte schreibt Hibernate die Positionen
   zeilenweise neu und verletzte die Bedingung zwischendurch.
 - Links hinzufügen/entfernen setzt das Kontext-Formular nicht zurück, damit ungespeicherter Text bleibt (Befund
   angular-signals-reviewer, Test «behält ungespeicherten Business-Kontext …»).

@@ -13,7 +13,7 @@ REST (alle liefern das ganze PI als `ProgramIncrementDto`, 200):
 - `DELETE /api/v1/program-increments/{id}/links/{linkId}`; unbekannte oder ungültige Link-ID → 404
   «Den Link gibt es nicht.»
 
-Unbekanntes PI: 404 wie in US-5. Persistenz: Migration V3 (nur additiv: zwei Textspalten mit Standard `''`, Tabelle
+Unbekanntes PI: 404 wie in US-5. Persistenz: Migration V4 (nur additiv: zwei Textspalten mit Standard `''`, Tabelle
 `pi_link`), Link-Liste geordnet über `position`.
 
 Fehlermeldungen (Wortlaut aus dem Delta): «Die URL muss mit http:// oder https:// beginnen.» und «Der Text darf
@@ -26,11 +26,11 @@ höchstens 10 000 Zeichen lang sein.»; für den Titel analog zum PI-Namen: «De
 - [x] 2. Gerüst + Tests (`test-author`)
 - [x] 3. Domain: `PiLink`, `ProgramIncrement.withBusinessContext/withLink/withoutLink`
 - [x] 4. Application: `updateBusinessContext`, `addLink`, `removeLink` (`@Transactional`)
-- [x] 5. Persistenz: V3, Entity, Adapter-Upsert
+- [x] 5. Persistenz: V4, Entity, Adapter-Upsert
 - [x] 6. REST: Requests, DTO, Endpunkte, 404-Mapper für Link
 - [x] 7. Frontend: Modell, Port, Adapter, Service, Detailseite
 - [x] 8. Doku: Delta einpflegen, fachliche Spezifikation (Datenmodell, REST), arc42 §8
-- [ ] 9. `scripts/gate.sh` grün
+- [x] 9. `scripts/gate.sh` grün
 
 ## Test-Strategie
 
