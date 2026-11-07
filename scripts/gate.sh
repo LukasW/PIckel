@@ -3,7 +3,7 @@
 # damit der Agent sein eigener erster Reviewer ist und CI nicht als Fehlersuche dient.
 #
 #   scripts/gate.sh          Skills (agentskills.io), Format (Prettier, Spotless), npm audit, Unit inkl. ArchUnit, Vitest,
-#                            Mutation, CucumberIT, SmokeIT
+#                            Mutation, CucumberIT, SmokeIT, Container-Image (Podman oder Docker)
 #   scripts/gate.sh --fast   ohne Integration (keine Container nötig), wie der Unit-Job in CI
 #
 # Ausgabe je Schritt in ${TMPDIR:-/tmp}/pikel-gate-<schritt>.log; angezeigt werden nur Fehlerzeilen.
@@ -37,5 +37,8 @@ step unit      ./mvnw -B test
 step mutation  ./mvnw -B test-compile -Pmutation
 if ! $fast; then
   step integration ./mvnw -B verify -DskipFrontendTests=true
+  # Wie der Job «Integration + Smoke»: ein kaputtes Dockerfile fällt vor dem ersten Deployment auf
+  engine=$(command -v podman || command -v docker) || { echo "image        ROT  (weder podman noch docker)"; exit 1; }
+  step image "$engine" build -f src/main/docker/Dockerfile.jvm -t pikel-jvm:gate .
 fi
 echo "Gate grün."

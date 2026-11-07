@@ -68,11 +68,33 @@ Klon einmal `cd src/main/webapp && npm ci`.
   PIT
 - **Integration:** `./mvnw verify -B -DskipFrontendTests=true` — `CucumberIT` und `SmokeIT` gegen
   Dev-Services-PostgreSQL. Braucht Podman oder Docker
-- **Abschluss ohne Fail-Fast:** `scripts/gate.sh` — alles oben in einer Kette; muss vor jedem Push grün sein
+- **Abschluss ohne Fail-Fast:** `scripts/gate.sh` — alles oben in einer Kette samt Image-Build; muss vor jedem Push
+  grün sein
 - **Mutation allein:** `./mvnw test-compile -B -Pmutation`, Bericht unter `target/pit-reports/index.html`.
   Überlebende Mutanten heissen: Ein Test fehlt, nicht die Schwelle senken
 - **Ausgabe auswerten:**
   `grep -E '\[ERROR\]|FAIL|Tests run:.*(Failures|Errors): [1-9]|Test Files|below threshold|Violation|BUILD' "${TMPDIR:-/tmp}/pikel-build.log" | head -60`
+
+## Ohne GitHub Actions
+
+Der ganze Ablauf geht auch ohne CI (Kontingent aufgebraucht, Ausfall). `scripts/ci-local.sh` auf dem gepushten
+Branch mit offenem PR prüft lokal, was die vier Pflicht-Checks der Branch Protection prüfen, und meldet sie bei Grün
+als Commit-Status mit denselben Namen (ADR 0004):
+
+| Pflicht-Check | lokal |
+|---|---|
+| Secret-Scan (Gitleaks) | `gitleaks git` über die Commits des Branches (`brew install gitleaks`) |
+| Spec-Drift | `check-story-drift.sh`, ausser der PR trägt das Übersteuer-Label |
+| Unit Tests, Integration + Smoke | `scripts/gate.sh` (braucht Podman oder Docker) |
+
+Dazu setzt es wie CI das Label `needs-human-review` bei Risiko-Pfaden. Es weigert sich bei uncommitteten Änderungen,
+ungepushtem HEAD und wenn CI für den Commit echt gelaufen ist (rot oder aktiv). `--dry-run` prüft nur.
+
+- Einen Commit-Status setzt nur das Skript; `guard-labels.sh` blockiert `gh api …/statuses/…` direkt
+- Bricht GitHub die Jobs ohne Kontingent ab, bleiben deren rote Checks am Commit. Dann `gh workflow disable
+  ci-pr.yml`, einen leeren Commit pushen, Skript neu starten; ist das Kontingent zurück, `gh workflow enable
+  ci-pr.yml`
+- `ci-main.yml` nach dem Merge fehlt dann; der Stand auf `main` ist der lokal geprüfte Commit
 
 ## Tests
 

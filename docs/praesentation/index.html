@@ -188,6 +188,14 @@
   .zz .box { background: var(--card); padding: 14px 20px; }
   .zz .it.l .box { text-align: right; }
 
+  /* PIkel-Vorstellung mit Maskottchen */
+  .intro { grid-template-columns: 400px 1fr; gap: 44px; }
+  .intro .mascot { background: linear-gradient(180deg, #F7FBFE 0%, #CCEDF9 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; }
+  .intro .mascot svg { width: 330px; height: 368px; }
+  .intro .facts { display: flex; flex-direction: column; justify-content: space-between; }
+  .intro .facts .it { border-left: 4px solid var(--cyan); padding: 4px 0 4px 18px; }
+  .intro .facts .it.now { border-left-color: var(--navy); }
+
   .ico { width: 44px; height: 44px; stroke: var(--navy); fill: none; stroke-width: 1.6; margin-bottom: 8px; }
 
   /* Steuerung */
@@ -224,11 +232,11 @@
 <section class="slide">
   <h2>Agenda</h2>
   <div class="body agenda" style="top:150px">
-    <div class="row"><span class="n">01</span><div><div class="t">Warum ein Harness</div><div class="d">Begriffe, Ausgangslage, das Demo-Projekt PIkel</div></div><span class="p">S. 03</span></div>
-    <div class="row"><span class="n">02</span><div><div class="t">Aufbau</div><div class="d">Kontext, Ablauf, Spezialisten, Leitplanken</div></div><span class="p">S. 07</span></div>
-    <div class="row"><span class="n">03</span><div><div class="t">Spezifikation</div><div class="d">Story, Delta, Gherkin, Testpyramide</div></div><span class="p">S. 13</span></div>
-    <div class="row"><span class="n">04</span><div><div class="t">Ablauf</div><div class="d">Von der Idee zum PR, Modelle, Nachtlauf</div></div><span class="p">S. 18</span></div>
-    <div class="row"><span class="n">05</span><div><div class="t">Praxis</div><div class="d">Demo, Einrichtung, Tipps, Einführung im Team</div></div><span class="p">S. 23</span></div>
+    <div class="row"><span class="n">01</span><div><div class="t">Warum ein Harness</div><div class="d">Begriffe, Ausgangslage, PIkel als Demo-Projekt</div></div><span class="p">S. 03</span></div>
+    <div class="row"><span class="n">02</span><div><div class="t">Aufbau</div><div class="d">Kontext, Ablauf, Spezialisten, Leitplanken</div></div><span class="p">S. 08</span></div>
+    <div class="row"><span class="n">03</span><div><div class="t">Spezifikation</div><div class="d">Story, Delta, Gherkin, Testpyramide</div></div><span class="p">S. 14</span></div>
+    <div class="row"><span class="n">04</span><div><div class="t">Ablauf</div><div class="d">Von der Idee zum PR, Modelle, Nachtlauf</div></div><span class="p">S. 19</span></div>
+    <div class="row"><span class="n">05</span><div><div class="t">Praxis</div><div class="d">Demo, Einrichtung, Devcontainer, Tipps, Einführung im Team</div></div><span class="p">S. 24</span></div>
   </div>
   <aside class="notes">Teile 1 bis 3 erklären, was im Repository steckt und warum. Teil 4 zeigt den Arbeitsablauf. Teil 5 ist für euch als Champions: demonstrieren, einrichten und ins eigene Team bringen.</aside>
 </section>
@@ -289,7 +297,52 @@
   <aside class="notes">Harness ist das Geschirr, in das man das Modell einspannt. Spec Driven Development beantwortet, wogegen der Agent arbeitet. Ohne Spezifikation prüft der Harness nur die Form; ohne Harness bleibt die Spezifikation eine Empfehlung. Erst zusammen entsteht ein Ablauf, dem man Aufgaben über Nacht überlassen kann.</aside>
 </section>
 
-<!-- 6 PIkel -->
+<!-- 6 Das ist PIkel -->
+<section class="slide">
+  <h2>Darf ich vorstellen: PIkel</h2>
+  <p class="sub">Das PI Planning ohne Klebezettel-Wand</p>
+  <div class="body grid intro">
+    <div class="mascot">
+      <svg viewBox="0 0 260 290" role="img" aria-label="Maskottchen: ein platzender Pickel, aus dem das Wort Increment spritzt">
+        <defs>
+          <radialGradient id="pk-rot" cx="50%" cy="40%" r="60%"><stop offset="0" stop-color="#F0766C"/><stop offset="1" stop-color="#C9423A"/></radialGradient>
+          <path id="pk-bahn" d="M118 196 C100 130, 130 70, 238 46"/>
+        </defs>
+        <path d="M0 290 V246 C60 236, 90 222, 130 222 S200 236, 260 246 V290 Z" fill="#F6C9A8"/>
+        <path d="M0 246 C60 236, 90 222, 130 222 S200 236, 260 246" fill="none" stroke="#E0A584" stroke-width="3"/>
+        <ellipse cx="130" cy="238" rx="74" ry="20" fill="#F2A38F" opacity=".55"/>
+        <path d="M78 236 C82 196, 106 180, 130 180 S178 196, 182 236 Z" fill="url(#pk-rot)" stroke="#A8352E" stroke-width="3"/>
+        <ellipse cx="108" cy="208" rx="9" ry="5" fill="#FFFFFF" opacity=".35" transform="rotate(-30 108 208)"/>
+        <path d="M112 186 C114 174, 146 172, 148 186 C140 192, 120 192, 112 186 Z" fill="#FFF4D6" stroke="#D9C38A" stroke-width="2.5"/>
+        <path d="M122 182 l6 4 l5 -5 l6 5" fill="none" stroke="#C9A85A" stroke-width="2"/>
+        <g stroke="#C9423A" stroke-width="3.5" stroke-linecap="round">
+          <path d="M90 176 l-14 -12"/><path d="M80 194 l-18 -4"/><path d="M168 172 l12 -14"/><path d="M178 192 l18 -6"/>
+        </g>
+        <use href="#pk-bahn" fill="none" stroke="#FFF4D6" stroke-width="40" stroke-linecap="round"/>
+        <use href="#pk-bahn" fill="none" stroke="#FFFBEF" stroke-width="30" stroke-linecap="round"/>
+        <text font-family="Arial, sans-serif" font-weight="700" font-size="30" fill="#00327D" letter-spacing="0.5" dy="10">
+          <textPath href="#pk-bahn" startOffset="8%">Increment</textPath>
+        </text>
+        <g fill="#FFF4D6" stroke="#D9C38A" stroke-width="2">
+          <circle cx="246" cy="22" r="7"/><circle cx="226" cy="14" r="4.5"/><circle cx="256" cy="66" r="5"/>
+          <circle cx="210" cy="28" r="3"/><circle cx="84" cy="128" r="5"/><circle cx="160" cy="118" r="4"/>
+          <path d="M60 150 q6 -12 12 0 q-6 8 -12 0 z"/>
+        </g>
+        <path d="M96 204 l12 6 l-12 6 M164 204 l-12 6 l12 6" stroke="#5A2A22" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M116 228 q14 -9 28 0" stroke="#5A2A22" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div class="facts">
+      <div class="it"><div class="t">Wofür</div><div class="d">Werkzeug für das PI Planning nach SAFe: Program Increments, Teams, Features, Abhängigkeiten und PI Objectives an einem Ort.</div></div>
+      <div class="it"><div class="t">Was das MVP abdeckt</div><div class="d">Was im Planning-Raum wehtut: das Program Board Teams × Iterationen, die Abhängigkeiten als «Red String» und den Confidence Vote.</div></div>
+      <div class="it"><div class="t">Was bewusst draussen bleibt</div><div class="d">Was Jira schon gut kann: Story-Planung, Burndowns, Zeiterfassung, zweiseitige Synchronisation.</div></div>
+      <div class="it now"><div class="t">Stand heute</div><div class="d">Walking Skeleton «PI anlegen und auflisten». Fachliche Breite kommt Story für Story, über die Releases M1 bis M3.</div></div>
+    </div>
+  </div>
+  <aside class="notes">Kurz vorstellen, worum es fachlich geht, damit die folgenden Beispiele greifbar sind. Im PI Planning stehen heute oft Klebezettel an der Wand und rote Wollfäden für Abhängigkeiten; PIkel soll genau das ersetzen. M1 «Klebezettel-Wand ersetzt» bringt PI-Setup, Backlog, Board und Abhängigkeiten, M2 die Planning-Rituale mit Risiken, Objectives und Confidence Vote, M3 den Export. Wichtig für den Vortrag: Fachlich ist PIkel noch fast leer. Gerade deshalb sieht man den Harness so gut. Zum Maskottchen: PIkel klingt nach Pickel, und wenn der platzt, kommt ein Increment heraus. Das ist das Ziel jedes Plannings.</aside>
+</section>
+
+<!-- 7 PIkel-Technik -->
 <section class="slide">
   <h2>PIkel ist absichtlich klein</h2>
   <p class="sub">Walking Skeleton «PI anlegen und auflisten» durch alle Schichten</p>
@@ -558,7 +611,7 @@
   <div class="band"></div>
   <div class="no">05</div>
   <h2>Praxis</h2>
-  <p class="sub" style="color:#E6F5EF">Demo, Einrichtung, Tipps und Einführung im eigenen Team</p>
+  <p class="sub" style="color:#E6F5EF">Demo, Einrichtung mit Devcontainer, Tipps und Einführung im eigenen Team</p>
   <aside class="notes">Kapitel fünf ist für euch als Champions: wie ihr das zeigt, einrichtet und weitergebt.</aside>
 </section>
 
@@ -593,10 +646,30 @@
       <li>scripts/gate.sh --fast</li>
       <li>./mvnw quarkus:dev</li>
       <li>claude, dann /flow-task &lt;idee&gt;</li>
-      <li class="plain">Im Devcontainer erledigt post-create.sh jq und hooksPath</li>
+      <li class="plain">Ohne lokale Installation: Devcontainer, nächste Folie</li>
     </ul></div></div>
   </div>
   <aside class="notes">Erst mit core.hooksPath läuft der pre-commit-Hook mit Gitleaks, Prettier und Spotless. Die Claude-Hooks brauchen jq und halten ohne es an, statt still durchzulassen. Node kommt aus .nvmrc, npm in Version 11. Die App läuft danach auf localhost:8080, Swagger UI unter /q/swagger-ui. Vor jedem Push läuft scripts/gate.sh ohne Flag.</aside>
+</section>
+
+<!-- 27 Devcontainer -->
+<section class="slide">
+  <h2>Devcontainer: dieselbe Umgebung für alle</h2>
+  <p class="sub mono">.devcontainer/devcontainer.json und post-create.sh</p>
+  <div class="body fz grid split">
+    <div class="panel">
+      <div class="claim">Ordner öffnen, «Reopen in Container», loslegen.</div>
+      <div class="d">Java, Node, gh und Claude Code in festen Versionen. Der Agent arbeitet in einem Linux-Container statt direkt auf dem Laptop.</div>
+    </div>
+    <div class="items">
+      <div><div class="t">Image und Features</div><div class="d">Debian bookworm, Java 25 (Temurin), Node 24.19, GitHub CLI, Claude Code; VS-Code-Erweiterungen für Java, Quarkus, Angular, Prettier und Claude</div></div>
+      <div><div class="t">docker-outside-of-docker</div><div class="d">Die Dev Services starten PostgreSQL über den Docker des Hosts; Ports 8080 und 4200 werden weitergeleitet</div></div>
+      <div><div class="t">node_modules als Volume</div><div class="d">Keine macOS-Binaries im Linux-Container, und npm ci bleibt schnell</div></div>
+      <div><div class="t">post-create.sh</div><div class="d">jq für die Hooks, core.hooksPath, npm 11 und npm ci, claude install für Updates ohne sudo</div></div>
+    </div>
+  </div>
+  <div class="fazit">Danach einmal gh auth login und claude anmelden. Gitleaks fehlt im Container; der Secret-Scan läuft dann nur in CI.</div>
+  <aside class="notes">Der Devcontainer beantwortet zwei Fragen. Erstens: Bei mir läuft es nicht. Alle haben dieselben Versionen von Java, Node und npm, ohne Homebrew und ohne nvm. Zweitens: Wo darf der Agent arbeiten? Im Container sieht er den Workspace und die Werkzeuge darin, nicht das Home-Verzeichnis des Laptops. Das ist eine zusätzliche Leitplanke, aber keine harte Sandbox: Über docker-outside-of-docker erreicht der Container den Docker des Hosts, und die Anmeldungen bei gh und Claude liegen im Container. Die deny-Regeln und Hooks gelten unverändert. VS Code, JetBrains und GitHub Codespaces lesen dieselbe devcontainer.json; auf der Kommandozeile geht es mit devcontainer up. Gitleaks installiert post-create.sh nicht; der pre-commit-Hook meldet das und lässt den Commit durch, CI prüft trotzdem.</aside>
 </section>
 
 <!-- 26 Tipps -->

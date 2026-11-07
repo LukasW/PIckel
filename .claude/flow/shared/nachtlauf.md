@@ -55,6 +55,8 @@ und jede fortlaufende Nummer (Datenbank-Migration, ADR, Story-Nummer) gegen `ori
 
 - Uncommittete Änderungen, rote CI, PR nicht mergebar oder Konflikt: nicht mergen, am PR und am Issue kommentieren,
   abbrechen wie oben
+- CI läuft nicht: `scripts/ci-local.sh` wie in `/flow-ship`. Kann das Nacht-Token keinen Commit-Status melden, nicht
+  mergen, am PR vermerken und mit `NACHTLAUF: ABGEBROCHEN — CI fehlt, lokal grün` enden
 - PR mit Label `needs-human-review` (Risiko-Pfad, gesetzt von CI): nicht mergen, am PR vermerken und mit
   `NACHTLAUF: ABGEBROCHEN — Risiko-Pfad, Review nötig` enden
 - Squash-Commit: Titel `<typ>(<scope>): <Beschreibung> (#<issue-nr>)` wie der Commit aus `/flow-implement`, Body
