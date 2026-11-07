@@ -17,4 +17,8 @@
         <sqlFile path="db/migration/V3__create_teams.sql"/>
     </changeSet>
 
+    <changeSet id="4" author="pikel">
+        <sqlFile path="db/migration/V4__add_business_context.sql"/>
+    </changeSet>
+
 </databaseChangeLog>

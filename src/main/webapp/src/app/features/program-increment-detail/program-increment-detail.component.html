@@ -31,6 +31,128 @@
       }
     </tbody>
   </table>
+
+  <section class="mt-8" aria-labelledby="business-context-heading">
+    <h2 id="business-context-heading" class="mb-3 text-xl font-semibold">Business-Kontext</h2>
+
+    @if (service.error(); as error) {
+      <p role="alert" class="mb-4 text-danger">{{ error }}</p>
+    }
+
+    @if (hasBusinessContext()) {
+      <div class="mb-4 grid gap-4 rounded-lg border border-border bg-surface p-4">
+        @if (pi.businessContext) {
+          <div>
+            <h3 class="mb-1 text-sm font-medium text-muted">Business-Kontext</h3>
+            <p data-testid="business-context" class="whitespace-pre-line">
+              {{ pi.businessContext }}
+            </p>
+          </div>
+        }
+        @if (pi.artObjectives) {
+          <div>
+            <h3 class="mb-1 text-sm font-medium text-muted">PI Objectives des ART</h3>
+            <p data-testid="art-objectives" class="whitespace-pre-line">{{ pi.artObjectives }}</p>
+          </div>
+        }
+        @if (pi.links.length > 0) {
+          <div>
+            <h3 class="mb-1 text-sm font-medium text-muted">Links</h3>
+            <ul class="divide-y divide-border">
+              @for (link of pi.links; track link.id) {
+                <li class="flex items-center justify-between py-2">
+                  <a
+                    [href]="link.url"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="text-accent hover:underline"
+                    >{{ link.title }}</a
+                  >
+                  <button
+                    type="button"
+                    (click)="removeLink(link.id)"
+                    class="rounded border border-border px-2 py-0.5 text-sm"
+                  >
+                    Entfernen
+                  </button>
+                </li>
+              }
+            </ul>
+          </div>
+        }
+      </div>
+    } @else {
+      <p class="mb-4 text-muted">Noch kein Business-Kontext erfasst.</p>
+    }
+
+    <form
+      [formGroup]="contextForm"
+      (ngSubmit)="saveContext()"
+      novalidate
+      class="mb-4 grid gap-3 rounded-lg border border-border bg-surface p-4"
+      aria-label="Business-Kontext erfassen"
+    >
+      <label class="flex flex-col gap-1 text-sm">
+        Business-Kontext
+        <textarea
+          formControlName="businessContext"
+          rows="4"
+          [attr.aria-invalid]="tooLong('businessContext')"
+          class="rounded border border-border bg-background px-2 py-1"
+        ></textarea>
+        @if (tooLong('businessContext')) {
+          <span class="text-danger">Der Text darf höchstens 10 000 Zeichen lang sein.</span>
+        }
+      </label>
+      <label class="flex flex-col gap-1 text-sm">
+        PI Objectives des ART
+        <textarea
+          formControlName="artObjectives"
+          rows="4"
+          [attr.aria-invalid]="tooLong('artObjectives')"
+          class="rounded border border-border bg-background px-2 py-1"
+        ></textarea>
+        @if (tooLong('artObjectives')) {
+          <span class="text-danger">Der Text darf höchstens 10 000 Zeichen lang sein.</span>
+        }
+      </label>
+      <button
+        type="submit"
+        class="justify-self-start rounded bg-accent px-3 py-1.5 text-accent-foreground"
+      >
+        Speichern
+      </button>
+    </form>
+
+    <form
+      [formGroup]="linkForm"
+      (ngSubmit)="addLink()"
+      novalidate
+      class="grid gap-3 rounded-lg border border-border bg-surface p-4 sm:grid-cols-3 sm:items-end"
+      aria-label="Link hinzufügen"
+    >
+      <label class="flex flex-col gap-1 text-sm">
+        Titel
+        <input
+          formControlName="title"
+          maxlength="100"
+          class="rounded border border-border bg-background px-2 py-1"
+        />
+      </label>
+      <label class="flex flex-col gap-1 text-sm">
+        URL
+        <input
+          type="url"
+          formControlName="url"
+          placeholder="https://"
+          class="rounded border border-border bg-background px-2 py-1"
+        />
+      </label>
+      <button type="submit" class="rounded bg-accent px-3 py-1.5 text-accent-foreground">
+        Link hinzufügen
+      </button>
+    </form>
+  </section>
 } @else if (service.error(); as error) {
   <p role="alert" class="text-danger">{{ error }}</p>
 } @else {

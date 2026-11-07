@@ -222,6 +222,11 @@ unbekanntes PI in HTTP 404 mit demselben Körper (Vertrag:
 [ADR 0003](adr/0003-fehlervertrag.md)). Das Formular prüft Pflichtfelder und Länge nur, um früher zu melden. Die Datenbank sichert zusätzlich mit Constraints ab (`NOT NULL`, `CHECK (end_date > start_date)`,
 `CHECK (iteration_length_weeks BETWEEN 1 AND 4)`).
 
+Business-Kontext, PI Objectives des ART und Links gehören zum Aggregat PI ([ADR 0005](adr/0005-aggregatschnitt-mvp.md)):
+Änderungen laufen über das PI (`withBusinessContext`, `withLink`, `withoutLink`), der Adapter speichert den ganzen
+Stand samt Links (Tabelle `pi_link`, Reihenfolge über `position`). Ein Link lässt nur `http` und `https` zu, damit
+ein Link auf der Detailseite kein Skript ausführt; die Oberfläche öffnet ihn mit `rel="noopener noreferrer"`.
+
 Abgeleitetes wird berechnet, nicht gespeichert: Von den Iterationen eines PI speichert PIkel nur die Länge, die
 Domain berechnet daraus die Iterationen ([ADR 0006](adr/0006-kapazitaet-story-points.md)). Andere Objekte
 verweisen auf eine Iteration über PI und Nummer; das trägt, solange Länge und Zeitraum eines PI unveränderlich sind.
