@@ -9,7 +9,7 @@ jede Regel hat genau einen Ort:
 |-------|-----|
 | Fachbegriffe, Datenmodell, REST-API | [`spec/fachliche-spezifikation.md`](../spec/fachliche-spezifikation.md) |
 | Einzelne Änderungen mit Akzeptanzkriterien | [`spec/user-stories/`](../spec/user-stories/), Szenarien unter `src/test/resources/features/` |
-| Schichten, Testpyramide, Code-Regeln, Sprache | [`CLAUDE.md`](../CLAUDE.md), [`.claude/rules/`](../.claude/rules/) |
+| Tech Stack, Schichten, Testpyramide, Code-Regeln, Sprache | [`CLAUDE.md`](../CLAUDE.md), [`.claude/rules/`](../.claude/rules/) |
 | Entscheide | [`docs/adr/`](adr/) |
 | Ablauf, Build, Definition of Done | [`.claude/flow.md`](../.claude/flow.md) |
 
@@ -46,13 +46,8 @@ Heute umgesetzt ist ein Durchstich durch alle Schichten: **Program Increment anl
 
 ### Technisch
 
-| Randbedingung | Erläuterung |
-|---------------|-------------|
-| Java 25, Quarkus 3.40 | Backend, Hibernate ORM mit Panache |
-| Angular 22, TypeScript 6, Tailwind CSS 4 | Standalone, Signals, zoneless |
-| PostgreSQL, Liquibase | Schema nur über neue Migrationen; Hibernate validiert nur |
-| Ein Maven-Modul | Backend und SPA über Quinoa in einem JAR |
-| Podman oder Docker | Dev Services starten PostgreSQL für Dev und Tests |
+Stack und Versionen: [`CLAUDE.md`](../CLAUDE.md) → «Tech Stack». Backend und SPA bilden ein Maven-Modul und ein
+JAR; für Entwicklung und Tests braucht es Podman oder Docker (Dev Services).
 
 ### Organisatorisch
 
@@ -101,7 +96,7 @@ flowchart LR
 | Änderbarkeit, Testbarkeit | Hexagonale Architektur in Backend **und** Frontend; `domain/` ist framework-frei |
 | Korrektheit | Fachregeln im Compact Constructor der Domain-Records; REST validiert nur Form (fail fast an der Grenze) |
 | Schneller Start der Fachlichkeit | Walking Skeleton mit dem Stack von Brainy ([ADR 0001](adr/0001-walking-skeleton.md)) |
-| Testbarkeit | Testpyramide mit Unit als Default, Mutationstests (PIT ≥ 80 %), Gherkin als Spezifikation |
+| Testbarkeit | Testpyramide mit Unit als Default, Mutationstests (PIT), Gherkin als Spezifikation |
 | Betreibbarkeit | Ein JAR, Liquibase `migrate-at-start`, Hibernate `validate`, Health-Checks |
 | Einhaltung der Regeln | Regeln, die der Build prüft: ArchUnit, Spotless/Prettier, Spec-Drift-Gate in CI |
 
@@ -127,30 +122,14 @@ flowchart TB
     persistence --> db[(PostgreSQL)]
 ```
 
-Abhängigkeiten zeigen nur nach innen; `ArchitectureTest` (ArchUnit) bricht den Build bei einem Verstoss.
-
-| Baustein | Verantwortung | Inhalt heute |
-|----------|---------------|--------------|
-| `domain/model` | Fachobjekte und -regeln, ohne Framework | `ProgramIncrement`, `InvalidProgramIncrementException` |
-| `domain/port/in` | Driving Ports (Use Cases) | `ProgramIncrementUseCase` |
-| `domain/port/out` | Driven Ports (Repositories) | `ProgramIncrementRepository` |
-| `application/service` | Implementiert Use Cases, Transaktionsgrenze | `ProgramIncrementService` |
-| `adapter/in/rest` | HTTP ↔ Use Case, DTOs, Exception-Mapping | `ProgramIncrementResource`, `InvalidProgramIncrementExceptionMapper` |
-| `adapter/out/persistence` | JPA-Entities, Mapping Entity ↔ Domain | `ProgramIncrementEntity`, `ProgramIncrementRepositoryAdapter` |
-| Angular-SPA | Oberfläche, eigenes Hexagon | siehe Ebene 2 |
+Verantwortung der Bausteine und Abhängigkeitsregel: [`CLAUDE.md`](../CLAUDE.md) → «Wichtigste Regeln» Nr. 1 und
+«Hexagonal Architecture» → «Backend». Welche Klassen es heute gibt, zeigt der Code.
 
 ### Ebene 2: Angular-SPA
 
-| Baustein | Verantwortung | Inhalt heute |
-|----------|---------------|--------------|
-| `core/models` | Domain-Typen | `program-increment.model.ts` |
-| `core/ports` | Abstrakte Repositories (Driven Ports) | `program-increments.repository.ts` |
-| `core/api` | HTTP-Adapter, einziger Ort für `HttpClient` | `program-increments-http.adapter.ts` |
-| `core/services` | Use Cases, State als Signals | `program-increments.service.ts` |
-| `features/` | UI pro Route (Driving Adapter) | `program-increments` |
-| `shared/` | Wiederverwendbare UI ohne Fachlogik | — |
-
-Port und Adapter werden in `app.config.ts` verdrahtet; Tests ersetzen den Port durch ein Mock-Objekt.
+Die SPA ist ein eigenes Hexagon (`core/models`, `core/ports`, `core/api`, `core/services`, `features/`, `shared/`).
+Verantwortung und Verdrahtung: [`CLAUDE.md`](../CLAUDE.md) → «Hexagonal Architecture» → «Frontend», Regeln in
+[`.claude/rules/angular.md`](../.claude/rules/angular.md).
 
 ## 6. Laufzeitsicht
 
@@ -219,23 +198,20 @@ Ein Deployment-Ziel ist noch nicht festgelegt (Abschnitt 11).
 
 ### Domänenmodell und Validierung
 
-Domain-Objekte sind Java-Records; fachliche Regeln stehen im Compact Constructor und werfen fachliche Exceptions.
+Eine Fachregel gilt an genau einem Ort, im Domain-Objekt ([`.claude/rules/java.md`](../.claude/rules/java.md)).
 Die REST-Schicht prüft nur die Form (Bean Validation: Pflichtfelder); ein `ExceptionMapper` übersetzt fachliche
-Exceptions in HTTP 400 mit `{ "message": … }`. Die Datenbank sichert zusätzlich mit Constraints ab
-(`NOT NULL`, `CHECK (end_date > start_date)`).
+Exceptions in HTTP 400 (Vertrag: [`spec/fachliche-spezifikation.md`](../spec/fachliche-spezifikation.md) →
+«REST-API»). Die Datenbank sichert zusätzlich mit Constraints ab (`NOT NULL`, `CHECK (end_date > start_date)`).
 
-### Persistenz
+### Persistenz und Transaktionen
 
-Liquibase (`db/changeLog.xml` → `db/migration/V<n>__<slug>.sql`) migriert beim Start, Hibernate validiert nur.
-Entities, Mapping und Migrationsregel: [`CLAUDE.md`](../CLAUDE.md) → «Hexagonal Architecture» und Regel 3.
-
-### Transaktionen
-
-Die Transaktionsgrenze liegt im Application Service (`@Transactional`), nicht in Resource oder Adapter.
+Liquibase migriert beim Start, Hibernate validiert nur (Abschnitt 6, «Anwendungsstart»). Migrationsregel,
+Mapping und Transaktionsgrenze: [`CLAUDE.md`](../CLAUDE.md) Regel 3 und «Hexagonal Architecture»,
+[`.claude/rules/java.md`](../.claude/rules/java.md).
 
 ### Fehlerbehandlung
 
-Keine `null`-Rückgaben (`Optional` bzw. `undefined`). Fachliche Fehler → 400 mit Meldung in Du-Form; ein Mapping für technische Fehler gibt es noch nicht.
+Fachliche Fehler → 400 mit Meldung in Du-Form; ein Mapping für technische Fehler gibt es noch nicht.
 
 ### Frontend-State
 
@@ -245,8 +221,8 @@ Services in `core/services` halten State als Signals; Regeln für Komponenten un
 ### Sicherheit
 
 Noch **keine** Anmeldung: Die API ist ungeschützt, PIkel darf bis zur Auth-Story nicht öffentlich betrieben werden.
-Geplant: OIDC (Keycloak) mit BFF und Session-Cookies, kein JWT im Browser. Secrets nur über Umgebungsvariablen,
-CI prüft mit Gitleaks.
+Geplant wie in Brainy: OIDC (Keycloak) mit BFF und Session-Cookies, kein JWT im Browser. Secrets nur über
+Umgebungsvariablen, CI prüft mit Gitleaks.
 
 ### Internationalisierung
 
@@ -271,7 +247,7 @@ Neue Entscheide als `docs/adr/NNNN-<slug>.md`; Entscheide zu einer einzelnen Sto
 | Szenario | Qualitätsziel | Messung |
 |----------|---------------|---------|
 | Ein Entwickler ergänzt eine Fachregel; der Test dazu läuft ohne Quarkus und Datenbank in Sekunden | Testbarkeit | Unit-Tests unter `domain/` ohne Framework-Imports (ArchUnit) |
-| Eine Fachregel wird versehentlich geändert; mindestens ein Test schlägt fehl | Korrektheit | PIT-Mutation ≥ 80 % in `domain/` und `application/` |
+| Eine Fachregel wird versehentlich geändert; mindestens ein Test schlägt fehl | Korrektheit | PIT-Mutation über der Schwelle in `domain/` und `application/` |
 | Eine Resource greift direkt aufs Repository zu; der Build bricht | Änderbarkeit | `ArchitectureTest` |
 | Ein Benutzer gibt ein Enddatum vor dem Startdatum ein; er sieht eine verständliche Meldung, nichts wird gespeichert | Bedienbarkeit, Korrektheit | `CucumberIT`, Vitest |
 | Das gepackte JAR startet gegen eine leere Datenbank; Schema wird angelegt, UI ausgeliefert | Betreibbarkeit | `SmokeIT` |

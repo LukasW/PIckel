@@ -30,7 +30,7 @@ Sprachspezifische Konventionen laden bei Bedarf aus `.claude/rules/java.md` und 
 - **Build**: Maven (`./mvnw`), npm 11, Quinoa; Spotless (Palantir) und Prettier als Formatierer
 - **Tests**: JUnit 5 + Mockito, ArchUnit, PIT (Mutation), Cucumber JVM + REST-assured (`CucumberIT`),
   `@QuarkusIntegrationTest` (`SmokeIT`), Vitest (über `ng test`)
-- **Auth**: noch keine — kommt als eigene Story (OIDC/Keycloak wie in Brainy, Session-Cookies, kein JWT im Browser)
+- **Auth**: noch keine, die API ist ungeschützt — Plan in `docs/arc42.md` → «Sicherheit»
 
 ## Hexagonal Architecture
 
