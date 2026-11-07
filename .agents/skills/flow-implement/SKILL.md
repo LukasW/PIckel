@@ -233,7 +233,8 @@ PR-Beschreibung vermerken und den Nutzer auf die ausstehende Prüfung von Hand h
 ## 14. Push & PR
 
 - `git push -u origin feature/<nr>-<slug>`
-- PR über den Provider: Titel = Issue-Titel, Base = Hauptzweig. Body:
+- PR über den Provider: Titel `<typ>(<scope>): <Beschreibung> (#<nr>)` wie die Commit-Message, Base = Hauptzweig.
+  Auch ein Squash-Merge über die Oberfläche übernimmt so die Issue-Nummer in den Titel auf dem Hauptzweig. Body:
   - `Closes #<nr>` und eine Zusammenfassung
   - Change-Ordner: Pfad; Delta je Abschnitt die Einträge (Neu, Geändert, Entfernt), sonst die Zeile
     `Delta: keines — <Grund>` aus dem Plan

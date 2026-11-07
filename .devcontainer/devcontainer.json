@@ -44,6 +44,10 @@
     "WORKSPACE": "${containerWorkspaceFolder}",
     // Damit auch .claude.json (Onboarding, Projekt-Vertrauen) im Volume liegt statt in ~
     "CLAUDE_CONFIG_DIR": "/home/vscode/.claude",
+    // Docker läuft ausserhalb des Containers: Ports, die Testcontainers für die Dev Services veröffentlicht,
+    // liegen auf dem Host, nicht auf localhost. Ohne Override scheitern CucumberIT und SmokeIT mit
+    // «Container startup failed for image postgres». host.docker.internal stellen Docker Desktop und Podman bereit
+    "TESTCONTAINERS_HOST_OVERRIDE": "host.docker.internal",
     "LANG": "C.UTF-8",
     "LC_ALL": "C.UTF-8"
   },
