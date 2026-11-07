@@ -17,5 +17,10 @@ export const routes: Routes = [
       ),
     title: 'Program Increment – PIkel',
   },
+  {
+    path: 'teams',
+    loadComponent: () => import('./features/teams/teams.component').then((m) => m.TeamsComponent),
+    title: 'Teams – PIkel',
+  },
   { path: '**', redirectTo: '' },
 ];
