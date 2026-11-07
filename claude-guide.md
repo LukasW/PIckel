@@ -99,6 +99,23 @@ Einmal pro Klon `git config core.hooksPath .githooks` und `brew install gitleaks
 Eine Session pro Issue: nach `/flow-plan` und nach `/flow-ship` mit `/clear` neu beginnen. Plan, Delta und
 Implementierungsnotizen im Change-Ordner tragen alles über `/clear` hinweg und kommen mit dem PR in Git.
 
+## Mit der Copilot CLI
+
+Die Copilot CLI ist eine Option neben Claude Code (ADR 0007). Welcher Skill mit welchem Agenten laufen darf, steht in
+[`.claude/flow.md`](.claude/flow.md) → «Agent wechseln». Kurz: Skills ohne Subagenten (`flow-task`, `flow-grill-me`,
+`flow-plan`, `flow-ship`, `flow-fix-build`) ja, `flow-implement`, `flow-fast` und der Nachtlauf nur mit Claude Code.
+
+- **Kontrolle vor dem ersten Schreibzugriff:** `/env` muss unter «Hooks» die Einträge aus `.github/hooks/flow.json`
+  zeigen, und `git push --dry-run origin HEAD:main` muss mit «Denied by preToolUse hook: guard-push: …» abgelehnt
+  werden. Zeigt `/env` «No hooks loaded», nicht weiterarbeiten
+- Copilot liest `CLAUDE.md`, `.claude/rules/` und die Skills aus `.agents/skills/` selbst. Die Hooks lädt es
+  interaktiv aus `.github/hooks/flow.json`, im Prompt-Modus (`copilot -p --trust-folder`) auch aus
+  `.claude/settings.json`; es sind dieselben Skripte, `lib.sh` versteht alle Formate; als Schutz zählen
+  nur sie, ob Copilot die Erlaubnis-Regeln aus `settings.json` beachtet, ist nicht gemessen. `guard-env` sperrt
+  das Lesen der Geheimnis-Datei deshalb auch über Lese- und Suchwerkzeuge
+- Gewechselt wird nur zwischen zwei Schritten: Was ein Schritt hinterlässt, steht im Change-Ordner und im Branch
+- Der VS-Code-Agent-Modus ist noch nicht gemessen und nicht freigegeben
+
 ## Spezifikation und Drift
 
 ```

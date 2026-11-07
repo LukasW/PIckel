@@ -30,7 +30,7 @@ step() {
 
 step skills    scripts/check-skills.sh
 step adrs      scripts/adr-index.sh --check
-step guards    bash -c 'bash .claude/flow/scripts/test-guard-labels.sh && bash .claude/flow/scripts/test-guard-push.sh'
+step guards    bash -c 'for t in guard-labels guard-push guard-env hook-input; do bash .claude/flow/scripts/test-$t.sh || exit 1; done'
 step prettier  bash -c 'cd src/main/webapp && npm run format:check'
 step audit     bash -c 'cd src/main/webapp && npm audit --omit=dev --audit-level=high'
 step spotless  ./mvnw -B spotless:check

@@ -1,7 +1,7 @@
 ---
 name: flow-plan
 description: Analysiert ein Issue gegen Spezifikation und Code und schreibt plan.md und das Delta in den Change-Ordner, ohne Code zu ändern. Einsetzen vor grösseren Features oder wenn die Umsetzung Abwägungen braucht.
-compatibility: Claude Code im Repository PIkel. Braucht git, gh (GitHub), den Maven Wrapper und die Subagenten unter .claude/agents; Projektangaben in .claude/flow.md.
+compatibility: Claude Code oder Copilot CLI (in einem vertrauten Ordner, ADR 0007) im Repository PIkel. Braucht git, gh (GitHub) und den Maven Wrapper; Projektangaben in .claude/flow.md.
 argument-hint: <issue-nummer>
 disable-model-invocation: true
 model: opus
@@ -124,4 +124,4 @@ kommt vor dem Wie.
 Bei Korrekturen: `plan.md` und Delta anpassen, erneut vorlegen. Erst nach «OK»/«ja»/«go»: im Delta
 `Status: bestätigt`, dann `/flow-implement <nr>`.
 
-Dabei empfehlen, vorher `/clear` einzugeben: Alles, was `/flow-implement` braucht, steht im Change-Ordner, und eine frische Session liest nicht bei jedem Turn die ganze Erkundung mit.
+Dabei empfehlen, vorher eine frische Session zu beginnen (`/clear`): Alles, was `/flow-implement` braucht, steht im Change-Ordner, und eine frische Session liest nicht bei jedem Turn die ganze Erkundung mit.

@@ -1,7 +1,7 @@
 ---
 name: flow-grill-me
 description: Fragt ein Issue Frage für Frage durch, bis alle Entscheidungen geklärt sind, und schreibt sie nach entscheide.md im Change-Ordner. Einsetzen, wenn ein Issue unscharf ist oder vor dem Plan offene Fragen hat.
-compatibility: Claude Code im Repository PIkel. Braucht git, gh (GitHub), den Maven Wrapper und die Subagenten unter .claude/agents; Projektangaben in .claude/flow.md.
+compatibility: Claude Code oder Copilot CLI (in einem vertrauten Ordner, ADR 0007) im Repository PIkel. Braucht git, gh (GitHub) und den Maven Wrapper; Projektangaben in .claude/flow.md.
 argument-hint: <issue-nummer>
 disable-model-invocation: true
 model: opus
@@ -77,8 +77,8 @@ Löse Abhängigkeiten zwischen Entscheidungen **eine nach der anderen** — eine
 **Vor dem Senden prüfen:** Enthält der Turn genau eine Frage an den Nutzer? Steht ihre Antwort in den Notizen aus
 Schritt 3? Ist die zweite Antwort ja oder die erste nein, schreib den Turn neu.
 
-**Bevorzugt `AskUserQuestion`:** die empfohlene Option zuerst, mit `(Empfohlen)` im Label; Pro/Contra in die
-`description` jeder Option. Sonst als Text:
+**Bevorzugt das Auswahl-Werkzeug des Agenten** (in Claude Code `AskUserQuestion`): die empfohlene Option zuerst,
+mit `(Empfohlen)` im Label; Pro/Contra in die `description` jeder Option. Sonst als Text:
 
 ```markdown
 **Frage:** <konkrete Frage>

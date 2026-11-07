@@ -9,7 +9,7 @@ jede Regel hat genau einen Ort:
 |-------|-----|
 | Fachbegriffe, Datenmodell, REST-API | [`spec/fachliche-spezifikation.md`](../spec/fachliche-spezifikation.md) |
 | Einzelne Änderungen mit Akzeptanzkriterien | [`spec/user-stories/`](../spec/user-stories/), Szenarien unter `src/test/resources/features/` |
-| Tech Stack, Schichten, Testpyramide, Code-Regeln, Sprache | [`CLAUDE.md`](../CLAUDE.md), [`.claude/rules/`](../.claude/rules/) |
+| Tech Stack, Schichten, Testpyramide, Code-Regeln, Sprache (gilt für Claude Code und Copilot CLI, ADR 0007) | [`CLAUDE.md`](../CLAUDE.md), [`.claude/rules/`](../.claude/rules/) |
 | Entscheide | [`docs/adr/`](adr/) |
 | Ablauf, Build, Definition of Done | [`.claude/flow.md`](../.claude/flow.md) |
 
@@ -46,7 +46,7 @@ Heute umgesetzt ist ein Durchstich durch alle Schichten: **Program Increment anl
 | Product Owner / Product Management | Features ins PI bringen und priorisieren (WSJF) |
 | Business Owner | PI Objectives der Teams mit Business Value bewerten |
 | Agile Teams | Features auf Iterationen planen, Abhängigkeiten und PI Objectives erfassen, im Confidence Vote abstimmen |
-| Entwicklung (Lukas, Claude Code) | Klare Schichten, schneller Test-Loop, Regeln, die der Build prüft |
+| Entwicklung (Lukas, Claude Code, Copilot CLI) | Klare Schichten, schneller Test-Loop, Regeln, die der Build prüft |
 
 ## 2. Randbedingungen
 

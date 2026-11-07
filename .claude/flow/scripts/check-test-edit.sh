@@ -6,7 +6,7 @@
 #
 # Zwei Arten des Aufrufs:
 #   - PostToolUse-Hook (Edit|Write|MultiEdit): JSON auf stdin, prüft die eine Datei, nur mit `test-guard: true` in
-#     der flow.md. Exit 2 gibt die Meldung an Claude zurück; die Änderung bleibt bestehen. Dieselbe Meldung zur
+#     der flow.md. Meldung über flow_hint an Claude Code bzw. Copilot; die Änderung bleibt bestehen. Dieselbe Meldung zur
 #     selben Datei kommt pro Session nur einmal
 #   - Von Hand für den Handoff: `check-test-edit.sh --all` prüft alle geänderten Testdateien des Branches, auch
 #     solche, die per Bash geändert oder gelöscht wurden. Exit 1, wenn es etwas zu begründen gibt
@@ -106,14 +106,20 @@ if [ "${1:-}" = "--all" ]; then
 fi
 
 flow_need_jq check-test-edit
-payload=$(cat)
-file=$(printf '%s' "$payload" | jq -r '.tool_input.file_path // .tool_response.filePath // empty')
-session_id=$(printf '%s' "$payload" | jq -r '.session_id // empty')
-case "$file" in
-  "$root"/*) ;;
-  *) exit 0 ;;
-esac
-findings=$(check_file "${file#"$root"/}")
+payload=$(flow_payload)
+FLOW_PAYLOAD=$payload
+flow_is_edit "$payload" || exit 0
+session_id=$(printf '%s' "$payload" | jq -r '.session_id // empty' 2>/dev/null)
+findings=""
+while IFS= read -r file; do
+  case "$file" in
+    "$root"/*) ;;
+    *) continue ;;
+  esac
+  found=$(check_file "${file#"$root"/}")
+  [ -n "$found" ] && findings+="$found"$'\n'
+done < <(flow_tool_files "$payload")
+findings=$(printf '%s' "$findings" | sed '/^$/d')
 [ -n "$findings" ] || exit 0
 
 # Dieselbe Meldung nur einmal pro Session: Wer begründet umbaut, soll nicht bei jedem Edit erinnert werden.
@@ -128,10 +134,7 @@ if [ -n "$session_id" ]; then
   findings="$fresh"
 fi
 
-{
-  echo "Bestehender Test abgeschwächt (Vergleich mit der Abzweigung von $main_branch):"
-  echo "$findings"
-  echo "Ändert sich die Spezifikation, zuerst die Story-Datei; sonst den Code ändern statt den Test."
-  echo "Bleibt die Änderung, im Handoff begründen (/flow-implement Schritt 12)."
-} >&2
-exit 2
+flow_hint "Bestehender Test abgeschwächt (Vergleich mit der Abzweigung von $main_branch):
+$findings
+Ändert sich die Spezifikation, zuerst die Story-Datei; sonst den Code ändern statt den Test.
+Bleibt die Änderung, im Handoff begründen (/flow-implement Schritt 12)."

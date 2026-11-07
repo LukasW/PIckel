@@ -1,7 +1,7 @@
 ---
 name: flow-implement
 description: Setzt ein Issue aus seinem Change-Ordner um — Branch, Delta in die Story einpflegen, Tests vom test-author, Code, Gate, Reviewer, Handoff mit Pflicht-Pause, Commit und PR. Einsetzen, wenn Delta bzw. Plan bereit sind.
-compatibility: Claude Code im Repository PIkel. Braucht git, gh (GitHub), den Maven Wrapper und die Subagenten unter .claude/agents; Projektangaben in .claude/flow.md.
+compatibility: Claude Code im Repository PIkel (startet Subagenten unter .claude/agents, ADR 0007). Braucht git, gh (GitHub) und den Maven Wrapper; Projektangaben in .claude/flow.md.
 argument-hint: <issue-nummer> [--worktree] [--nachtlauf <hinweis>]
 disable-model-invocation: true
 model: sonnet
@@ -174,7 +174,7 @@ starten, bis grün. Derselbe Fehler nach drei Korrekturen: anhalten (`shared/sto
 
 ## 9. Reviewer-Runde
 
-Die passenden Agenten laut `flow.md` → «Reviewer» **parallel** starten (mehrere Agent-Aufrufe in einer Nachricht),
+Die passenden Agenten laut `flow.md` → «Reviewer» **parallel** starten (mehrere Subagenten-Aufrufe in einer Nachricht),
 jedem die Issue-Nummer, Story-Datei, Change-Ordner und die geänderten Pfade mitgeben, **nicht** deine Begründungen
 oder Einschätzungen: Ein Reviewer, der deine Sicht kennt, bestätigt sie eher. Tests unter den Testordnern geändert →
 immer auch `test-reviewer`, mit dem Ablauf-Verzeichnis `.claude/flow`. Story oder Bugfix → `spec-reviewer`.
