@@ -76,13 +76,15 @@ wird ein Bereich erst mit seinen User Stories, und die Akzeptanzkriterien stehen
 - Mehrere ARTs, Solution Train
 - Retrospektiven
 
+### Entscheide vor den Stories
+
+- Aggregatschnitt: ein impliziter ART, Teams am ART, Kapazität und Board am PI — [ADR 0005](../docs/adr/0005-aggregatschnitt-mvp.md)
+- Kapazität und Schätzung in Story Points, Iterationen aus fester Länge mit IP-Iteration am Ende —
+  [ADR 0006](../docs/adr/0006-kapazitaet-story-points.md)
+- Anmeldung und Rollen: erst in M2 mit dem Bereich «Zusammenarbeit»; M1 läuft ohne Anmeldung und nicht öffentlich
+- Import: nur CSV (siehe «Nicht im MVP»)
+
 ### Offene Fragen
 
-Bevor die ersten Stories entstehen, sind diese Fragen zu entscheiden. Was mehrere Stories betrifft, kommt als ADR
-nach `docs/adr/`:
-
-- Aggregatschnitt: Ist der ART der Wurzel-Container? Gehören Teams zum ART oder zum PI?
-- Einheit der Kapazität: Story Points oder Personentage, fest oder pro ART wählbar
-- Echtzeit: WebSocket oder SSE, und wie das Frontend den State nachzieht
-- Anmeldung und Rollen: ab wann, und wie die anonyme Abstimmung per Link dazu passt
-- Import: nur CSV oder auch direkt aus Jira
+- Echtzeit: WebSocket oder SSE, und wie das Frontend den State nachzieht — ADR mit der ersten Story aus Bereich 8
+- Anonyme Abstimmung per Link: wie sie zu Anmeldung und Rollen passt — mit den Stories aus Bereich 7
