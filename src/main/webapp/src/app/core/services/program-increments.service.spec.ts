@@ -29,8 +29,8 @@ describe('ProgramIncrementsService', () => {
     service = TestBed.inject(ProgramIncrementsService);
   });
 
-  it('sortiert geladene PIs nach Startdatum (US-1)', async () => {
-    repository.list.mockResolvedValue([PI_27_2, PI_27_1]);
+  it('übernimmt die Reihenfolge des Servers, der nach Startdatum sortiert (US-1)', async () => {
+    repository.list.mockResolvedValue([PI_27_1, PI_27_2]);
 
     await service.load();
 
@@ -38,8 +38,8 @@ describe('ProgramIncrementsService', () => {
     expect(service.loading()).toBe(false);
   });
 
-  it('fügt ein angelegtes PI der Liste hinzu (US-1)', async () => {
-    repository.list.mockResolvedValue([PI_27_2]);
+  it('lädt nach dem Anlegen die Liste in der Reihenfolge des Servers neu (US-1)', async () => {
+    repository.list.mockResolvedValueOnce([PI_27_2]).mockResolvedValueOnce([PI_27_1, PI_27_2]);
     repository.plan.mockResolvedValue(PI_27_1);
     await service.load();
 
@@ -50,6 +50,7 @@ describe('ProgramIncrementsService', () => {
     });
 
     expect(ok).toBe(true);
+    expect(repository.list).toHaveBeenCalledTimes(2);
     expect(service.programIncrements()).toEqual([PI_27_1, PI_27_2]);
   });
 
@@ -69,5 +70,6 @@ describe('ProgramIncrementsService', () => {
 
     expect(ok).toBe(false);
     expect(service.error()).toBe('Das Enddatum muss nach dem Startdatum liegen.');
+    expect(repository.list).not.toHaveBeenCalled();
   });
 });

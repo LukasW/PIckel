@@ -8,10 +8,9 @@
 # Write/Edit schreiben bzw. `git commit -F <datei>` nehmen.
 set -u
 . "$(dirname "$0")/lib.sh"
-command -v jq >/dev/null 2>&1 || exit 0
-
 root=$(flow_root)
 flow_require "$root" guard-env true
+flow_need_jq guard-env
 
 cmd=$(jq -r '.tool_input.command // empty')
 [ -n "$cmd" ] || exit 0

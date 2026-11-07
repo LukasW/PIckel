@@ -105,7 +105,7 @@ if [ "${1:-}" = "--all" ]; then
   exit 0
 fi
 
-command -v jq >/dev/null 2>&1 || exit 0
+flow_need_jq check-test-edit
 payload=$(cat)
 file=$(printf '%s' "$payload" | jq -r '.tool_input.file_path // .tool_response.filePath // empty')
 session_id=$(printf '%s' "$payload" | jq -r '.session_id // empty')

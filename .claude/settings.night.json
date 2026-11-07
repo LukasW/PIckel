@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "deny": [
+      "Edit(.claude/**)",
+      "Write(.claude/**)",
+      "Edit(.agents/**)",
+      "Write(.agents/**)",
+      "Edit(.github/**)",
+      "Write(.github/**)",
+      "Edit(.githooks/**)",
+      "Write(.githooks/**)",
+      "Edit(CLAUDE.md)",
+      "Write(CLAUDE.md)",
+      "Bash(npx:*)",
+      "Bash(npm install:*)",
+      "Bash(npm i:*)",
+      "Bash(npm add:*)",
+      "Bash(npm exec:*)",
+      "Bash(gh pr merge --admin:*)",
+      "Bash(gh api -X PUT:*)",
+      "Bash(gh api --method PUT:*)",
+      "Bash(git config:*)"
+    ]
+  }
+}

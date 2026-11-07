@@ -174,6 +174,7 @@ check_batch() {
   git -C "$B_REPO" cat-file -e "origin/$BASE:.claude/flow.md" 2>/dev/null \
     || err ".claude/flow.md fehlt auf origin/$BASE; die Worktrees hätten keine Projektangaben"
   command -v "$CLAUDE_BIN" >/dev/null 2>&1 || err "$CLAUDE_BIN nicht im PATH"
+  command -v jq >/dev/null 2>&1 || err "jq nicht im PATH (Settings je Phase, Hooks)"
   for i in "${!I_NR[@]}"; do
     nr=${I_NR[$i]}
     for j in "${!I_NR[@]}"; do
@@ -283,8 +284,20 @@ claude_phase() {
     out="$RUN/$nr.$phase.$attempt.jsonl"
     echo "[$(ts)] $phase Versuch $attempt/$MAX_ATTEMPTS #$nr" >>"$log"
     # --output-format stream-json: Das Log wächst live, sonst puffert claude bis zum Ende des Laufs.
+    # Nachts zusätzlich gesperrt: Leitplanken, Pipeline und Abhängigkeiten ändern (.claude/settings.night.json,
+    # falls das Repository eine hat) und in jeder Phase ausser «ship» mergen. Nur «ship» mit «merge: ja» mergt.
+    # Eine Datei je Phase, weil Regeln mit Leerzeichen als Argument von --disallowedTools zerfallen würden.
+    local night="$wt/.claude/settings.night.json" settings="$RUN/settings.$nr.$phase.json"
+    [ -f "$night" ] || night=<(echo '{}')
+    if [ "$phase" = ship ]; then
+      jq '.' "$night" >"$settings"
+    else
+      jq '.permissions.deny = ((.permissions.deny // []) + ["Bash(gh pr merge:*)"])' "$night" >"$settings"
+    fi
     # shellcheck disable=SC2086 # CLAUDE_ARGS soll in Wörter zerfallen
-    (cd "$wt" && "$CLAUDE_BIN" -p --verbose --output-format stream-json $CLAUDE_ARGS "$prompt") </dev/null 2>&1 \
+    (cd "$wt" && "$CLAUDE_BIN" -p --verbose --output-format stream-json $CLAUDE_ARGS --settings "$settings" \
+      "$prompt") \
+      </dev/null 2>&1 \
       | tee "$out" >>"$log"
     rc=$?
     last=$(grep '"type":"result"' "$out" | tail -1)

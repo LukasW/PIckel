@@ -3,30 +3,51 @@
 <form
   [formGroup]="form"
   (ngSubmit)="submit()"
-  class="mb-6 grid gap-3 rounded-lg border border-border bg-surface p-4 sm:grid-cols-4 sm:items-end"
+  novalidate
+  class="mb-6 grid gap-3 rounded-lg border border-border bg-surface p-4 sm:grid-cols-4 sm:items-start"
   aria-label="Neues PI anlegen"
 >
   <label class="flex flex-col gap-1 text-sm">
     Name
-    <input formControlName="name" class="rounded border border-border bg-background px-2 py-1" />
+    <input
+      formControlName="name"
+      [attr.aria-invalid]="hasError('name', 'required') || hasError('name', 'maxlength')"
+      class="rounded border border-border bg-background px-2 py-1"
+    />
+    @if (hasError('name', 'required')) {
+      <span class="text-danger">Der Name ist Pflicht.</span>
+    }
+    @if (hasError('name', 'maxlength')) {
+      <span class="text-danger"
+        >Der Name darf höchstens {{ maxNameLength }} Zeichen lang sein.</span
+      >
+    }
   </label>
   <label class="flex flex-col gap-1 text-sm">
     Start
     <input
       type="date"
       formControlName="startDate"
+      [attr.aria-invalid]="hasError('startDate', 'required')"
       class="rounded border border-border bg-background px-2 py-1"
     />
+    @if (hasError('startDate', 'required')) {
+      <span class="text-danger">Das Startdatum ist Pflicht.</span>
+    }
   </label>
   <label class="flex flex-col gap-1 text-sm">
     Ende
     <input
       type="date"
       formControlName="endDate"
+      [attr.aria-invalid]="hasError('endDate', 'required')"
       class="rounded border border-border bg-background px-2 py-1"
     />
+    @if (hasError('endDate', 'required')) {
+      <span class="text-danger">Das Enddatum ist Pflicht.</span>
+    }
   </label>
-  <button type="submit" class="rounded bg-accent px-3 py-1.5 text-accent-foreground">
+  <button type="submit" class="rounded bg-accent px-3 py-1.5 text-accent-foreground sm:mt-6">
     PI anlegen
   </button>
 </form>
@@ -42,7 +63,9 @@
     @for (pi of service.programIncrements(); track pi.id) {
       <li class="flex justify-between px-4 py-3" data-testid="pi-row">
         <span class="font-medium">{{ pi.name }}</span>
-        <span class="text-sm text-muted">{{ pi.startDate }} – {{ pi.endDate }}</span>
+        <span class="text-sm text-muted"
+          >{{ pi.startDate | date: 'dd.MM.yyyy' }} – {{ pi.endDate | date: 'dd.MM.yyyy' }}</span
+        >
       </li>
     } @empty {
       <li class="px-4 py-3 text-muted">Noch keine PIs. Leg das erste oben an.</li>

@@ -3,6 +3,12 @@
 # node_modules liegt auf einem Container-Volume, damit keine macOS-Binaries in Linux landen.
 set -euo pipefail
 
+# jq: Ohne jq halten die Hooks unter .claude/flow/scripts/ an (fail-closed)
+command -v jq >/dev/null 2>&1 || { sudo apt-get update && sudo apt-get install -y jq; }
+
+# pre-commit-Hook (Gitleaks, Prettier, Spotless) aktivieren
+git -C "${WORKSPACE}" config core.hooksPath .githooks
+
 sudo chown "$(id -u):$(id -g)" "${WORKSPACE}/src/main/webapp/node_modules"
 sudo npm install -g npm@11.17.0
 npm --prefix "${WORKSPACE}/src/main/webapp" ci

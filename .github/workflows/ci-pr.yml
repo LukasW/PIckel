@@ -105,6 +105,15 @@ jobs:
       - name: Skills gegen agentskills.io prüfen
         run: bash scripts/check-skills.sh
 
+      - name: Label- und Push-Guard gegen bekannte Umgehungen prüfen
+        run: |
+          bash .claude/flow/scripts/test-guard-labels.sh
+          bash .claude/flow/scripts/test-guard-push.sh
+
+      - name: Bekannte Schwachstellen in npm-Abhängigkeiten (Laufzeit, ab high)
+        working-directory: src/main/webapp
+        run: npm audit --omit=dev --audit-level=high
+
       - name: Frontend format check (Prettier)
         working-directory: src/main/webapp
         run: npm run format:check
@@ -148,3 +157,7 @@ jobs:
 
       - name: CucumberIT + SmokeIT (Dev-Services-PostgreSQL)
         run: ./mvnw verify -B -DskipFrontendTests=true
+
+      # Nur bauen, nicht veröffentlichen: Ein kaputtes Dockerfile soll im PR auffallen, nicht beim ersten Deployment.
+      - name: Container-Image bauen
+        run: docker build -f src/main/docker/Dockerfile.jvm -t pikel-jvm:ci .

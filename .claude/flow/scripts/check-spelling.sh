@@ -3,10 +3,9 @@
 # Exit 2 gibt die Meldung an Claude zurück; die Änderung selbst bleibt bestehen.
 set -u
 . "$(dirname "$0")/lib.sh"
-command -v jq >/dev/null 2>&1 || exit 0
-
 root=$(flow_root)
 flow_require "$root" spelling swiss
+flow_need_jq check-spelling
 
 file=$(jq -r '.tool_input.file_path // .tool_response.filePath // empty')
 [ -n "$file" ] && [ -f "$file" ] || exit 0

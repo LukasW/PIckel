@@ -2,7 +2,6 @@ package ch.grudligstrasse.pikel.adapter.in.rest;
 
 import ch.grudligstrasse.pikel.domain.model.ProgramIncrement;
 import ch.grudligstrasse.pikel.domain.port.in.ProgramIncrementUseCase;
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
@@ -11,7 +10,6 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import java.net.URI;
 import java.util.List;
 
 /**
@@ -36,11 +34,14 @@ public class ProgramIncrementResource {
         return useCase.listAll().stream().map(ProgramIncrementDto::from).toList();
     }
 
-    /** Legt ein PI an. 201 mit dem neuen PI; 400 bei fehlenden oder ungültigen Angaben. */
+    /**
+     * Legt ein PI an. 201 mit dem neuen PI; 400 mit {@link ErrorResponse} bei fehlenden oder ungültigen Angaben. Ohne
+     * {@code Location}-Header, weil es keinen Endpunkt für ein einzelnes PI gibt.
+     */
     @POST
-    public Response plan(@Valid @NotNull PlanProgramIncrementRequest request) {
+    public Response plan(@NotNull PlanProgramIncrementRequest request) {
         ProgramIncrement created = useCase.plan(request.name(), request.startDate(), request.endDate());
-        return Response.created(URI.create("/api/v1/program-increments/" + created.id()))
+        return Response.status(Response.Status.CREATED)
                 .entity(ProgramIncrementDto.from(created))
                 .build();
     }

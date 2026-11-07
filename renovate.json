@@ -22,5 +22,11 @@
         "renovate-major"
       ]
     }
-  ]
+  ],
+  "osvVulnerabilityAlerts": true,
+  "vulnerabilityAlerts": {
+    "labels": [
+      "security"
+    ]
+  }
 }

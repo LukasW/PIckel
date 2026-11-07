@@ -151,7 +151,9 @@ sequenceDiagram
     C->>S: plan(request)
     S->>H: plan(request)
     H->>R: POST /api/v1/program-increments
-    R->>R: Bean Validation (Pflichtfelder)
+    alt Inhalt fehlt, kein JSON, ungültiger Wert
+        R-->>H: 400 { "message": … } (ExceptionMapper)
+    end
     R->>UC: plan(name, start, end)
     UC->>D: ProgramIncrement.plan(...)
     alt Regel verletzt
@@ -163,6 +165,9 @@ sequenceDiagram
         P->>DB: INSERT program_increment
         R-->>H: 201 Created + PI
         H-->>S: PI
+        S->>H: list()
+        H->>R: GET /api/v1/program-increments
+        R-->>S: PIs, sortiert nach Startdatum
         S->>S: Signal aktualisieren
     end
 ```
@@ -199,9 +204,10 @@ Ein Deployment-Ziel ist noch nicht festgelegt (Abschnitt 11).
 ### Domänenmodell und Validierung
 
 Eine Fachregel gilt an genau einem Ort, im Domain-Objekt ([`.claude/rules/java.md`](../.claude/rules/java.md)).
-Die REST-Schicht prüft nur die Form (Bean Validation: Pflichtfelder); ein `ExceptionMapper` übersetzt fachliche
-Exceptions in HTTP 400 (Vertrag: [`spec/fachliche-spezifikation.md`](../spec/fachliche-spezifikation.md) →
-«REST-API»). Die Datenbank sichert zusätzlich mit Constraints ab (`NOT NULL`, `CHECK (end_date > start_date)`).
+Die REST-Schicht prüft keine Felder, sie liest nur JSON. `ExceptionMapper` im REST-Adapter übersetzen fachliche
+Exceptions, fehlenden Inhalt, kaputtes JSON und unpassende Werte in HTTP 400 mit `{ "message": … }` (Vertrag:
+[`spec/fachliche-spezifikation.md`](../spec/fachliche-spezifikation.md) → «REST-API», Entscheid:
+[ADR 0003](adr/0003-fehlervertrag.md)). Das Formular prüft Pflichtfelder und Länge nur, um früher zu melden. Die Datenbank sichert zusätzlich mit Constraints ab (`NOT NULL`, `CHECK (end_date > start_date)`).
 
 ### Persistenz und Transaktionen
 

@@ -49,7 +49,10 @@ class ProgramIncrementTest {
 
     @Test
     void rejectsEndDateNotAfterStartDate() {
-        assertThrows(InvalidProgramIncrementException.class, () -> ProgramIncrement.plan("PI 27.1", START, START));
+        InvalidProgramIncrementException exception = assertThrows(
+                InvalidProgramIncrementException.class, () -> ProgramIncrement.plan("PI 27.1", START, START));
+
+        assertEquals("Das Enddatum muss nach dem Startdatum liegen.", exception.getMessage());
     }
 
     @Test
