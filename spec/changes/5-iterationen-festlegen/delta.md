@@ -1,6 +1,6 @@
 # Delta US-5 — Iterationen eines PI mit IP-Iteration festlegen (Issue #5)
 
-Story: `spec/user-stories/5-iterationen-festlegen.md` (neu) · Status: entwurf
+Story: `spec/user-stories/5-iterationen-festlegen.md` (neu) · Status: bestätigt
 
 ## Warum
 
@@ -17,6 +17,11 @@ Zeitraum aus einer festen Länge aufgeteilt, entstehen weder Lücken noch Überl
   aufgeht
 - **Nicht in dieser Story:** Iterationslänge eines bestehenden PI ändern, Iterationen einzeln anpassen (Feiertage)
 - **Ort:** neue Detailseite des PI, aus der Liste erreichbar; die Board-Stories bauen darauf auf
+- **Lese-Endpunkt für ein PI:** `GET /api/v1/program-increments/{id}` liefert das PI mit Iterationen; eine unbekannte
+  ID ergibt 404 mit `{ "message": … }` (ADR 0003) (Rückfrage im Plan, 7. November 2026)
+- **Berechnet, nicht gespeichert:** Gespeichert wird nur die Iterationslänge, die Iterationen berechnet die Domain.
+  Spätere Stories (#7, #13) verweisen auf eine Iteration über PI und Nummer; das bleibt stabil, weil Länge und
+  Zeitraum eines PI in M1 nicht änderbar sind (Rückfrage im Plan, 7. November 2026)
 
 ## Neu
 
@@ -29,6 +34,8 @@ Zeitraum aus einer festen Länge aufgeteilt, entstehen weder Lücken noch Überl
 ### AK: Ein Zeitraum, der weniger als zwei Iterationen ergibt, wird mit einer verständlichen Meldung abgelehnt
 
 ### AK: Die Detailseite eines PI zeigt seine Iterationen mit Name, Start- und Enddatum (TT.MM.JJJJ); die IP-Iteration ist sichtbar markiert
+
+### AK: Ein unbekanntes PI wird mit einer verständlichen Meldung abgelehnt
 
 ### Szenario: Iterationen werden aus der Iterationslänge erzeugt
 - **Gegeben sei** eine leere Liste der PIs
@@ -54,6 +61,10 @@ Zeitraum aus einer festen Länge aufgeteilt, entstehen weder Lücken noch Überl
 - **Wenn** ich das PI "PI 27.1" vom "2027-01-04" bis "2027-01-10" mit Iterationen zu 2 Wochen anlege
 - **Dann** wird das Anlegen mit der Meldung "Der Zeitraum reicht nicht für mindestens zwei Iterationen." abgelehnt
 
+### Szenario: Unbekanntes PI wird nicht gefunden
+- **Wenn** ich ein PI mit einer unbekannten ID abfrage
+- **Dann** wird die Abfrage mit dem Status 404 und der Meldung "Das PI gibt es nicht." abgelehnt
+
 ### Szenario: Detailseite zeigt die Iterationen mit markierter IP-Iteration
 - **Gegeben sei** das PI "PI 27.1" vom "2027-01-04" bis "2027-03-26" mit Iterationen zu 2 Wochen
 - **Wenn** ich die Detailseite von "PI 27.1" öffne
@@ -62,9 +73,49 @@ Zeitraum aus einer festen Länge aufgeteilt, entstehen weder Lücken noch Überl
 
 ## Geändert
 
-keine — die Iterationslänge ist im Request optional, die bestehenden Szenarien von US-1 behalten ihr Ergebnis.
-`/flow-plan` prüft, ob die zusätzlichen Felder in der Antwort von `POST /api/v1/program-increments` ein Eintrag
-unter «Geändert» für US-1 sind (`story-delta.md` → «Neu, geändert oder entfernt»).
+keine (die Änderungen an US-1 stehen unten unter «Delta US-1»)
+
+## Entfernt
+
+keine
+
+# Delta US-1 — PI anlegen: Antwort mit Iterationen und `Location` (Issue #5)
+
+Story: `spec/user-stories/1-pi-anlegen.md` (bestehend) · Status: bestätigt
+
+## Warum
+
+Mit US-5 trägt jedes PI eine Iterationslänge und Iterationen, und es gibt einen Endpunkt für ein einzelnes PI. Damit
+ändert sich, was `POST` und `GET` von US-1 zurückgeben, auch wenn jede bisher gültige Anfrage gültig bleibt.
+
+## Entscheide
+
+- **Iterationslänge optional** im Request (Standard 2 Wochen, Delta US-5): Die Szenarien von US-1 behalten Wortlaut
+  und Ergebnis
+- **`Location`-Header bei 201:** Der Grund für das Weglassen («es gibt keinen Endpunkt für ein einzelnes PI») fällt
+  mit US-5 weg (Rückfrage im Plan, 7. November 2026)
+
+## Neu
+
+keine
+
+## Geändert
+
+### Szenario: PI wird angelegt und erscheint in der Liste
+- **Vorher:**
+  - **Wenn** ich das PI "PI 27.1" vom "2027-01-04" bis "2027-03-26" anlege
+  - **Dann** wird das PI mit einer ID angelegt
+  - **Und** erscheint "PI 27.1" in der Liste der PIs
+- **Nachher:**
+  - **Wenn** ich das PI "PI 27.1" vom "2027-01-04" bis "2027-03-26" anlege
+  - **Dann** wird das PI mit einer ID angelegt
+  - **Und** verweist die Antwort im Header `Location` auf das neue PI
+  - **Und** erscheint "PI 27.1" in der Liste der PIs
+- **Grund:** `POST` antwortet mit `Location`; `POST` und `GET` liefern zusätzlich `iterationLengthWeeks` und
+  `iterations` (AK 1 bleibt im Wortlaut, die Antwort enthält mehr)
+- **Tests:** `ProgramIncrementSteps` (neuer Schritt für den Header), Kommentar und Antwort in
+  `ProgramIncrementResource`; Testdaten in `program-increments.service.spec.ts` und
+  `program-increments.component.spec.ts` um die neuen Felder ergänzt
 
 ## Entfernt
 
