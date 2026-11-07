@@ -9,6 +9,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 
+import ch.grudligstrasse.pikel.adapter.out.persistence.FeatureRepositoryAdapter;
 import ch.grudligstrasse.pikel.adapter.out.persistence.ProgramIncrementRepositoryAdapter;
 import io.cucumber.java.de.Dann;
 import io.cucumber.java.de.Gegebensei;
@@ -28,19 +29,31 @@ public class ProgramIncrementSteps {
     @Inject
     ProgramIncrementRepositoryAdapter repository;
 
+    // Die Features (US-9) werden im PI erfasst und brauchen dessen ID.
+    @Inject
+    ScenarioContext context;
+
     private Response response;
     private String addedLinkUrl;
 
+    @Inject
+    FeatureRepositoryAdapter features;
+
     // Szenarien teilen sich die Datenbank; ohne Leeren hängen Sortierung und Leerzustand von der Reihenfolge ab.
+    // Features zuerst: Sie verweisen per Fremdschlüssel auf ihr PI (US-9).
     @Gegebensei("eine leere Liste der PIs")
     public void eineLeereListe() {
-        QuarkusTransaction.requiringNew().run(repository::deleteAll);
+        QuarkusTransaction.requiringNew().run(() -> {
+            features.deleteAll();
+            repository.deleteAll();
+        });
     }
 
     @Gegebensei("das PI {string} vom {string} bis {string}")
     public void dasPiExistiert(String name, String start, String end) {
         ichDasPiAnlege(name, start, end);
-        response.then().statusCode(201);
+        String id = response.then().statusCode(201).extract().path("id");
+        context.programIncrementCreated(name, id);
     }
 
     @Wenn("ich das PI {string} vom {string} bis {string} anlege")

@@ -153,6 +153,8 @@
       </button>
     </form>
   </section>
+
+  <app-feature-backlog [programIncrementId]="pi.id" />
 } @else if (service.error(); as error) {
   <p role="alert" class="text-danger">{{ error }}</p>
 } @else {
