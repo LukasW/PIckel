@@ -97,8 +97,7 @@ thematisch oder durch Abhängigkeiten betroffene Stories lesen.
   - Beschreibung (Als / möchte / damit)
   - Akzeptanzkriterien
   - BDD-Szenarien (Gegeben sei / Wenn / Dann) mit Zeile «Tests»
-  - Technische Notizen / Abhängigkeiten
-  - Aufgaben-Checkliste
+  - Technische Notizen und Aufgaben nicht in der Story, sondern im `plan.md` des Change-Ordners
 - Die Verzeichnisse und Tabellen nachführen, die `flow.md` nennt
 
 **Fall C — Bugfix oder technischer Task ohne Story:**

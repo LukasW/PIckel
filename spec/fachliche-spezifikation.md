@@ -1,9 +1,8 @@
 # Fachliche Spezifikation — PIkel
 
-## Zweck
-
-PIkel unterstützt das **PI Planning** nach SAFe: Ein Agile Release Train (ART) plant für ein Program Increment (PI)
-Features, verteilt sie auf Teams und Iterationen, macht Abhängigkeiten sichtbar und hält PI-Ziele fest.
+Fachlicher Gesamtstand: Begriffe, Datenmodell mit Regeln, API. Zweck und Stakeholder stehen in
+[`docs/arc42.md`](../docs/arc42.md) → Abschnitt 1, die einzelnen Änderungen mit Akzeptanzkriterien unter
+[`user-stories/`](user-stories/); deren Status steht in der Story-Datei.
 
 ## Begriffe
 
@@ -34,12 +33,6 @@ Features, verteilt sie auf Teams und Iterationen, macht Abhängigkeiten sichtbar
 |---------|------|--------------|
 | `GET` | `/api/v1/program-increments` | Alle PIs, aufsteigend nach Startdatum |
 | `POST` | `/api/v1/program-increments` | PI anlegen → 201; 400 mit `{ "message": … }` bei Regelverletzung |
-
-## User Stories
-
-| ID | Titel | Status |
-|----|-------|--------|
-| [US-1](user-stories/1-pi-anlegen.md) | PI anlegen (Walking Skeleton) | Umgesetzt |
 
 ## Ausblick (noch nicht spezifiziert)
 

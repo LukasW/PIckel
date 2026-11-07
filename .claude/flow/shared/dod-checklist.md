@@ -16,7 +16,8 @@ Vor jedem Commit abprüfen, zusammen mit den Punkten aus `flow.md` → «Definit
 - [ ] Jedes Szenario der Story ist durch einen Test belegt oder mit Begründung als nicht automatisierbar vermerkt
 
 ## Dokumentation
-- [ ] Story-Datei vollständig und aktuell, Verweis auf die Tests eingetragen, Aufgaben abgehakt, Status nachgeführt
+- [ ] Story-Datei vollständig und aktuell, Verweis auf die Tests eingetragen, Status nachgeführt; Aufgaben im
+  `plan.md` abgehakt
 - [ ] Change-Ordner `spec/changes/<nr>-<slug>/` im Commit: Delta (eingepflegt, Story und `.feature` nachgeführt)
   oder `plan.md` mit `Delta: keines — <Grund>`, dazu Plan und Notizen (`.claude/flow/shared/story-delta.md`)
 - [ ] `.claude/flow/scripts/check-story-drift.sh` ohne Meldung — CI-Gate, keine Begründung im Handoff ersetzt es

@@ -74,7 +74,7 @@ doppelt laufen. Für Issues und PRs `gh auth login`. Einmal pro Klon `git config
 | Frage | Datei |
 |-------|-------|
 | Was soll PIkel fachlich können? | `spec/fachliche-spezifikation.md`, `spec/user-stories/` |
-| Wie ist es gebaut? | `spec/technische-spezifikation.md`, `docs/adr/` |
+| Wie ist es gebaut? | `docs/arc42.md`, `docs/adr/` |
 | Welche Regeln gelten im Code? | `CLAUDE.md`, `.claude/rules/` |
 | Was ändert ein Issue, und wie wird es umgesetzt? | `spec/changes/<nr>-<slug>/` — Delta, Entscheide, Plan, Notizen (versioniert) |
 | Was steht im Issue? | nur Auftrag und Verweis auf den Change-Ordner; massgebend ist das Repository |

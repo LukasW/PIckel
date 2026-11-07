@@ -8,8 +8,8 @@ jede Regel hat genau einen Ort:
 | Thema | Ort |
 |-------|-----|
 | Fachbegriffe, Datenmodell, REST-API | [`spec/fachliche-spezifikation.md`](../spec/fachliche-spezifikation.md) |
-| Konfiguration, Persistenz, Betrieb | [`spec/technische-spezifikation.md`](../spec/technische-spezifikation.md) |
-| Schichten, Testpyramide, Code-Regeln | [`CLAUDE.md`](../CLAUDE.md), [`.claude/rules/`](../.claude/rules/) |
+| Einzelne Änderungen mit Akzeptanzkriterien | [`spec/user-stories/`](../spec/user-stories/), Szenarien unter `src/test/resources/features/` |
+| Schichten, Testpyramide, Code-Regeln, Sprache | [`CLAUDE.md`](../CLAUDE.md), [`.claude/rules/`](../.claude/rules/) |
 | Entscheide | [`docs/adr/`](adr/) |
 | Ablauf, Build, Definition of Done | [`.claude/flow.md`](../.claude/flow.md) |
 
@@ -56,12 +56,9 @@ Heute umgesetzt ist ein Durchstich durch alle Schichten: **Program Increment anl
 
 ### Organisatorisch
 
-| Randbedingung | Erläuterung |
-|---------------|-------------|
-| Spezifikation zuerst | Gherkin unter `src/test/resources/features/` ist die Spezifikation; Tests vor dem Code |
-| Arbeitsablauf | `/flow-task` → `/flow-plan` → `/flow-implement` → `/flow-ship`, Issues und PRs auf GitHub |
-| Qualitäts-Gate | `scripts/gate.sh` muss vor jedem Push grün sein (dieselben Prüfungen wie CI) |
-| Sprache | Oberfläche Deutsch mit Schweizer Schreibweise, Bezeichner Englisch, SAFe-Begriffe englisch |
+Spezifikation und Tests vor dem Code, Qualitäts-Gate vor jedem Push, Sprache der Oberfläche:
+[`CLAUDE.md`](../CLAUDE.md) → «Wichtigste Regeln». Arbeitsablauf mit Issues und PRs auf GitHub:
+[`.claude/flow.md`](../.claude/flow.md).
 
 ## 3. Kontextabgrenzung
 
@@ -213,6 +210,9 @@ flowchart LR
 | Test / CI | Dev Services | `./mvnw verify` bzw. GitHub Actions (`ci-pr.yml`, `ci-main.yml`) |
 | Produktion | externe PostgreSQL über `QUARKUS_DATASOURCE_*` | `java -jar` oder Container aus `src/main/docker/Dockerfile.jvm` |
 
+Konfiguration in `src/main/resources/application.properties`; in Produktion setzen `QUARKUS_DATASOURCE_JDBC_URL`,
+`QUARKUS_DATASOURCE_USERNAME` und `QUARKUS_DATASOURCE_PASSWORD` die Datenbank.
+
 Ein Deployment-Ziel ist noch nicht festgelegt (Abschnitt 11).
 
 ## 8. Querschnittliche Konzepte
@@ -226,8 +226,8 @@ Exceptions in HTTP 400 mit `{ "message": … }`. Die Datenbank sichert zusätzli
 
 ### Persistenz
 
-JPA-Entities leben nur in `adapter/out/persistence`, das Mapping Entity ↔ Domain im Adapter. Das Schema ändert sich
-nur über eine **neue** Liquibase-Migration; bestehende Migrationen werden nie geändert (Checksummen).
+Liquibase (`db/changeLog.xml` → `db/migration/V<n>__<slug>.sql`) migriert beim Start, Hibernate validiert nur.
+Entities, Mapping und Migrationsregel: [`CLAUDE.md`](../CLAUDE.md) → «Hexagonal Architecture» und Regel 3.
 
 ### Transaktionen
 
@@ -239,8 +239,8 @@ Keine `null`-Rückgaben (`Optional` bzw. `undefined`). Fachliche Fehler → 400 
 
 ### Frontend-State
 
-Services in `core/services` halten State als Signals; Komponenten sind OnPush und nutzen `input()`/`output()` und
-`inject()`. Farben und Abstände kommen aus Design-Tokens (Tailwind 4).
+Services in `core/services` halten State als Signals; Regeln für Komponenten und Design-Tokens:
+[`.claude/rules/angular.md`](../.claude/rules/angular.md).
 
 ### Sicherheit
 
@@ -250,7 +250,7 @@ CI prüft mit Gitleaks.
 
 ### Internationalisierung
 
-Oberfläche nur Deutsch (Schweiz), `ss` statt Eszett, Du-Form. Ein Hook prüft die Schreibweise.
+Nur Deutsch (Schweiz), Regel in [`CLAUDE.md`](../CLAUDE.md) Nr. 5; ein Hook prüft die Schreibweise.
 
 ### Testkonzept
 

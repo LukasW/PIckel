@@ -25,6 +25,9 @@ und wird an PIkel angepasst. Dazu Leitplanken, die Werkzeuge statt Textregeln du
 - [x] `ArchitectureTest` nach hexagonal-reviewer auf 14 Regeln erweitert (Allowlist Domain, Transaktionen, Ports,
   Namen, Adapter untereinander, neue Pakete)
 - [x] `README.md` und `claude-guide.md` auf den neuen Ablauf nachgeführt
+- [x] Doku entdoppelt: technische Spezifikation in arc42 aufgelöst, fachliche Spezifikation ohne Zweck und
+  Story-Tabelle, arc42 verweist auf `CLAUDE.md`/Rules statt sie zu wiederholen, Story ohne Notizen und Aufgaben
+  (gehören ins `plan.md`)
 
 ## Test-Strategie
 

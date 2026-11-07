@@ -29,8 +29,7 @@ an genau einem Ort; hier nur, was der Ablauf zusätzlich braucht.
 ## Spezifikation
 
 - Fachlich: `spec/fachliche-spezifikation.md`, Stories unter `spec/user-stories/`
-- Technisch: `spec/technische-spezifikation.md`
-- Architektur (arc42): `docs/arc42.md`
+- Architektur und Technik (arc42): `docs/arc42.md`
 - Entscheide: `docs/adr/NNNN-<slug>.md`
 - Schnittstelle: JAX-RS-Resources unter `adapter/in/rest/`, OpenAPI zur Laufzeit unter `/q/openapi`
 - **Change-Ordner je Issue:** `spec/changes/<nr>-<slug>/` mit `delta.md`, `entscheide.md`, `plan.md`, `notes.md`
@@ -46,7 +45,8 @@ an genau einem Ort; hier nur, was der Ablauf zusätzlich braucht.
   Nie vorab raten
 - Datei `spec/user-stories/<nr>-<slug>.md` mit H1 `US-<nr>: …`, `**ID:**`, `**Issue:**`, `**Status:**`
   (`Entwurf` → `In Arbeit` → `Umgesetzt`), `**Priorität:**`, `**Schätzung:**`, danach Beschreibung,
-  Akzeptanzkriterien, BDD-Szenarien (Verweis auf die `.feature`-Datei), technische Notizen, Aufgaben, Änderungen
+  Akzeptanzkriterien, BDD-Szenarien (Verweis auf die `.feature`-Datei), Änderungen. Technische Notizen und
+  Aufgaben stehen im `plan.md` des Change-Ordners, nicht in der Story
 - BDD-Szenarien gleichlautend in `src/test/resources/features/<bereich>/<nr>-<slug>.feature` (`# language: de`,
   Titel `US-<nr> <Kurztitel>`); die Story verweist darauf
 - Vitest-Testnamen tragen das Suffix `(US-<nr>)`; Java-Methoden kein Suffix, der Bezug steht im Feature als
