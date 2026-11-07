@@ -54,8 +54,18 @@ public record Feature(
                 title,
                 description,
                 owner,
-                wsjfRank == null ? OptionalInt.empty() : OptionalInt.of(wsjfRank),
-                estimate == null ? OptionalInt.empty() : OptionalInt.of(estimate));
+                toOptional(wsjfRank),
+                toOptional(estimate));
+    }
+
+    private static OptionalInt toOptional(Integer value) {
+        return value == null ? OptionalInt.empty() : OptionalInt.of(value);
+    }
+
+    /** Dasselbe Feature (ID und PI bleiben) mit neuen Angaben und denselben Regeln wie beim Erfassen. */
+    public Feature revise(String title, String description, Integer wsjfRank, String owner, Integer estimate) {
+        return new Feature(
+                id, programIncrementId, title, description, owner, toOptional(wsjfRank), toOptional(estimate));
     }
 
     /** Ob das Feature schon auf dem Program Board eingeplant ist; heute nie, die Einplanung kommt mit #13. */

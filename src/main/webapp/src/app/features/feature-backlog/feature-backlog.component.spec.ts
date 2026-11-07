@@ -34,7 +34,12 @@ const MESSAGES = {
 };
 
 describe('FeatureBacklogComponent', () => {
-  let repository: { list: ReturnType<typeof vi.fn>; add: ReturnType<typeof vi.fn> };
+  let repository: {
+    list: ReturnType<typeof vi.fn>;
+    add: ReturnType<typeof vi.fn>;
+    update: ReturnType<typeof vi.fn>;
+    remove: ReturnType<typeof vi.fn>;
+  };
 
   /** Rendert das Backlog des PI; `lists` sind die Antworten des Servers auf das erste, zweite, … Laden. */
   async function render(...lists: Feature[][]): Promise<ComponentFixture<FeatureBacklogComponent>> {
@@ -43,7 +48,7 @@ describe('FeatureBacklogComponent', () => {
       list.mockResolvedValueOnce(answer);
     }
     list.mockResolvedValue(lists.at(-1) ?? []);
-    repository = { list, add: vi.fn() };
+    repository = { list, add: vi.fn(), update: vi.fn(), remove: vi.fn() };
     TestBed.configureTestingModule({
       imports: [FeatureBacklogComponent],
       providers: [{ provide: FeaturesRepository, useValue: repository }],
@@ -139,10 +144,11 @@ describe('FeatureBacklogComponent', () => {
     expect(repository.list).toHaveBeenCalledWith(PI_ID);
   });
 
+  // Den genauen Text legt US-10 fest (Hinweis auf den CSV-Import), siehe den Test dort.
   it('zeigt den Leerzustand ohne Features (US-9)', async () => {
     const el = (await render([])).nativeElement as HTMLElement;
 
-    expect(el.textContent).toContain('Noch keine Features. Erfasse das erste Feature.');
+    expect(el.textContent).toContain('Noch keine Features.');
     expect(rows(el)).toHaveLength(0);
   });
 
@@ -364,5 +370,313 @@ describe('FeatureBacklogComponent', () => {
     expect(el.querySelector('[role="alert"]')?.textContent).toContain('Das PI gibt es nicht.');
     expect(field(form, 'Titel').value).toBe('Login');
     expect(field(form, 'Owner').value).toBe('Anna');
+  });
+
+  // --- US-10: Backlog bearbeiten ---
+
+  const EMPTY_STATE =
+    'Noch keine Features. Erfasse das erste Feature oder importiere eine CSV-Datei.';
+  const EXPORT = feature('e', 'CSV-Export', {
+    description: 'Für die Buchhaltung',
+    wsjfRank: 2,
+    owner: 'Beat',
+    estimate: 5,
+  });
+
+  function row(el: HTMLElement, title: string): HTMLElement {
+    const found = rows(el).find((r) => r.textContent!.includes(title));
+    expect(found, `Zeile von ${title}`).toBeDefined();
+    return found!;
+  }
+
+  function button(scope: HTMLElement, text: string): HTMLButtonElement {
+    const found = Array.from(scope.querySelectorAll('button')).find(
+      (b) => b.textContent!.trim() === text,
+    );
+    expect(found, `Button «${text}»`).toBeDefined();
+    return found!;
+  }
+
+  /** Prüft, dass die Zeile ein eigenes Element mit der Zahl zeigt (z. B. «#2» oder «5 SP»), ohne andere Ziffern. */
+  function expectNumberShown(r: HTMLElement, value: number) {
+    const leaves = Array.from(r.querySelectorAll('*'))
+      .filter((e) => e.children.length === 0)
+      .map((e) => e.textContent!.trim());
+    expect(
+      leaves.some((t) => new RegExp(`^\\D*${value}\\D*$`).test(t)),
+      `Zahl ${value} in ${JSON.stringify(leaves)}`,
+    ).toBe(true);
+  }
+
+  async function click(fixture: ComponentFixture<FeatureBacklogComponent>, target: HTMLElement) {
+    target.click();
+    await fixture.whenStable();
+  }
+
+  /**
+   * Das Formular des Features, ob zum Erfassen oder Bearbeiten: Bearbeiten nutzt dasselbe Formular, dessen
+   * Absende-Button dann anders heissen darf. Erkennbar an der Beschriftung «Titel».
+   */
+  function featureForm(el: HTMLElement): HTMLFormElement {
+    const forms = Array.from(el.querySelectorAll('form')).filter((f) =>
+      Array.from(f.querySelectorAll('label')).some((l) =>
+        l.textContent!.trim().startsWith('Titel'),
+      ),
+    );
+    expect(forms, 'genau ein Formular mit dem Feld «Titel»').toHaveLength(1);
+    return forms[0];
+  }
+
+  /** Klickt den einzigen Absende-Button des Formulars, unabhängig von seiner Beschriftung. */
+  async function submitFeatureForm(fixture: ComponentFixture<FeatureBacklogComponent>) {
+    const form = featureForm(fixture.nativeElement as HTMLElement);
+    const submits = Array.from(form.querySelectorAll('button')).filter((b) => b.type === 'submit');
+    expect(submits, 'genau ein Absende-Button').toHaveLength(1);
+    await click(fixture, submits[0]);
+  }
+
+  async function startEdit(
+    fixture: ComponentFixture<FeatureBacklogComponent>,
+    title: string,
+  ): Promise<HTMLFormElement> {
+    const el = fixture.nativeElement as HTMLElement;
+    await click(fixture, button(row(el, title), 'Bearbeiten'));
+    return featureForm(el);
+  }
+
+  async function editAndSubmit(
+    fixture: ComponentFixture<FeatureBacklogComponent>,
+    title: string,
+    values: Partial<Record<FieldName, string>>,
+  ): Promise<HTMLFormElement> {
+    const el = fixture.nativeElement as HTMLElement;
+    await startEdit(fixture, title);
+    for (const [name, value] of Object.entries(values) as [FieldName, string][]) {
+      type(field(featureForm(el), name), value);
+    }
+    await submitFeatureForm(fixture);
+    return featureForm(el);
+  }
+
+  it('zeigt den Leerzustand mit Hinweis auf CSV-Import (US-10)', async () => {
+    const el = (await render([])).nativeElement as HTMLElement;
+
+    const texts = Array.from(el.querySelectorAll('*')).map((e) =>
+      e.textContent!.replace(/\s+/g, ' ').trim(),
+    );
+    expect(texts).toContain(EMPTY_STATE);
+    expect(rows(el)).toHaveLength(0);
+  });
+
+  it('zeigt je Feature Titel, WSJF-Rang, Owner und Schätzung (US-10)', async () => {
+    const el = (await render([EXPORT])).nativeElement as HTMLElement;
+
+    const r = row(el, 'CSV-Export');
+    expect(r.textContent).toContain('Beat');
+    expectNumberShown(r, 2);
+    expectNumberShown(r, 5);
+    // Rang und Schätzung unterscheidbar, nicht nur irgendwo die Zahl.
+    expect(r.textContent).toContain('#2');
+    expect(r.textContent).toContain('5 SP');
+  });
+
+  it('bietet je Feature «Bearbeiten» und «Löschen» an (US-10)', async () => {
+    const el = (await render([LOGIN, PORTAL])).nativeElement as HTMLElement;
+
+    for (const r of rows(el)) {
+      expect(hasButton(r, 'Bearbeiten'), r.textContent!).toBe(true);
+      expect(hasButton(r, 'Löschen'), r.textContent!).toBe(true);
+    }
+  });
+
+  it('füllt beim Bearbeiten das Formular mit den Angaben des Features (US-10)', async () => {
+    const fixture = await render([LOGIN, EXPORT]);
+
+    const form = await startEdit(fixture, 'CSV-Export');
+
+    expect(field(form, 'Titel').value).toBe('CSV-Export');
+    expect(field(form, 'Beschreibung').value).toBe('Für die Buchhaltung');
+    expect(field(form, 'WSJF-Rang').value).toBe('2');
+    expect(field(form, 'Owner').value).toBe('Beat');
+    expect(field(form, 'Schätzung').value).toBe('5');
+  });
+
+  it('lässt optionale Felder beim Bearbeiten eines Features ohne diese Angaben leer (US-10)', async () => {
+    const fixture = await render([EXPORT, LOGIN]);
+
+    const form = await startEdit(fixture, 'Login');
+
+    expect(field(form, 'Titel').value).toBe('Login');
+    for (const name of FIELDS.filter((f) => f !== 'Titel')) {
+      expect(field(form, name).value, `Feld «${name}»`).toBe('');
+    }
+  });
+
+  it('speichert Rang und Schätzung des bearbeiteten Features und zeigt das neue Backlog (US-10)', async () => {
+    const changed = { ...LOGIN, wsjfRank: 3, estimate: 8 };
+    const fixture = await render([LOGIN], [changed]);
+    repository.update.mockResolvedValue(changed);
+
+    await editAndSubmit(fixture, 'Login', { 'WSJF-Rang': '3', Schätzung: '8' });
+
+    expect(repository.update).toHaveBeenCalledWith(PI_ID, 'l', {
+      title: 'Login',
+      wsjfRank: 3,
+      estimate: 8,
+    });
+    expect(repository.add).not.toHaveBeenCalled();
+    expect(repository.list).toHaveBeenCalledTimes(2);
+    const el = fixture.nativeElement as HTMLElement;
+    expectNumberShown(row(el, 'Login'), 3);
+    expectNumberShown(row(el, 'Login'), 8);
+  });
+
+  it('kehrt nach dem Speichern zum Erfassen zurück (US-10)', async () => {
+    const changed = { ...LOGIN, wsjfRank: 3 };
+    const fixture = await render([LOGIN], [changed]);
+    repository.update.mockResolvedValue(changed);
+
+    await editAndSubmit(fixture, 'Login', { 'WSJF-Rang': '3' });
+
+    const form = addForm(fixture.nativeElement as HTMLElement);
+    for (const name of FIELDS) {
+      expect(field(form, name).value, `Feld «${name}»`).toBe('');
+    }
+  });
+
+  it('sendet beim Bearbeiten den Titel ohne Leerzeichen am Rand und geleerte Angaben nicht mit (US-10)', async () => {
+    const fixture = await render([EXPORT]);
+    repository.update.mockResolvedValue(EXPORT);
+
+    await editAndSubmit(fixture, 'CSV-Export', { Titel: '  Export  ', Owner: '', Schätzung: ' ' });
+
+    expect(repository.update).toHaveBeenCalledTimes(1);
+    const [piId, id, sent] = repository.update.mock.calls[0];
+    expect(piId).toBe(PI_ID);
+    expect(id).toBe('e');
+    expect(sent).toEqual({ title: 'Export', description: 'Für die Buchhaltung', wsjfRank: 2 });
+  });
+
+  it('lehnt beim Bearbeiten einen Titel aus Leerzeichen am Feld ab und speichert nichts (US-10)', async () => {
+    const form = await editAndSubmit(await render([LOGIN]), 'Login', { Titel: ' ' });
+
+    expectErrorAt(form, 'Titel', MESSAGES.titleEmpty);
+    expect(repository.update).not.toHaveBeenCalled();
+    expect(repository.add).not.toHaveBeenCalled();
+  });
+
+  it('lehnt beim Bearbeiten einen Titel mit 201 Zeichen am Feld ab und speichert nichts (US-10)', async () => {
+    const form = await editAndSubmit(await render([LOGIN]), 'Login', { Titel: 'x'.repeat(201) });
+
+    expectErrorAt(form, 'Titel', MESSAGES.titleTooLong);
+    expect(repository.update).not.toHaveBeenCalled();
+  });
+
+  it('lehnt beim Bearbeiten den WSJF-Rang 0 am Feld ab und speichert nichts (US-10)', async () => {
+    const form = await editAndSubmit(await render([LOGIN]), 'Login', { 'WSJF-Rang': '0' });
+
+    expectErrorAt(form, 'WSJF-Rang', MESSAGES.rank);
+    expect(repository.update).not.toHaveBeenCalled();
+  });
+
+  it('lehnt beim Bearbeiten die Schätzung -1 am Feld ab und speichert nichts (US-10)', async () => {
+    const form = await editAndSubmit(await render([LOGIN]), 'Login', { Schätzung: '-1' });
+
+    expectErrorAt(form, 'Schätzung', MESSAGES.estimate);
+    expect(repository.update).not.toHaveBeenCalled();
+  });
+
+  it('lehnt beim Bearbeiten einen Owner mit 101 Zeichen am Feld ab und speichert nichts (US-10)', async () => {
+    const form = await editAndSubmit(await render([LOGIN]), 'Login', { Owner: 'x'.repeat(101) });
+
+    expectErrorAt(form, 'Owner', MESSAGES.ownerTooLong);
+    expect(repository.update).not.toHaveBeenCalled();
+  });
+
+  it('verwirft beim Abbrechen des Bearbeitens die Änderungen und erfasst danach wieder neu (US-10)', async () => {
+    const fixture = await render([LOGIN], [LOGIN, PORTAL]);
+    const el = fixture.nativeElement as HTMLElement;
+    const form = await startEdit(fixture, 'Login');
+    type(field(form, 'Titel'), 'Anmeldung');
+
+    await click(fixture, button(featureForm(el), 'Abbrechen'));
+
+    expect(repository.update).not.toHaveBeenCalled();
+    expect(row(el, 'Login').textContent).not.toContain('Anmeldung');
+    expect(field(addForm(el), 'Titel').value).toBe('');
+
+    repository.add.mockResolvedValue(PORTAL);
+    await fillAndSubmit(fixture, { Titel: 'Self-Service-Portal' });
+
+    expect(repository.add).toHaveBeenCalledWith(PI_ID, { title: 'Self-Service-Portal' });
+    expect(repository.update).not.toHaveBeenCalled();
+  });
+
+  it('zeigt die Meldung des Servers als Alarm und behält die Angaben, wenn das Bearbeiten abgelehnt wird (US-10)', async () => {
+    const fixture = await render([LOGIN]);
+    repository.update.mockRejectedValue(
+      new HttpErrorResponse({ status: 404, error: { message: 'Das Feature gibt es nicht.' } }),
+    );
+
+    const form = await editAndSubmit(fixture, 'Login', { 'WSJF-Rang': '3' });
+
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('[role="alert"]')?.textContent).toContain('Das Feature gibt es nicht.');
+    expect(field(form, 'Titel').value).toBe('Login');
+    expect(field(form, 'WSJF-Rang').value).toBe('3');
+  });
+
+  it('löscht ein Feature erst nach der Bestätigung und zeigt dann den Leerzustand (US-10)', async () => {
+    const fixture = await render([LOGIN], []);
+    repository.remove.mockResolvedValue(undefined);
+    const el = fixture.nativeElement as HTMLElement;
+
+    await click(fixture, button(row(el, 'Login'), 'Löschen'));
+
+    expect(repository.remove).not.toHaveBeenCalled();
+    expect(hasButton(row(el, 'Login'), 'Wirklich löschen')).toBe(true);
+
+    await click(fixture, button(row(el, 'Login'), 'Wirklich löschen'));
+
+    expect(repository.remove).toHaveBeenCalledWith(PI_ID, 'l');
+    expect(rows(el)).toHaveLength(0);
+    expect(el.textContent).toContain(EMPTY_STATE);
+  });
+
+  it('behält das Feature, wenn das Löschen abgebrochen wird (US-10)', async () => {
+    const fixture = await render([LOGIN]);
+    const el = fixture.nativeElement as HTMLElement;
+    await click(fixture, button(row(el, 'Login'), 'Löschen'));
+
+    await click(fixture, button(row(el, 'Login'), 'Abbrechen'));
+
+    expect(repository.remove).not.toHaveBeenCalled();
+    expect(hasButton(row(el, 'Login'), 'Wirklich löschen')).toBe(false);
+    expect(hasButton(row(el, 'Login'), 'Löschen')).toBe(true);
+  });
+
+  it('fragt nur beim gewählten Feature nach der Bestätigung (US-10)', async () => {
+    const fixture = await render([PORTAL, LOGIN]);
+    const el = fixture.nativeElement as HTMLElement;
+
+    await click(fixture, button(row(el, 'Login'), 'Löschen'));
+
+    expect(hasButton(row(el, 'Login'), 'Wirklich löschen')).toBe(true);
+    expect(hasButton(row(el, 'Self-Service-Portal'), 'Wirklich löschen')).toBe(false);
+  });
+
+  it('zeigt die Meldung des Servers als Alarm und behält das Feature, wenn das Löschen scheitert (US-10)', async () => {
+    const fixture = await render([LOGIN]);
+    repository.remove.mockRejectedValue(
+      new HttpErrorResponse({ status: 404, error: { message: 'Das Feature gibt es nicht.' } }),
+    );
+    const el = fixture.nativeElement as HTMLElement;
+    await click(fixture, button(row(el, 'Login'), 'Löschen'));
+
+    await click(fixture, button(row(el, 'Login'), 'Wirklich löschen'));
+
+    expect(repository.remove).toHaveBeenCalledWith(PI_ID, 'l');
+    expect(el.querySelector('[role="alert"]')?.textContent).toContain('Das Feature gibt es nicht.');
+    expect(rows(el).map((r) => r.textContent)).toEqual([expect.stringContaining('Login')]);
   });
 });

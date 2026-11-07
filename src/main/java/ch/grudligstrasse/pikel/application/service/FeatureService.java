@@ -1,6 +1,7 @@
 package ch.grudligstrasse.pikel.application.service;
 
 import ch.grudligstrasse.pikel.domain.model.Feature;
+import ch.grudligstrasse.pikel.domain.model.FeatureNotFoundException;
 import ch.grudligstrasse.pikel.domain.model.ProgramIncrementNotFoundException;
 import ch.grudligstrasse.pikel.domain.port.in.FeatureUseCase;
 import ch.grudligstrasse.pikel.domain.port.out.FeatureRepository;
@@ -48,6 +49,37 @@ public class FeatureService implements FeatureUseCase {
         Feature feature = Feature.create(programIncrementId, title, description, wsjfRank, owner, estimate);
         features.save(feature);
         return feature;
+    }
+
+    @Override
+    @Transactional
+    public Feature update(
+            UUID programIncrementId,
+            UUID featureId,
+            String title,
+            String description,
+            Integer wsjfRank,
+            String owner,
+            Integer estimate) {
+        Feature revised = findInProgramIncrement(programIncrementId, featureId)
+                .revise(title, description, wsjfRank, owner, estimate);
+        features.save(revised);
+        return revised;
+    }
+
+    @Override
+    @Transactional
+    public void remove(UUID programIncrementId, UUID featureId) {
+        findInProgramIncrement(programIncrementId, featureId);
+        features.remove(featureId);
+    }
+
+    // Ein Feature eines anderen PI ist unter dieser Adresse unbekannt, sonst liesse es sich über jedes PI ändern.
+    private Feature findInProgramIncrement(UUID programIncrementId, UUID featureId) {
+        ensureProgramIncrementExists(programIncrementId);
+        return features.findOne(featureId)
+                .filter(feature -> feature.programIncrementId().equals(programIncrementId))
+                .orElseThrow(FeatureNotFoundException::new);
     }
 
     private void ensureProgramIncrementExists(UUID programIncrementId) {

@@ -5,7 +5,7 @@ import {
   ReactiveFormsModule,
   ValidationErrors,
 } from '@angular/forms';
-import { NewFeature } from '../../core/models/feature.model';
+import { Feature, NewFeature } from '../../core/models/feature.model';
 import { FeaturesService } from '../../core/services/features.service';
 import { maxTrimmedLength, notBlank } from '../../shared/validators/text.validators';
 
@@ -26,7 +26,10 @@ function optionalIntegerFrom(min: number) {
   };
 }
 
-/** Backlog und Erfassungsformular der Features eines PI (US-9); die PI-ID kommt vom Elternelement. */
+/**
+ * Backlog der Features eines PI mit Formular zum Erfassen (US-9) und Bearbeiten, Löschen nach Bestätigung (US-10);
+ * die PI-ID kommt vom Elternelement.
+ */
 @Component({
   selector: 'app-feature-backlog',
   imports: [ReactiveFormsModule],
@@ -44,6 +47,10 @@ export class FeatureBacklogComponent implements OnInit {
   protected readonly maxOwnerLength = MAX_OWNER_LENGTH;
   /** Feldfehler erst nach dem ersten Absenden zeigen, nicht schon beim Tippen. */
   protected readonly submitted = signal(false);
+  /** ID des Features, das gerade im Formular bearbeitet wird; ohne ID erfasst das Formular ein neues. */
+  protected readonly editing = signal<string | undefined>(undefined);
+  /** ID des Features, dessen Löschen auf die Bestätigung wartet. */
+  protected readonly confirmingRemoval = signal<string | undefined>(undefined);
 
   protected readonly form = this.fb.nonNullable.group({
     title: ['', [notBlank, maxTrimmedLength(MAX_TITLE_LENGTH)]],
@@ -66,10 +73,54 @@ export class FeatureBacklogComponent implements OnInit {
     if (this.form.invalid) {
       return;
     }
-    if (await this.service.add(this.programIncrementId(), this.toNewFeature())) {
-      this.form.reset();
-      this.submitted.set(false);
+    const editing = this.editing();
+    const saved = editing
+      ? await this.service.update(this.programIncrementId(), editing, this.toNewFeature())
+      : await this.service.add(this.programIncrementId(), this.toNewFeature());
+    if (saved) {
+      this.resetForm();
     }
+  }
+
+  /** Bearbeiten nutzt das Formular zum Erfassen, damit dieselben Regeln und Feldmeldungen gelten. */
+  protected startEdit(feature: Feature): void {
+    this.confirmingRemoval.set(undefined);
+    this.editing.set(feature.id);
+    this.submitted.set(false);
+    this.form.setValue({
+      title: feature.title,
+      description: feature.description,
+      wsjfRank: feature.wsjfRank?.toString() ?? '',
+      owner: feature.owner,
+      estimate: feature.estimate?.toString() ?? '',
+    });
+  }
+
+  protected cancelEdit(): void {
+    this.resetForm();
+  }
+
+  protected askRemoval(feature: Feature): void {
+    this.confirmingRemoval.set(feature.id);
+  }
+
+  protected cancelRemoval(): void {
+    this.confirmingRemoval.set(undefined);
+  }
+
+  protected async confirmRemoval(feature: Feature): Promise<void> {
+    if (await this.service.remove(this.programIncrementId(), feature.id)) {
+      this.confirmingRemoval.set(undefined);
+      if (this.editing() === feature.id) {
+        this.resetForm();
+      }
+    }
+  }
+
+  private resetForm(): void {
+    this.form.reset();
+    this.submitted.set(false);
+    this.editing.set(undefined);
   }
 
   // Leere optionale Angaben fehlen im Objekt, statt als leerer Text oder 0 gesendet zu werden.

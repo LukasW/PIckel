@@ -1,6 +1,6 @@
 # Delta US-10 — Backlog nach WSJF-Rang bearbeiten (Issue #10)
 
-Story: `spec/user-stories/10-backlog-bearbeiten.md` (neu) · Status: entwurf
+Story: `spec/user-stories/10-backlog-bearbeiten.md` (neu) · Status: eingepflegt
 
 ## Warum
 
@@ -63,6 +63,43 @@ den Issue-Tracker.
 - **Gegeben sei** das PI "PI 27.1" vom "2027-01-04" bis "2027-03-26"
 - **Wenn** ich das Backlog von "PI 27.1" öffne
 - **Dann** sehe ich den Hinweis "Noch keine Features. Erfasse das erste Feature oder importiere eine CSV-Datei."
+
+### AK: Ein unbekanntes Feature oder eines aus einem anderen PI lässt sich unter diesem PI weder bearbeiten noch löschen (404 mit Meldung)
+
+Nachgetragen im Nachtlauf (Annahme, `notes.md`): Das Delta nannte die Fehlerfälle nicht; Muster wie US-6
+«Unbekanntes Team».
+
+### Szenario: Unbekanntes Feature lässt sich nicht bearbeiten
+Nachgetragen im Nachtlauf.
+- **Gegeben sei** das PI "PI 27.1" vom "2027-01-04" bis "2027-03-26"
+- **Wenn** ich im PI "PI 27.1" das Feature mit einer unbekannten oder ungültigen ID bearbeite
+- **Dann** antwortet der Server mit 404 und der Meldung "Das Feature gibt es nicht."
+
+### Szenario: Unbekanntes Feature lässt sich nicht löschen
+Nachgetragen im Nachtlauf.
+- **Gegeben sei** das PI "PI 27.1" vom "2027-01-04" bis "2027-03-26"
+- **Wenn** ich im PI "PI 27.1" das Feature mit einer unbekannten oder ungültigen ID lösche
+- **Dann** antwortet der Server mit 404 und der Meldung "Das Feature gibt es nicht."
+
+### Szenario: Feature eines anderen PI lässt sich dort nicht bearbeiten
+Nachgetragen im Nachtlauf.
+- **Gegeben sei** die PIs "PI 27.1" und "PI 27.2" und im PI "PI 27.1" das Feature "Login"
+- **Wenn** ich das Feature "Login" im PI "PI 27.2" bearbeite
+- **Dann** antwortet der Server mit 404 und der Meldung "Das Feature gibt es nicht."
+- **Und** erscheint "Login" weiterhin im Backlog von "PI 27.1"
+
+### Szenario: Feature eines anderen PI lässt sich dort nicht löschen
+Nachgetragen im Nachtlauf.
+- **Gegeben sei** die PIs "PI 27.1" und "PI 27.2" und im PI "PI 27.1" das Feature "Login"
+- **Wenn** ich das Feature "Login" im PI "PI 27.2" lösche
+- **Dann** antwortet der Server mit 404 und der Meldung "Das Feature gibt es nicht."
+- **Und** erscheint "Login" weiterhin im Backlog von "PI 27.1"
+
+### Szenario: Löschen verlangt eine Bestätigung
+Nachgetragen im Nachtlauf, belegt AK 4 im Frontend (`@Unit`, Vitest).
+- **Gegeben sei** das Backlog eines PI mit dem Feature "Login"
+- **Wenn** ich beim Feature "Login" auf «Löschen» klicke
+- **Dann** wird noch nichts gelöscht, erst «Wirklich löschen» löscht das Feature; «Abbrechen» behält es
 
 ## Geändert
 

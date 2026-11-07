@@ -4,11 +4,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import ch.grudligstrasse.pikel.domain.model.Feature;
+import ch.grudligstrasse.pikel.domain.model.FeatureNotFoundException;
 import ch.grudligstrasse.pikel.domain.model.InvalidFeatureException;
 import ch.grudligstrasse.pikel.domain.model.ProgramIncrement;
 import ch.grudligstrasse.pikel.domain.model.ProgramIncrementNotFoundException;
@@ -217,5 +219,173 @@ class FeatureServiceTest {
 
         assertThrows(ProgramIncrementNotFoundException.class, () -> service.add(unknown, " ", null, null, null, null));
         verify(features, never()).save(any());
+    }
+
+    // --- US-10: Bearbeiten (Szenarien «Feature wird bearbeitet», «Bearbeiten mit leerem Titel wird abgelehnt») ---
+
+    private static final String FEATURE_NOT_FOUND = "Das Feature gibt es nicht.";
+
+    // Ein Feature, das in den Features gespeichert ist; lenient, weil eine Umsetzung, die zuerst das PI prüft,
+    // nicht mehr nach dem Feature fragt.
+    private Feature stored(Feature feature) {
+        lenient().when(features.findOne(feature.id())).thenReturn(Optional.of(feature));
+        return feature;
+    }
+
+    private static Feature inOtherProgramIncrement(String title) {
+        return new Feature(
+                UUID.randomUUID(), UUID.randomUUID(), title, "", "", OptionalInt.empty(), OptionalInt.empty());
+    }
+
+    @Test
+    void updateSavesAndReturnsRevisedFeature() {
+        programIncrementExists();
+        Feature login = stored(feature("Login", null));
+
+        Feature updated = service.update(PI_27_1.id(), login.id(), "Login", null, 3, null, 8);
+
+        assertEquals(login.id(), updated.id());
+        assertEquals(PI_27_1.id(), updated.programIncrementId());
+        assertEquals("Login", updated.title());
+        assertEquals(OptionalInt.of(3), updated.wsjfRank());
+        assertEquals(OptionalInt.of(8), updated.estimate());
+        verify(features).save(updated);
+    }
+
+    // Die gesendeten Angaben gewinnen gegen die gespeicherten, auch das Leeren optionaler Angaben.
+    @Test
+    void updateReplacesStoredValuesWithSentOnes() {
+        programIncrementExists();
+        Feature portal = stored(new Feature(
+                UUID.randomUUID(), PI_27_1.id(), "Portal", "Alt", "Anna", OptionalInt.of(5), OptionalInt.of(13)));
+
+        Feature updated = service.update(PI_27_1.id(), portal.id(), " Self-Service-Portal ", null, null, "Beat", null);
+
+        assertEquals("Self-Service-Portal", updated.title());
+        assertEquals("", updated.description());
+        assertEquals("Beat", updated.owner());
+        assertEquals(OptionalInt.empty(), updated.wsjfRank());
+        assertEquals(OptionalInt.empty(), updated.estimate());
+        verify(features).save(updated);
+    }
+
+    @Test
+    void updateDoesNotSaveFeatureWithBlankTitle() {
+        programIncrementExists();
+        Feature login = stored(feature("Login", null));
+
+        InvalidFeatureException exception = assertThrows(
+                InvalidFeatureException.class, () -> service.update(PI_27_1.id(), login.id(), " ", null, 3, null, 8));
+
+        assertEquals(BLANK_TITLE, exception.getMessage());
+        verify(features, never()).save(any());
+    }
+
+    @Test
+    void updateDoesNotSaveFeatureWithRankZero() {
+        programIncrementExists();
+        Feature login = stored(feature("Login", null));
+
+        assertThrows(
+                InvalidFeatureException.class,
+                () -> service.update(PI_27_1.id(), login.id(), "Login", null, 0, null, null));
+        verify(features, never()).save(any());
+    }
+
+    // Das Feature gehört zum unbekannten PI: Nur die Prüfung des PI kann hier ablehnen.
+    @Test
+    void updateRejectsUnknownProgramIncrement() {
+        UUID unknown = unknownProgramIncrement();
+        Feature orphan = stored(
+                new Feature(UUID.randomUUID(), unknown, "Login", "", "", OptionalInt.empty(), OptionalInt.empty()));
+
+        ProgramIncrementNotFoundException exception = assertThrows(
+                ProgramIncrementNotFoundException.class,
+                () -> service.update(unknown, orphan.id(), "Login", null, 3, null, 8));
+
+        assertEquals(PI_NOT_FOUND, exception.getMessage());
+        verify(features, never()).save(any());
+    }
+
+    @Test
+    void updateRejectsUnknownFeature() {
+        programIncrementExists();
+        UUID unknown = UUID.randomUUID();
+        lenient().when(features.findOne(unknown)).thenReturn(Optional.empty());
+
+        FeatureNotFoundException exception = assertThrows(
+                FeatureNotFoundException.class, () -> service.update(PI_27_1.id(), unknown, "Login", null, 3, null, 8));
+
+        assertEquals(FEATURE_NOT_FOUND, exception.getMessage());
+        verify(features, never()).save(any());
+    }
+
+    // Gerüst (FeatureUseCase): Ein Feature eines anderen PI gibt es in diesem PI nicht.
+    @Test
+    void updateRejectsFeatureOfOtherProgramIncrement() {
+        programIncrementExists();
+        Feature foreign = stored(inOtherProgramIncrement("Login"));
+
+        FeatureNotFoundException exception = assertThrows(
+                FeatureNotFoundException.class,
+                () -> service.update(PI_27_1.id(), foreign.id(), "Login", null, 3, null, 8));
+
+        assertEquals(FEATURE_NOT_FOUND, exception.getMessage());
+        verify(features, never()).save(any());
+    }
+
+    // --- US-10: Löschen (Szenario «Feature wird gelöscht») ---
+
+    @Test
+    void removeDeletesFeature() {
+        programIncrementExists();
+        Feature login = stored(feature("Login", null));
+        lenient().when(features.remove(login.id())).thenReturn(true);
+
+        service.remove(PI_27_1.id(), login.id());
+
+        verify(features).remove(login.id());
+    }
+
+    @Test
+    void removeRejectsUnknownProgramIncrement() {
+        UUID unknown = unknownProgramIncrement();
+        Feature orphan = stored(
+                new Feature(UUID.randomUUID(), unknown, "Login", "", "", OptionalInt.empty(), OptionalInt.empty()));
+        lenient().when(features.remove(orphan.id())).thenReturn(true);
+
+        ProgramIncrementNotFoundException exception =
+                assertThrows(ProgramIncrementNotFoundException.class, () -> service.remove(unknown, orphan.id()));
+
+        assertEquals(PI_NOT_FOUND, exception.getMessage());
+        verify(features, never()).remove(any());
+    }
+
+    // Ob die Umsetzung vorher sucht oder das Ergebnis von remove auswertet, ist offen; beides ist gestubbt.
+    @Test
+    void removeRejectsUnknownFeature() {
+        programIncrementExists();
+        UUID unknown = UUID.randomUUID();
+        lenient().when(features.findOne(unknown)).thenReturn(Optional.empty());
+        lenient().when(features.remove(unknown)).thenReturn(false);
+
+        FeatureNotFoundException exception =
+                assertThrows(FeatureNotFoundException.class, () -> service.remove(PI_27_1.id(), unknown));
+
+        assertEquals(FEATURE_NOT_FOUND, exception.getMessage());
+    }
+
+    // Über ein anderes PI darf sich ein Feature nicht löschen lassen.
+    @Test
+    void removeRejectsFeatureOfOtherProgramIncrement() {
+        programIncrementExists();
+        Feature foreign = stored(inOtherProgramIncrement("Login"));
+        lenient().when(features.remove(foreign.id())).thenReturn(true);
+
+        FeatureNotFoundException exception =
+                assertThrows(FeatureNotFoundException.class, () -> service.remove(PI_27_1.id(), foreign.id()));
+
+        assertEquals(FEATURE_NOT_FOUND, exception.getMessage());
+        verify(features, never()).remove(any());
     }
 }

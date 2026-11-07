@@ -5,7 +5,7 @@
   (ngSubmit)="submit()"
   novalidate
   class="mb-6 grid gap-3 rounded-lg border border-border bg-surface p-4 sm:grid-cols-2"
-  aria-label="Neues Feature erfassen"
+  [attr.aria-label]="editing() ? 'Feature bearbeiten' : 'Neues Feature erfassen'"
 >
   <label class="flex flex-col gap-1 text-sm sm:col-span-2">
     Titel
@@ -74,10 +74,13 @@
       <span class="text-danger">Die Schätzung muss eine ganze Zahl ab 0 sein.</span>
     }
   </label>
-  <div class="flex items-end">
+  <div class="flex items-end gap-3">
     <button type="submit" class="rounded bg-accent px-3 py-1.5 text-accent-foreground">
-      Feature erfassen
+      {{ editing() ? 'Speichern' : 'Feature erfassen' }}
     </button>
+    @if (editing()) {
+      <button type="button" (click)="cancelEdit()" class="text-sm text-muted">Abbrechen</button>
+    }
   </div>
 </form>
 
@@ -103,9 +106,31 @@
         @if (feature.estimate !== undefined && feature.estimate !== null) {
           <span class="text-sm text-muted">{{ feature.estimate }} SP</span>
         }
+        @if (confirmingRemoval() === feature.id) {
+          <span class="text-sm">Wirklich löschen?</span>
+          <button
+            type="button"
+            (click)="confirmRemoval(feature)"
+            class="rounded border border-border px-3 py-1 text-sm text-danger"
+          >
+            Wirklich löschen
+          </button>
+          <button type="button" (click)="cancelRemoval()" class="text-sm text-muted">
+            Abbrechen
+          </button>
+        } @else {
+          <button type="button" (click)="startEdit(feature)" class="text-sm text-accent">
+            Bearbeiten
+          </button>
+          <button type="button" (click)="askRemoval(feature)" class="text-sm text-danger">
+            Löschen
+          </button>
+        }
       </li>
     } @empty {
-      <li class="px-4 py-3 text-muted">Noch keine Features. Erfasse das erste Feature.</li>
+      <li class="px-4 py-3 text-muted">
+        Noch keine Features. Erfasse das erste Feature oder importiere eine CSV-Datei.
+      </li>
     }
   </ul>
 }

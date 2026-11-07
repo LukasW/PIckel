@@ -275,4 +275,129 @@ class FeatureTest {
         assertFalse(
                 Feature.create(PI, "Self-Service-Portal", null, 1, "Anna", 21).scheduled());
     }
+
+    // --- US-10: Bearbeiten mit denselben Regeln wie beim Erfassen ---
+
+    private static final Feature PORTAL = Feature.create(PI, "Portal", "Alt", 5, "Anna", 13);
+
+    private static InvalidFeatureException revisionRejected(
+            String title, String description, Integer wsjfRank, String owner, Integer estimate) {
+        return assertThrows(
+                InvalidFeatureException.class, () -> PORTAL.revise(title, description, wsjfRank, owner, estimate));
+    }
+
+    // Bearbeiten ändert das Feature, es entsteht kein neues: ID und PI bleiben.
+    @Test
+    void reviseKeepsIdAndProgramIncrement() {
+        Feature revised = PORTAL.revise("Self-Service-Portal", "Neu", 1, "Beat", 21);
+
+        assertEquals(PORTAL.id(), revised.id());
+        assertEquals(PI, revised.programIncrementId());
+    }
+
+    // Jeder Wert weicht von der alten Fassung ab, damit sichtbar ist, dass die neue gewinnt.
+    @Test
+    void reviseTakesAllNewValues() {
+        Feature revised = PORTAL.revise("Self-Service-Portal", "Adresse selbst ändern", 1, "Beat", 21);
+
+        assertEquals("Self-Service-Portal", revised.title());
+        assertEquals("Adresse selbst ändern", revised.description());
+        assertEquals(OptionalInt.of(1), revised.wsjfRank());
+        assertEquals("Beat", revised.owner());
+        assertEquals(OptionalInt.of(21), revised.estimate());
+    }
+
+    // Szenario «Feature wird bearbeitet»: WSJF-Rang auf 3, Schätzung auf 8, der Rest bleibt wie gesendet.
+    @Test
+    void reviseSetsRankAndEstimateOfFeatureWithoutRank() {
+        Feature login = titleOnly("Login");
+
+        Feature revised = login.revise("Login", null, 3, null, 8);
+
+        assertEquals("Login", revised.title());
+        assertEquals(OptionalInt.of(3), revised.wsjfRank());
+        assertEquals(OptionalInt.of(8), revised.estimate());
+    }
+
+    // Wie beim Erfassen heisst null «fehlt»: Optionale Angaben lassen sich wieder leeren.
+    @Test
+    void reviseWithoutOptionalValuesClearsThem() {
+        Feature revised = PORTAL.revise("Portal", null, null, null, null);
+
+        assertEquals("", revised.description());
+        assertEquals("", revised.owner());
+        assertEquals(OptionalInt.empty(), revised.wsjfRank());
+        assertEquals(OptionalInt.empty(), revised.estimate());
+    }
+
+    @Test
+    void reviseTrimsTitleDescriptionAndOwner() {
+        Feature revised = PORTAL.revise("  Portal 2 ", " Neu \n", null, " Beat  ", null);
+
+        assertEquals("Portal 2", revised.title());
+        assertEquals("Neu", revised.description());
+        assertEquals("Beat", revised.owner());
+    }
+
+    // Szenario «Bearbeiten mit leerem Titel wird abgelehnt»
+    @ParameterizedTest
+    @ValueSource(strings = {"", " ", "\t"})
+    void reviseRejectsBlankTitle(String title) {
+        assertEquals(
+                BLANK_TITLE, revisionRejected(title, null, null, null, null).getMessage());
+    }
+
+    @Test
+    void reviseRejectsMissingTitle() {
+        assertEquals(BLANK_TITLE, revisionRejected(null, null, null, null, null).getMessage());
+    }
+
+    @Test
+    void reviseAcceptsLimitsOfCreate() {
+        Feature revised =
+                PORTAL.revise("x".repeat(MAX_TITLE), "d".repeat(MAX_DESCRIPTION), 1, "o".repeat(MAX_OWNER), 0);
+
+        assertEquals(MAX_TITLE, revised.title().length());
+        assertEquals(MAX_DESCRIPTION, revised.description().length());
+        assertEquals(MAX_OWNER, revised.owner().length());
+        assertEquals(OptionalInt.of(1), revised.wsjfRank());
+        assertEquals(OptionalInt.of(0), revised.estimate());
+    }
+
+    @Test
+    void reviseRejectsTitleOf201Characters() {
+        assertEquals(
+                TITLE_TOO_LONG,
+                revisionRejected("x".repeat(MAX_TITLE + 1), null, null, null, null)
+                        .getMessage());
+    }
+
+    @Test
+    void reviseRejectsDescriptionOf5001Characters() {
+        assertEquals(
+                DESCRIPTION_TOO_LONG,
+                revisionRejected("Portal", "d".repeat(MAX_DESCRIPTION + 1), null, null, null)
+                        .getMessage());
+    }
+
+    @Test
+    void reviseRejectsOwnerOf101Characters() {
+        assertEquals(
+                OWNER_TOO_LONG,
+                revisionRejected("Portal", null, null, "o".repeat(MAX_OWNER + 1), null)
+                        .getMessage());
+    }
+
+    @Test
+    void reviseRejectsRankZero() {
+        assertEquals(
+                INVALID_RANK, revisionRejected("Portal", null, 0, null, null).getMessage());
+    }
+
+    @Test
+    void reviseRejectsEstimateMinusOne() {
+        assertEquals(
+                INVALID_ESTIMATE,
+                revisionRejected("Portal", null, null, null, -1).getMessage());
+    }
 }

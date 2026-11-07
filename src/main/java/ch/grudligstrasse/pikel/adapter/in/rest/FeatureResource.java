@@ -1,11 +1,14 @@
 package ch.grudligstrasse.pikel.adapter.in.rest;
 
+import ch.grudligstrasse.pikel.domain.model.FeatureNotFoundException;
 import ch.grudligstrasse.pikel.domain.model.ProgramIncrementNotFoundException;
 import ch.grudligstrasse.pikel.domain.port.in.FeatureUseCase;
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
@@ -47,6 +50,37 @@ public class FeatureResource {
                 request.owner(),
                 request.estimate()));
         return Response.status(Response.Status.CREATED).entity(created).build();
+    }
+
+    /** Ändert ein Feature: 200 mit dem Feature; 400 wie beim Erfassen; 404 bei unbekanntem PI oder Feature. */
+    @PUT
+    @Path("/{id}")
+    public FeatureDto update(
+            @PathParam("piId") String piId, @PathParam("id") String id, @NotNull FeatureRequest request) {
+        return FeatureDto.from(useCase.update(
+                toUuid(piId),
+                toFeatureUuid(id),
+                request.title(),
+                request.description(),
+                request.wsjfRank(),
+                request.owner(),
+                request.estimate()));
+    }
+
+    /** Löscht ein Feature: 204; 404 bei unbekanntem PI oder Feature. */
+    @DELETE
+    @Path("/{id}")
+    public Response remove(@PathParam("piId") String piId, @PathParam("id") String id) {
+        useCase.remove(toUuid(piId), toFeatureUuid(id));
+        return Response.noContent().build();
+    }
+
+    private static UUID toFeatureUuid(String id) {
+        try {
+            return UUID.fromString(id);
+        } catch (IllegalArgumentException e) {
+            throw new FeatureNotFoundException();
+        }
     }
 
     // Wie bei den PIs: eine ungültige UUID ist für den Aufrufer ein unbekanntes PI.
