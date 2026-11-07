@@ -20,6 +20,11 @@ jede Regel hat genau einen Ort:
 PIkel unterstützt das **PI Planning** nach SAFe: Ein Agile Release Train (ART) plant für ein Program Increment (PI)
 Features, verteilt sie auf Teams und Iterationen, macht Abhängigkeiten sichtbar und hält PI Objectives fest.
 
+Das MVP ersetzt die Klebezettel-Wand im Planning-Raum: Program Board, Abhängigkeiten, Risiken, Objectives und
+Confidence Vote. Was Issue-Tracker wie Jira schon gut können, etwa die Planung auf Story-Ebene, macht PIkel bewusst
+nicht. Bereiche, Releases und Nicht-Ziele stehen in
+[`spec/fachliche-spezifikation.md`](../spec/fachliche-spezifikation.md) → «MVP-Umfang».
+
 Heute umgesetzt ist ein Durchstich durch alle Schichten: **Program Increment anlegen und auflisten**
 ([US-1](../spec/user-stories/1-pi-anlegen.md)). Die fachliche Breite kommt Story für Story.
 
@@ -37,9 +42,10 @@ Heute umgesetzt ist ein Durchstich durch alle Schichten: **Program Increment anl
 
 | Rolle | Erwartung |
 |-------|-----------|
-| Release Train Engineer (RTE) | PI anlegen, Planung moderieren, Überblick über den ART |
-| Product Owner / Product Management | Features ins PI bringen, Business Value bewerten |
-| Agile Teams | Features auf Iterationen planen, Abhängigkeiten und PI Objectives erfassen |
+| Release Train Engineer (RTE) | PI anlegen, Planung moderieren (Facilitator), Überblick über den ART, Risiken fürs Management-Review |
+| Product Owner / Product Management | Features ins PI bringen und priorisieren (WSJF) |
+| Business Owner | PI Objectives der Teams mit Business Value bewerten |
+| Agile Teams | Features auf Iterationen planen, Abhängigkeiten und PI Objectives erfassen, im Confidence Vote abstimmen |
 | Entwicklung (Lukas, Claude Code) | Klare Schichten, schneller Test-Loop, Regeln, die der Build prüft |
 
 ## 2. Randbedingungen
@@ -64,14 +70,19 @@ flowchart LR
     rte([RTE]) --> pikel[PIkel]
     po([Product Owner]) --> pikel
     team([Agile Teams]) --> pikel
+    bo([Business Owner]) --> pikel
+    tracker[(Issue-Tracker\nz. B. Jira)] -. "CSV: Features" .-> pikel
+    pikel -. "CSV: Features mit Team und Iteration" .-> tracker
+    pikel -. "PDF/PNG: Program Board" .-> wiki[(Confluence)]
 ```
 
 | Nachbar | Austausch |
 |---------|-----------|
-| RTE, Product Owner, Teams | Program Increments (heute), später Teams, Iterationen, Features, Abhängigkeiten, PI Objectives |
+| RTE, Product Owner, Business Owner, Teams | Program Increments (heute), mit dem MVP Teams, Iterationen, Features, Abhängigkeiten, Risiken, PI Objectives, Confidence Vote |
+| Issue-Tracker (geplant, M1/M3) | Features per CSV herein, geplante Features mit Team und Iteration per CSV zurück; keine Synchronisation |
+| Confluence (geplant, M3) | Program Board als PDF oder PNG, manuell abgelegt |
 
-Umsysteme (Issue-Tracker wie Jira, Identity Provider) sind noch nicht angebunden. Die Anmeldung über OIDC ist als
-eigene Story geplant (Abschnitt 11).
+Heute ist noch kein Umsystem angebunden. Die Anmeldung über OIDC ist als eigene Story geplant (Abschnitt 11).
 
 ### Technischer Kontext
 
