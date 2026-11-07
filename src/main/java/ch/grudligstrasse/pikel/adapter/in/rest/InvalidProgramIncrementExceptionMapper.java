@@ -11,8 +11,6 @@ public class InvalidProgramIncrementExceptionMapper implements ExceptionMapper<I
 
     @Override
     public Response toResponse(InvalidProgramIncrementException exception) {
-        return Response.status(Response.Status.BAD_REQUEST)
-                .entity(new ErrorResponse(exception.getMessage()))
-                .build();
+        return ErrorResponse.badRequest(exception.getMessage());
     }
 }

@@ -64,3 +64,11 @@ flow_merge_base() {
   echo "Hinweis: origin/$main_branch fehlt, verglichen wird nur mit HEAD." >&2
   git rev-parse HEAD 2>/dev/null
 }
+
+# Ohne jq kann ein Hook die Eingabe nicht lesen. Wächter dürfen dann nicht still durchlassen (fail-closed):
+# Exit 2 hält den Befehl an bzw. meldet es Claude, bis jq installiert ist.
+flow_need_jq() {
+  command -v jq >/dev/null 2>&1 && return 0
+  echo "flow: jq fehlt, $1 kann nicht prüfen und hält deshalb an. Installieren: brew install jq bzw. sudo apt-get install -y jq" >&2
+  exit 2
+}

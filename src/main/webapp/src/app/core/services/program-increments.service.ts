@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { computed, inject, Injectable, signal } from '@angular/core';
+import { inject, Injectable, signal } from '@angular/core';
 import { PlanProgramIncrement, ProgramIncrement } from '../models/program-increment.model';
 import { ProgramIncrementsRepository } from '../ports/program-increments.repository';
 
@@ -10,10 +10,9 @@ const GENERIC_ERROR = 'Das hat nicht geklappt. Bitte versuche es nochmals.';
 export class ProgramIncrementsService {
   private readonly repository = inject(ProgramIncrementsRepository);
 
+  // Der Server sortiert nach Startdatum (US-1); eine zweite Sortierung hier wäre ein zweiter Ort für dieselbe Regel.
   private readonly items = signal<ProgramIncrement[]>([]);
-  readonly programIncrements = computed(() =>
-    [...this.items()].sort((a, b) => a.startDate.localeCompare(b.startDate)),
-  );
+  readonly programIncrements = this.items.asReadonly();
   readonly loading = signal(false);
   readonly error = signal<string | undefined>(undefined);
 
@@ -29,12 +28,15 @@ export class ProgramIncrementsService {
     }
   }
 
-  /** Legt ein PI an; liefert `true` bei Erfolg, sonst steht die Meldung in `error`. */
+  /**
+   * Legt ein PI an und lädt danach die Liste in der Reihenfolge des Servers; liefert `true` bei Erfolg, sonst steht
+   * die Meldung in `error`.
+   */
   async plan(request: PlanProgramIncrement): Promise<boolean> {
     this.error.set(undefined);
     try {
-      const created = await this.repository.plan(request);
-      this.items.update((list) => [...list, created]);
+      await this.repository.plan(request);
+      await this.load();
       return true;
     } catch (e: unknown) {
       this.error.set(toMessage(e));

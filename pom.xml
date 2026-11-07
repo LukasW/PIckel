@@ -260,6 +260,13 @@
                                 <param>ch.grudligstrasse.pikel.domain.*Test</param>
                                 <param>ch.grudligstrasse.pikel.application.*Test</param>
                             </targetTests>
+                            <!-- STRONGER: zusätzlich Bedingungen entfernen und Rückgabewerte tauschen; die Standardgruppe
+                                 übersah im Chore flow-im-repo drei Lücken, die erst der test-reviewer fand.
+                                 Der Persistenz-Adapter ist kein Ziel: Panache braucht die Bytecode-Anreicherung von
+                                 Quarkus, PIT mutiert nur Klassen, die ohne Quarkus testbar sind. -->
+                            <mutators>
+                                <mutator>STRONGER</mutator>
+                            </mutators>
                             <mutationThreshold>${pitest.mutationThreshold}</mutationThreshold>
                             <timestampedReports>false</timestampedReports>
                         </configuration>

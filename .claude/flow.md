@@ -142,7 +142,13 @@ Angaben für `/flow-night-batch` und `.claude/flow/scripts/night-batch.sh`. Nach
 - Merge: nein (die PRs bleiben zum Review am Morgen offen)
 - Nie im Nachtlauf: Liquibase-Migrationen, die Daten ändern; Auth, Sessions, Rollen; `.github/`, `.claude/`,
   `pom.xml`, `package.json`; Issues, die nicht du selbst angelegt hast
-- Rechte: nur `.claude/settings.json` (`--permission-mode acceptEdits`), Kostendeckel `FLOW_MAX_BUDGET_USD` je Phase
+- Rechte: `.claude/settings.json` (`--permission-mode acceptEdits`) plus die Sperren aus
+  `.claude/settings.night.json` (keine Edits an `.claude/`, `.agents/`, `.github/`, `.githooks/`, `CLAUDE.md`; kein
+  `npx`/`npm install`; kein `git config`); `gh pr merge` nur in der Phase `ship` mit `merge: ja`. Kostendeckel
+  `FLOW_MAX_BUDGET_USD` je Phase
+- GitHub-Zugang nachts über ein eigenes Fine-grained Token in `GH_TOKEN`, nur für dieses Repository: Contents,
+  Pull requests und Issues mit Lesen und Schreiben, keine Administration. So kann der Lauf weder Branch Protection
+  noch Labels-Einstellungen ändern
 
 ## Abschluss
 

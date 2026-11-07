@@ -32,7 +32,7 @@ Fachlicher Gesamtstand: Begriffe, Datenmodell mit Regeln, API. Zweck und Stakeho
 | Methode | Pfad | Beschreibung |
 |---------|------|--------------|
 | `GET` | `/api/v1/program-increments` | Alle PIs, aufsteigend nach Startdatum |
-| `POST` | `/api/v1/program-increments` | PI anlegen → 201; 400 mit `{ "message": … }` bei Regelverletzung |
+| `POST` | `/api/v1/program-increments` | PI anlegen → 201 mit dem neuen PI (ohne `Location`); 400 mit `{ "message": … }` bei Regelverletzung, fehlendem Inhalt, ungültigem JSON oder ungültigem Wert |
 
 ## Ausblick (noch nicht spezifiziert)
 

@@ -9,8 +9,8 @@
     "watch": "ng build --watch --configuration development",
     "test": "ng test --watch=false",
     "test:watch": "ng test",
-    "format": "prettier --write \"src/app/**/*.{ts,html}\"",
-    "format:check": "prettier --check \"src/app/**/*.{ts,html}\""
+    "format": "prettier --write \"src/**/*.{ts,html,css}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,html,css}\""
   },
   "dependencies": {
     "@angular/common": "^22.1.7",
