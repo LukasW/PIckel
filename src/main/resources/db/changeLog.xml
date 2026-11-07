@@ -13,4 +13,8 @@
         <sqlFile path="db/migration/V2__add_iteration_length.sql"/>
     </changeSet>
 
+    <changeSet id="3" author="pikel">
+        <sqlFile path="db/migration/V3__create_teams.sql"/>
+    </changeSet>
+
 </databaseChangeLog>

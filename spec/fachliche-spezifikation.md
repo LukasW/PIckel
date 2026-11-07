@@ -53,6 +53,15 @@ verweisen auf eine Iteration über PI und `number`; das bleibt stabil, weil Län
 | `endDate` | Datum | Tag vor der nächsten Iteration, bei der letzten das Enddatum des PI |
 | `innovationAndPlanning` | Wahrheitswert | nur bei der letzten Iteration (IP-Iteration) |
 
+### Team
+
+Gehört zum impliziten ART und gilt für alle PIs (ADR 0005).
+
+| Feld | Typ | Regel |
+|------|-----|-------|
+| `id` | UUID | vom System vergeben |
+| `name` | Text | Pflicht, getrimmt, höchstens 50 Zeichen; eindeutig ohne Rücksicht auf Gross- und Kleinschreibung |
+
 ## REST-API (aktueller Stand)
 
 | Methode | Pfad | Beschreibung |
@@ -60,6 +69,10 @@ verweisen auf eine Iteration über PI und `number`; das bleibt stabil, weil Län
 | `GET` | `/api/v1/program-increments` | Alle PIs, aufsteigend nach Startdatum |
 | `GET` | `/api/v1/program-increments/{id}` | Ein PI mit Iterationen; 404 mit `{ "message": … }`, wenn es die ID nicht gibt |
 | `POST` | `/api/v1/program-increments` | PI anlegen (`iterationLengthWeeks` optional) → 201 mit dem neuen PI und `Location`; 400 mit `{ "message": … }` bei Regelverletzung, fehlendem Inhalt, ungültigem JSON oder ungültigem Wert |
+| `GET` | `/api/v1/teams` | Alle Teams, alphabetisch nach Name |
+| `POST` | `/api/v1/teams` | Team erfassen (`name`) → 201 mit dem Team; 400 mit `{ "message": … }` bei ungültigem oder doppeltem Namen |
+| `PUT` | `/api/v1/teams/{id}` | Team umbenennen (`name`) → 200 mit dem Team; 400 wie beim Erfassen; 404, wenn es die ID nicht gibt |
+| `DELETE` | `/api/v1/teams/{id}` | Team entfernen → 204; 404, wenn es die ID nicht gibt |
 
 ## MVP-Umfang (noch nicht spezifiziert)
 
