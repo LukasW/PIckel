@@ -37,4 +37,11 @@ if printf '%s' "$cmd" | grep -Eq 'gh[[:space:]]+api[[:space:]]+graphql' \
   && printf '%s' "$cmd" | grep -Eq 'clearLabelsFromLabelable|removeLabelsFromLabelable'; then
   deny_review "GraphQL"
 fi
+# Commit-Status mit den Namen der Pflicht-Checks meldet nur scripts/ci-local.sh, nachdem es selbst geprüft hat;
+# ein direkt gemeldeter Status wäre ein grüner Check ohne Prüfung (ADR 0004)
+if printf '%s' "$cmd" | grep -Eq 'statuses/' \
+  && printf '%s' "$cmd" | grep -Eqi -- "${method}(POST|PUT|PATCH)|(^|[[:space:]])(-f|-F|--field|--raw-field|--input)([[:space:]=]|$)"; then
+  echo "guard-labels: Einen Commit-Status meldet nur scripts/ci-local.sh, nach den Prüfungen. Das Skript starten statt den Status selbst zu setzen." >&2
+  exit 2
+fi
 exit 0

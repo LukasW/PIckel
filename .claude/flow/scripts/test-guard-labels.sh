@@ -29,6 +29,12 @@ t 0 'gh api -X DELETE repos/o/r/issues/5/labels/bug'
 t 0 'gh api repos/o/r/issues/5/labels'
 t 0 'gh api -X POST repos/o/r/issues/5/labels -f labels[]=bug'
 t 0 'gh pr edit 5 --add-label needs-human-review'
+t 2 'gh api -X POST repos/o/r/statuses/abc -f state=success -f context="Unit Tests"'
+t 2 'gh api repos/o/r/statuses/abc -f state=success'
+t 2 'gh api repos/o/r/statuses/abc --raw-field state=success'
+t 2 'gh api --method=post repos/o/r/statuses/abc --input s.json'
+t 0 'gh api repos/o/r/commits/abc/statuses'
+t 0 'scripts/ci-local.sh'
 t 0 'git status'
 # Ohne jq: fail-closed. Eigener PATH mit den nötigen Werkzeugen, aber ohne jq (macOS hat jq unter /usr/bin)
 nojq=$(mktemp -d)

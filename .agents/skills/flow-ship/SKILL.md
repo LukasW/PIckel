@@ -36,7 +36,10 @@ Hauptzweig: `base-branch` aus dem Kopf von `flow.md`, sonst `main`.
 - Change-Ordner `spec/changes/<nr>-*/` ist im PR enthalten (Delta bzw. Plan, Notizen)
 - CI-Status des PR prüfen — **warten, bis alle Checks grün sind**
 - Bei Fehlschlag: abbrechen, den Nutzer informieren, nicht mergen
-- Gibt es keine CI für diesen PR: das sagen und nur mit lokal grünem Build weitermachen
+- **CI läuft nicht** (Jobs ohne ausgeführten Schritt abgebrochen, etwa weil das Actions-Kontingent aufgebraucht ist,
+  oder nach einigen Minuten noch keine Checks): das sagen und `scripts/ci-local.sh` starten (`flow.md` → «Ohne
+  GitHub Actions»). Es prüft lokal dasselbe und meldet die Pflicht-Checks als Commit-Status; danach wie bei grüner CI
+  weiter. Einen Status nie selbst setzen, eine rote CI nie lokal überstimmen
 - PR trägt das Label `needs-human-review` (Risiko-Pfad: Schema, Pipeline, Agenten-Konfiguration, Abhängigkeiten):
   die betroffenen Dateien nennen und erst nach ausdrücklicher Freigabe im Chat mergen. Ein früheres «ok» zum Diff
   zählt nicht, weil die Freigabe genau diesem Risiko gelten soll
