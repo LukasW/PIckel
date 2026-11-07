@@ -106,7 +106,9 @@ if [ "${1:-}" = "--all" ]; then
 fi
 
 flow_need_jq check-test-edit
-payload=$(cat)
+payload=$(flow_payload)
+FLOW_PAYLOAD=$payload
+flow_is_edit "$payload" || exit 0
 session_id=$(printf '%s' "$payload" | jq -r '.session_id // empty' 2>/dev/null)
 findings=""
 while IFS= read -r file; do

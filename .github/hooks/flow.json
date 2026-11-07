@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "hooks": {
+    "preToolUse": [
+      {
+        "type": "command",
+        "bash": "bash \"${COPILOT_PROJECT_DIR:-.}\"/.claude/flow/scripts/guard-env.sh",
+        "timeoutSec": 10
+      },
+      {
+        "type": "command",
+        "bash": "bash \"${COPILOT_PROJECT_DIR:-.}\"/.claude/flow/scripts/guard-labels.sh",
+        "timeoutSec": 10
+      },
+      {
+        "type": "command",
+        "bash": "bash \"${COPILOT_PROJECT_DIR:-.}\"/.claude/flow/scripts/guard-push.sh",
+        "timeoutSec": 10
+      }
+    ],
+    "postToolUse": [
+      {
+        "type": "command",
+        "bash": "bash \"${COPILOT_PROJECT_DIR:-.}\"/.claude/hooks/reviewer-reminder.sh",
+        "timeoutSec": 10
+      },
+      {
+        "type": "command",
+        "bash": "bash \"${COPILOT_PROJECT_DIR:-.}\"/.claude/flow/scripts/check-spelling.sh",
+        "timeoutSec": 10
+      },
+      {
+        "type": "command",
+        "bash": "bash \"${COPILOT_PROJECT_DIR:-.}\"/.claude/flow/scripts/check-test-edit.sh",
+        "timeoutSec": 10
+      },
+      {
+        "type": "command",
+        "bash": "bash \"${COPILOT_PROJECT_DIR:-.}\"/.claude/hooks/adr-index.sh",
+        "timeoutSec": 10
+      }
+    ]
+  }
+}

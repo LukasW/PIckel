@@ -146,6 +146,54 @@ messen und freigeben, Subagenten (`.github/agents/`), Freigabe von `implement` u
 - [x] Prüfung mit `copilot -p` (von Claude Code aus, eng freigegebene Tools, `--trust-folder`): Push auf `main` mit
   sichtbarem Grund abgelehnt, Eszett-Edit gemeldet; Ergebnis in `notes.md`
 
+## Nachtrag: interaktive CLI (Entscheid 2026-11-07, nach der Prüfung von Hand)
+
+Die interaktive Copilot CLI lädt die Hooks aus `.claude/settings.json` nicht (`/env`: «No hooks loaded»), nur im
+Prompt-Modus. Sie lädt `.github/hooks/*.json` mit Copilots eigenem Format (`notes.md`, Abschnitt «Interaktive CLI
+lädt keine Claude-Hooks»). Darum kommt der ursprünglich geplante Hook-Satz für Copilot doch, als Registrierung
+derselben Skripte, nicht als Kopie.
+
+### Architektur-Entscheide
+
+- **`.github/hooks/flow.json`** registriert `guard-env`, `guard-labels`, `guard-push` als `preToolUse` und
+  `reviewer-reminder`, `check-spelling`, `check-test-edit`, `adr-index` als `postToolUse`; Pfad über
+  `${COPILOT_PROJECT_DIR:-.}`
+- **`flow_payload` in `lib.sh`** liest stdin und gibt die Eingabe im Claude-Format aus. Copilots eigenes Format
+  (erkennbar an `toolName` ohne `tool_name`) wird übersetzt: `toolArgs` → `tool_input`, `toolResult` →
+  `tool_response`, `sessionId` → `session_id`, `toolCallId` → `tool_use_id`; Werkzeuge `bash` → `Bash`, `view` →
+  `Read`, `rg`/`grep` → `Grep`, `glob` → `Glob`, `edit`/`create`/`apply_patch` → `Edit`, andere unverändert. Eine
+  Eingabe im Claude-Format bleibt unverändert, eine unlesbare wird unverändert weitergereicht (die Guards lehnen dann
+  wie bisher ab). Alle Hooks lesen ihre Eingabe über `flow_payload`
+- **Filter nach Werkzeug in jedem Skript** (die Datei kennt keinen Matcher): `guard-push` und `guard-labels` prüfen
+  nur `Bash` (fehlt `tool_name`, gilt `Bash`, fail closed wie bisher); `guard-env` prüft `Bash` und `Read|Grep|Glob`,
+  jedes andere Werkzeug geht durch; die Hinweis-Hooks reagieren nur auf `Edit|Write|MultiEdit|NotebookEdit`
+- **Doppelte Hinweise vermeiden:** Im Prompt-Modus laufen die Hooks aus beiden Quellen. `flow_hint` meldet je
+  Werkzeug-Aufruf (`tool_use_id`) und Hook nur einmal; ohne `tool_use_id` wie bisher. Doppelte Ablehnungen der Guards
+  sind unschädlich
+- Die Bedingung «vertrauter Ordner» bleibt für den Prompt-Modus; interaktiv ist die Kontrolle `/env` (Abschnitt
+  «Hooks» listet `flow.json`) plus der abgelehnte Push auf `main`
+
+### Aufgaben
+
+- [x] N1. `flow_payload` und Werkzeug-Filter, `.github/hooks/flow.json` — erledigt, wenn alle Testskripte für
+  Claude-Format, übersetztes und eigenes Copilot-Format grün sind
+- [x] N2. Dedup in `flow_hint` — erledigt, wenn derselbe Hinweis bei gleicher `tool_use_id` einmal kommt
+- [x] N3. Doku: ADR 0007 «Eine Konfiguration», `flow.md` «Agent wechseln», `claude-guide.md` — Kontrolle mit `/env`
+- [x] N4. Prüfung von Hand in der interaktiven CLI: `/env` listet die Hooks, Push auf `main` und Lesen der
+  Geheimnis-Datei abgelehnt, Eszett-Edit gemeldet; Ergebnis in `notes.md`
+
+### Test-Strategie
+
+- [ ] `flow_payload`: übersetzt je ein gemessenes Beispiel (`bash`, `view`, `rg`, `glob`, `apply_patch`, `edit`,
+  `postToolUse` mit `toolResult`) korrekt; lässt Claude-Format unverändert; reicht Nicht-JSON unverändert durch
+- [ ] Guards im eigenen Copilot-Format: jeder bestehende Fall von `guard-push` und `guard-labels` auch als
+  `{"toolName":"bash","toolArgs":{"command":…}}` mit gleichem Entscheid; `apply_patch`, `view` und `edit` gehen
+  bei `guard-push`/`guard-labels` durch; `guard-env` lehnt `view`/`rg`/`glob` auf die Geheimnis-Datei ab, lässt
+  `apply_patch` und `edit` durch
+- [ ] Hinweis-Hooks: `check-spelling` mit eigenem Copilot-`apply_patch` meldet Eszett; mit `view` auf eine Datei
+  mit Eszett bleibt es still (kein Edit); zweiter Aufruf mit gleicher `tool_use_id` bleibt still
+- [ ] `flow.json` ist gültiges JSON, `version: 1`, nennt alle sieben Skripte (Prüfung in `test-hook-input.sh`)
+
 ## Entschieden (2026-11-07)
 
 

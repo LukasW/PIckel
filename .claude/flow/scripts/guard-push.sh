@@ -9,7 +9,9 @@ root=$(flow_root)
 [ -f "$root/.claude/flow.md" ] || exit 0
 flow_need_jq guard-push
 
-payload=$(cat)
+payload=$(flow_payload)
+# .github/hooks/flow.json kennt keinen Matcher: nur Terminal-Aufrufe prüfen; ohne tool_name gilt Bash (fail closed)
+[ "$(printf '%s' "$payload" | jq -r '.tool_name // "Bash"' 2>/dev/null || echo Bash)" = Bash ] || exit 0
 cmd=$(flow_tool_command "$payload") \
   || flow_deny "guard-push: Kein Befehl in der Eingabe erkannt; ohne Befehl lässt der Wächter nichts durch (ADR 0007)."
 printf '%s' "$cmd" | grep -Eq '(^|[^[:alnum:]_-])git([[:space:]]+-C[[:space:]]+[^[:space:]]+)?[[:space:]]+push([[:space:]]|$)' || exit 0

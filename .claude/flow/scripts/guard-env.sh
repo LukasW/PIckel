@@ -15,8 +15,13 @@ flow_require "$root" guard-env true
 flow_need_jq guard-env
 
 reason="guard-env: Der Aufruf nennt die .env mit echten Zugangsdaten und wird nicht ausgeführt. Nie lesen oder durchsuchen; eine Vorlage ohne Werte heisst env.example."
-payload=$(cat)
+payload=$(flow_payload)
 tool=$(printf '%s' "$payload" | jq -r '.tool_name // "Bash"' 2>/dev/null) || tool=Bash
+
+case "$tool" in
+  Bash|Read|Grep|Glob) ;;
+  *) exit 0 ;; # .github/hooks/flow.json kennt keinen Matcher; Schreiben schützt guard-env nicht
+esac
 
 if [ "$tool" != Bash ]; then
   unreadable="guard-env: Eingabe von $tool nicht lesbar; ohne Prüfung lässt der Wächter nichts durch (ADR 0007)."

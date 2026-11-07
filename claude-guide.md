@@ -105,12 +105,12 @@ Die Copilot CLI ist eine Option neben Claude Code (ADR 0007). Welcher Skill mit 
 [`.claude/flow.md`](.claude/flow.md) → «Agent wechseln». Kurz: Skills ohne Subagenten (`flow-task`, `flow-grill-me`,
 `flow-plan`, `flow-ship`, `flow-fix-build`) ja, `flow-implement`, `flow-fast` und der Nachtlauf nur mit Claude Code.
 
-- **Ordner vertrauen**, sonst greift kein Hook: beim ersten Start bestätigen oder in `~/.copilot/config.json` unter
-  `trustedFolders` eintragen
-- **Kontrolle vor dem ersten Schreibzugriff:** `git push --dry-run origin HEAD:main` ausführen lassen; Copilot muss
-  mit «Denied by preToolUse hook: guard-push: …» ablehnen
-- Copilot liest `CLAUDE.md`, `.claude/rules/`, die Hooks aus `.claude/settings.json` und die Skills aus
-  `.agents/skills/` selbst. Die Hooks verstehen beide Formate (`.claude/flow/scripts/lib.sh`); als Schutz zählen
+- **Kontrolle vor dem ersten Schreibzugriff:** `/env` muss unter «Hooks» die Einträge aus `.github/hooks/flow.json`
+  zeigen, und `git push --dry-run origin HEAD:main` muss mit «Denied by preToolUse hook: guard-push: …» abgelehnt
+  werden. Zeigt `/env` «No hooks loaded», nicht weiterarbeiten
+- Copilot liest `CLAUDE.md`, `.claude/rules/` und die Skills aus `.agents/skills/` selbst. Die Hooks lädt es
+  interaktiv aus `.github/hooks/flow.json`, im Prompt-Modus (`copilot -p --trust-folder`) auch aus
+  `.claude/settings.json`; es sind dieselben Skripte, `lib.sh` versteht alle Formate; als Schutz zählen
   nur sie, ob Copilot die Erlaubnis-Regeln aus `settings.json` beachtet, ist nicht gemessen. `guard-env` sperrt
   das Lesen der Geheimnis-Datei deshalb auch über Lese- und Suchwerkzeuge
 - Gewechselt wird nur zwischen zwei Schritten: Was ein Schritt hinterlässt, steht im Change-Ordner und im Branch

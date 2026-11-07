@@ -174,12 +174,12 @@ Referenz.
 
 Bedingungen für die Copilot CLI:
 
-- Der Ordner ist vertraut (`trustedFolders` in `~/.copilot/config.json`). Sonst lädt die CLI keine Repository-Hooks,
-  und kein Guard greift
-- Vor dem ersten Schreibzugriff einer Session prüfen, dass die Hooks greifen: `git push --dry-run origin HEAD:main`
-  ausführen lassen; erwartet ist «Denied by preToolUse hook: guard-push: …»
-- Copilot liest dieselben Dateien wie Claude Code (`CLAUDE.md`, `.claude/rules/`, `.claude/settings.json`,
-  `.agents/skills/`); es gibt keine Copilot-Kopien. Ob Copilot die Erlaubnis-Regeln aus `settings.json`
+- Vor dem ersten Schreibzugriff einer Session prüfen, dass die Hooks greifen: `/env` listet unter «Hooks» die
+  Einträge aus `.github/hooks/flow.json`, und `git push --dry-run origin HEAD:main` wird mit «Denied by preToolUse
+  hook: guard-push: …» abgelehnt. Sonst nicht weiterarbeiten
+- Im Prompt-Modus (`copilot -p`) lädt die CLI Repository-Hooks nur in einem vertrauten Ordner (`--trust-folder`)
+- Copilot liest `CLAUDE.md`, `.claude/rules/` und `.agents/skills/` selbst; die Hooks interaktiv aus
+  `.github/hooks/flow.json`, im Prompt-Modus zusätzlich aus `.claude/settings.json` (dieselben Skripte). Ob Copilot die Erlaubnis-Regeln aus `settings.json`
   (`permissions`) beachtet, ist nicht gemessen; als Schutz zählen unter Copilot nur die Hooks. Das Leseverbot für
   die Geheimnis-Datei setzt `guard-env` deshalb auch bei Lese- und Suchwerkzeugen durch (ausser bei einer Suche über
   einen ganzen Ordner)

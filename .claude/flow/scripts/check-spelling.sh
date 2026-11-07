@@ -7,7 +7,9 @@ root=$(flow_root)
 flow_require "$root" spelling swiss
 flow_need_jq check-spelling
 
-payload=$(cat)
+payload=$(flow_payload)
+FLOW_PAYLOAD=$payload
+flow_is_edit "$payload" || exit 0
 sz=$'\xc3\x9f'
 report=""
 while IFS= read -r file; do

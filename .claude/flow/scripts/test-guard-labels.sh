@@ -2,6 +2,8 @@
 # Prüft guard-labels.sh gegen bekannte Umgehungen (Projekt-Review 2026-11-07): je Fall erwarteter Exit-Code und
 # Befehl. Läuft in scripts/gate.sh und CI, damit eine Änderung am Guard keine Lücke wieder öffnet.
 set -u
+# Laufen die Tests unter Copilot, ginge dessen Projektordner den gesetzten Wurzeln vor (flow_root)
+unset COPILOT_PROJECT_DIR
 root="$(cd "$(dirname "$0")/../../.." && pwd)"
 G="$root/.claude/flow/scripts/guard-labels.sh"
 export CLAUDE_PROJECT_DIR="$root"
@@ -10,6 +12,10 @@ fails=0
 # transcript_path). Erwartet denselben Exit wie Claude; bei Exit 2 zusätzlich JSON mit permissionDecision deny und dem
 # Grund von stderr auf stdout (nur so zeigt Copilot den Grund), bei Exit 0 keine Ablehnung auf stdout.
 copilot_payload() { jq -cn --arg c "$1" --arg cwd "$2" '{hook_event_name:"PreToolUse",session_id:"c1",timestamp:1793955600000,cwd:$cwd,tool_use_id:"call_1",tool_name:"Bash",tool_input:{command:$c,description:"Befehl"}}'; }
+# Eigenes Format der Copilot CLI (.github/hooks/flow.json, notes.md «Interaktive CLI lädt keine Claude-Hooks»):
+# toolName, toolArgs, sessionId, toolCallId, ohne tool_name. Erwartet denselben Entscheid wie im Claude-Format.
+own_payload() { jq -cn --arg c "$1" --arg cwd "$2" '{sessionId:"c1",timestamp:1793955600000,cwd:$cwd,toolCallId:"call_1",toolName:"bash",toolArgs:{command:$c,description:"Befehl"}}'; }
+own_tool() { jq -cn --arg n "$1" --argjson a "$2" --arg cwd "$3" '{sessionId:"c1",timestamp:1793955600000,cwd:$cwd,toolCallId:"call_1",toolName:$n,toolArgs:$a}'; }
 check() {
   local want="$1" label="$2" payload="$3" dir="${4:-$root}" o e got out err
   o=$(mktemp) e=$(mktemp)
@@ -35,6 +41,7 @@ t() {
   got=$?
   if [ "$got" = "$want" ]; then echo "ok   $got $cmd"; else echo "FAIL $got (erwartet $want) $cmd"; fails=$((fails+1)); fi
   check "$want" "copilot: $cmd" "$(copilot_payload "$cmd" "$root")"
+  check "$want" "copilot eigen: $cmd" "$(own_payload "$cmd" "$root")"
 }
 SU="spec-$(printf unchanged)"
 t 2 'gh pr edit 5 --remove-label needs-human-review'
@@ -64,6 +71,15 @@ t 0 'git status'
 check 2 'claude: Bash ohne Befehl' '{"tool_name":"Bash","tool_input":{"description":"Befehl"}}'
 check 2 'copilot: Bash ohne Befehl' \
   "$(jq -cn --arg cwd "$root" '{hook_event_name:"PreToolUse",session_id:"c1",timestamp:1793955600000,cwd:$cwd,tool_use_id:"call_1",tool_name:"Bash",tool_input:{description:"Befehl"}}')"
+check 2 'copilot eigen: bash ohne Befehl' "$(own_tool bash '{"description":"Befehl"}' "$root")"
+# Nur Bash wird geprüft (Plan #24, «Nachtrag»): Lesen und Bearbeiten gehen durch, auch wenn der Text das Label nennt
+check 0 'copilot eigen: view' "$(own_tool view "$(jq -cn --arg p "$root/README.md" '{path:$p,view_range:[1,200]}')" "$root")"
+check 0 'copilot eigen: edit mit Label im Text' \
+  "$(own_tool edit "$(jq -cn --arg p "$root/README.md" --arg l "$SU" '{path:$p,old_str:"x",new_str:("gh pr edit 5 --add-label " + $l)}')" "$root")"
+check 0 'copilot eigen: apply_patch mit Label im Text' \
+  "$(own_tool apply_patch "$(jq -cn --arg p "$root/README.md" '"*** Begin Patch\n*** Update File: " + $p + "\n@@\n+gh pr edit 5 --remove-label needs-human-review\n*** End Patch\n"')" "$root")"
+check 0 'claude: Read geht durch' "$(jq -cn --arg p "$root/README.md" '{tool_name:"Read",tool_input:{file_path:$p}}')"
+check 2 'Eingabe, die kein JSON ist' 'gh pr edit 5 --remove-label needs-human-review'
 
 # Ohne jq: fail-closed. Eigener PATH mit den nötigen Werkzeugen, aber ohne jq (macOS hat jq unter /usr/bin)
 nojq=$(mktemp -d)

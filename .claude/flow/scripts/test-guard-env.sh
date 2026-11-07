@@ -4,6 +4,8 @@
 # Bei einer Ablehnung steht der Grund zusätzlich als JSON mit permissionDecision deny auf stdout, sonst zeigt Copilot
 # ihn nicht. Läuft in scripts/gate.sh und CI.
 set -u
+# Laufen die Tests unter Copilot, ginge dessen Projektordner den gesetzten Wurzeln vor (flow_root)
+unset COPILOT_PROJECT_DIR
 root="$(cd "$(dirname "$0")/../../.." && pwd)"
 G="$root/.claude/flow/scripts/guard-env.sh"
 export CLAUDE_PROJECT_DIR="$root"
@@ -11,6 +13,10 @@ fails=0
 
 claude_payload() { jq -cn --arg c "$1" '{tool_input:{command:$c}}'; }
 copilot_payload() { jq -cn --arg c "$1" --arg cwd "$root" '{hook_event_name:"PreToolUse",session_id:"c1",timestamp:1793955600000,cwd:$cwd,tool_use_id:"call_1",tool_name:"Bash",tool_input:{command:$c,description:"Befehl"}}'; }
+# Eigenes Format der Copilot CLI (.github/hooks/flow.json, notes.md «Interaktive CLI lädt keine Claude-Hooks»):
+# toolName, toolArgs, sessionId, toolCallId, ohne tool_name
+own_payload() { own_tool bash "$(jq -cn --arg c "$1" '{command:$c,description:"Befehl"}')"; }
+own_tool() { jq -cn --arg n "$1" --argjson a "$2" --arg cwd "$root" '{sessionId:"c1",timestamp:1793955600000,cwd:$cwd,toolCallId:"call_1",toolName:$n,toolArgs:$a}'; }
 
 # Ein Lauf: erwarteter Exit; bei Exit 2 JSON mit permissionDecision deny und dem Grund von stderr, bei Exit 0 keine
 # Ablehnung auf stdout (Copilot lehnt auch bei Exit 0 ab, wenn das JSON deny sagt).
@@ -40,6 +46,7 @@ t() {
   got=$?
   if [ "$got" = "$want" ]; then echo "ok   $got $cmd"; else echo "FAIL $got (erwartet $want) $cmd"; fails=$((fails+1)); fi
   check "$want" "copilot: $cmd" "$(copilot_payload "$cmd")"
+  check "$want" "copilot eigen: $cmd" "$(own_payload "$cmd")"
 }
 
 t 2 'cat .env'
@@ -105,6 +112,27 @@ check 2 'claude: Read notebook_path .env' "$(claude_tool Read "$(jq -cn --arg p 
 check 2 'copilot: Read filePath .env' "$(copilot_tool Read "$(jq -cn --arg p "$root/.env" '{filePath:$p}')")"
 # tool_input, das kein Objekt ist, lässt der Wächter nicht durch (fail closed wie im Bash-Zweig)
 check 2 'copilot: Read mit tool_input als String' "$(jq -cn --arg p "$root/.env" '{tool_name:"Read",tool_input:$p}')"
+
+# Eigenes Format der Copilot CLI (Plan #24, «Nachtrag: interaktive CLI»): view → Read, rg → Grep, glob → Glob werden
+# geprüft; edit und apply_patch (→ Edit) gehen durch, auch auf die .env (jedes andere Werkzeug geht durch)
+check 2 'copilot eigen: bash ohne Befehl' "$(own_tool bash '{"description":"Befehl"}')"
+check 2 'copilot eigen: view absolut .env' "$(own_tool view "$(jq -cn --arg p "$root/.env" '{path:$p,view_range:[1,200]}')")"
+check 2 'copilot eigen: view relativ .env' "$(own_tool view '{"path":".env"}')"
+check 2 'copilot eigen: view .env.local' "$(own_tool view "$(jq -cn --arg p "$root/.env.local" '{path:$p}')")"
+check 0 'copilot eigen: view README.md' "$(own_tool view "$(jq -cn --arg p "$root/README.md" '{path:$p,view_range:[1,200]}')")"
+check 2 'copilot eigen: rg paths .env' "$(own_tool rg "$(jq -cn --arg p "$root/.env" '{pattern:"TOKEN",paths:$p}')")"
+check 2 'copilot eigen: rg paths .env relativ' "$(own_tool rg '{"pattern":"TOKEN","paths":".env"}')"
+check 0 'copilot eigen: rg paths docs relativ' "$(own_tool rg '{"pattern":"TOKEN","paths":"docs"}')"
+check 0 'copilot eigen: rg pattern .env über docs' "$(own_tool rg '{"pattern":".env","paths":"docs"}')"
+check 2 'copilot eigen: glob pattern .env' "$(own_tool glob '{"pattern":".env"}')"
+check 2 'copilot eigen: glob pattern **/.env' "$(own_tool glob '{"pattern":"**/.env"}')"
+check 0 'copilot eigen: glob pattern docs/**/*.md' "$(own_tool glob '{"pattern":"docs/**/*.md"}')"
+check 0 'copilot eigen: edit README.md' "$(own_tool edit "$(jq -cn --arg p "$root/README.md" '{path:$p,old_str:"x",new_str:"y"}')")"
+check 0 'copilot eigen: edit .env' "$(own_tool edit "$(jq -cn --arg p "$root/.env" '{path:$p,old_str:"x",new_str:"y"}')")"
+check 0 'copilot eigen: apply_patch .env' \
+  "$(own_tool apply_patch "$(jq -cn --arg p "$root/.env" '"*** Begin Patch\n*** Update File: " + $p + "\n@@\n-A=1\n+A=2\n*** End Patch\n"')")"
+check 0 'copilot eigen: apply_patch docs' \
+  "$(own_tool apply_patch "$(jq -cn --arg p "$root/docs/arc42.md" '"*** Begin Patch\n*** Update File: " + $p + "\n@@\n-alt\n+neu\n*** End Patch\n"')")"
 
 [ "$fails" = 0 ] || { echo "[ERROR] guard-env: $fails Fälle falsch"; exit 1; }
 echo "guard-env: alle Fälle ok"

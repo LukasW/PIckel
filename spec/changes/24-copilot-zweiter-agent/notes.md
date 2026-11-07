@@ -135,3 +135,39 @@ Gemessen mit vorübergehend umgebautem `guard-push.sh` und `check-spelling.sh` (
 - Für das Folge-Issue (schon auf `main`, betrifft auch Claude Code): Der Bash-Zweig von `guard-env` lässt Befehle mit
   Shell-Platzhaltern oder getrennten Anführungszeichen im Dateinamen durch (Stern, Fragezeichen, Klammer, `""`
   mitten im Namen), ebenso einen Symlink auf die Datei; zusammen mit den Push-Umgehungen von `guard-push`
+
+### Interaktive CLI lädt keine Claude-Hooks (Prüfung von Hand, 2026-11-07)
+
+- Prüfung von Hand durch den Nutzer: In der **interaktiven** CLI las Copilot die Geheimnis-Datei über das Terminal,
+  ein `git push --dry-run origin HEAD:main` führte zur Rückfrage statt zur Ablehnung. `/env` zeigt «Hooks: No hooks
+  loaded», listet aber `CLAUDE.md`, `.claude/rules/`, die Skills und die Agenten unter `.claude/agents/`
+- Die Hooks aus `.claude/settings.json` lädt die CLI nur im Prompt-Modus (`-p --trust-folder`, Log: «Loading repo
+  hooks in prompt mode»). `.github/hooks/*.json` lädt sie auch interaktiv (Spike am Anfang). Die Messungen weiter
+  oben gelten deshalb nur für den Prompt-Modus
+- Eigenes Format von `.github/hooks` (Prompt-Modus, vorübergehender Log-Hook, danach entfernt):
+  `{"sessionId","timestamp","cwd","toolCallId","toolName","toolArgs"}`; Werkzeuge: `bash` `{command}`, `view`
+  `{path}`, `rg` `{pattern, paths}` (`paths` auch relativ, z. B. `docs`), `glob` `{pattern}`, `apply_patch` (Patch
+  als String in `toolArgs`), `edit` `{path, old_str, new_str}`. `postToolUse` zusätzlich `toolResult`
+- Folge: `.github/hooks/flow.json` registriert dieselben Skripte; `lib.sh` übersetzt das eigene Format ins
+  Claude-Format, und jedes Skript filtert selbst nach dem Werkzeug (die Datei kennt keinen Matcher)
+- Umgesetzt (N1, N2): `flow_payload` übersetzt das eigene Format, `flow_is_edit` und die Werkzeug-Filter in den
+  Guards, Dedup in `flow_hint` über `tool_use_id` je Hook. Prompt-Modus mit beiden Quellen (`copilot -p`): Eszett-
+  Meldung genau einmal, Push auf `main` mit Grund abgelehnt, README lesbar
+- Annahme: `guard-env` schützt das Lesen, nicht das Schreiben (Edit/`apply_patch` auf die Geheimnis-Datei geht durch,
+  wie unter Claude Code mit dem Matcher `Read|Grep|Glob`); im Handoff vorgelegt
+- Prüfung von Hand, interaktive CLI (N4): `/env` listet 3 preToolUse- und 4 postToolUse-Hooks aus `flow.json`; Push
+  auf `main` und Lesen der Geheimnis-Datei abgelehnt. Eszett-Edit blieb zuerst still: Interaktiv stehen im Patch
+  **relative** Pfade (`*** Update File: README.md`, aus `~/.copilot/session-state/*/events.jsonl`), die Hinweis-Hooks
+  prüfen nur Pfade unter dem Root. Behoben: `flow_tool_files` löst relative Pfade gegen `cwd` der Eingabe auf (Test)
+  Danach interaktiv: Eszett-Edit gemeldet, genau einmal. N4 erledigt
+- Sicherheits-Review, dritte Runde: Ein geerbtes `CLAUDE_PROJECT_DIR` eines anderen Projekts schaltete unter Copilot
+  alle Guards aus (`flow_root` fand dort keine `flow.md`). Behoben: `COPILOT_PROJECT_DIR` geht vor (auch in
+  `adr-index.sh`, `reviewer-reminder.sh`), Test in `test-guard-push.sh`; die Testskripte entfernen
+  `COPILOT_PROJECT_DIR`, damit sie auch unter Copilot ihre eigenen Wurzeln nutzen. Geprüft ohne Befund:
+  `toolArgs` als String/fehlend, `toolName` null/Zahl, `view`/`rg`/`grep`/`glob` auf die Geheimnis-Datei, Dedup
+  (wirkt nur auf Hinweise). `write_bash` gibt es in Copilot 1.0.107 nicht (Werkzeuge `bash`, `read_bash`,
+  `stop_bash`, `list_bash`)
+- Fürs Folge-Issue (Copilot-Ausbau): ob `web_fetch` `file://` liest (ginge an `guard-env` vorbei) und ob Hooks für
+  Werkzeug-Aufrufe von Copilot-Subagenten feuern, ist nicht gemessen
+- Vom Nutzer bestätigt (2026-11-07): `guard-env` schützt das Lesen, nicht das Schreiben; ohne `tool_name` gilt bei
+  Guards Bash, bei Hinweis-Hooks Edit; ein doppelter Hinweis endet still

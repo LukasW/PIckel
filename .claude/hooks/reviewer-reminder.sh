@@ -10,9 +10,10 @@ set -euo pipefail
 
 command -v jq >/dev/null 2>&1 || exit 0
 
-root="${CLAUDE_PROJECT_DIR:-$(pwd)}"
+root="${COPILOT_PROJECT_DIR:-${CLAUDE_PROJECT_DIR:-$(pwd)}}"
 . "$root/.claude/flow/scripts/lib.sh"
-payload=$(cat)
+payload=$(flow_payload)
+flow_is_edit "$payload" || exit 0
 session_id=$(printf '%s' "$payload" | jq -r '.session_id // empty' 2>/dev/null || true)
 
 reminders=()
