@@ -79,7 +79,8 @@ Atomar, in Umsetzungsreihenfolge, jede mit einem Erledigt-Kriterium, das sich pr
 
 ## Test-Strategie
 Verhalten und Invarianten, die die Tests belegen, nicht Testklassen; daraus schreibt `test-author` die Tests
-(`/flow-implement` 6b). Je Punkt die Ebene nach `flow.md` → «Tests».
+(`/flow-implement` 6b). Je Punkt die Ebene nach `flow.md` → «Tests». Jeder Punkt auf Ebene Integration oder
+Akzeptanz hat ein Szenario im Delta; fehlt es, zuerst das Delta ergänzen, sonst prüft ihn kein Test.
 - [ ] Unit: «Ein zweiter Lauf von … ändert nichts», Grenzfälle mit Werten
 - [ ] Integration / Adapter: …
 - [ ] Akzeptanz (US-<us-nr>): je Akzeptanzkriterium das beobachtbare Ergebnis
