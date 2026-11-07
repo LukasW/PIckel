@@ -11,6 +11,8 @@ ADR ausschliesst, ist entschieden; eine Änderung braucht eine neue ADR, die die
 | [0002](0002-agent-skills-standard.md) | Skills nach dem Agent-Skills-Standard | Angenommen | 2026-11-07 |
 | [0003](0003-fehlervertrag.md) | Einheitlicher Fehlervertrag `{ "message": … }`, Problem Details später | Angenommen | 2026-11-07 |
 | [0004](0004-ci-lokal.md) | Pflicht-Checks auch lokal erfüllbar | Angenommen | 2026-11-07 |
+| [0005](0005-aggregatschnitt-mvp.md) | Ein impliziter ART, Teams am ART, Kapazität und Board am PI | Angenommen | 2026-11-07 |
+| [0006](0006-kapazitaet-story-points.md) | Kapazität und Schätzung in Story Points, Iterationen aus fester Länge | Angenommen | 2026-11-07 |
 
 Neue ADR: nächste freie Nummer gegen `origin/main` prüfen, Datei `NNNN-<slug>.md` mit dem Kopf aus
 `scripts/adr-index.sh` anlegen. Den Index führt der Claude-Hook `.claude/hooks/adr-index.sh` nach; ohne Claude
