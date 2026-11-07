@@ -1,12 +1,15 @@
 package ch.grudligstrasse.pikel.adapter.in.rest;
 
+import ch.grudligstrasse.pikel.domain.model.PiLinkNotFoundException;
 import ch.grudligstrasse.pikel.domain.model.ProgramIncrement;
 import ch.grudligstrasse.pikel.domain.model.ProgramIncrementNotFoundException;
 import ch.grudligstrasse.pikel.domain.port.in.ProgramIncrementUseCase;
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
@@ -51,6 +54,36 @@ public class ProgramIncrementResource {
         } catch (IllegalArgumentException e) {
             throw new ProgramIncrementNotFoundException();
         }
+    }
+
+    /** Ersetzt Business-Kontext und PI Objectives des ART; 200 mit dem PI, 400 bei zu langem Text, 404 ohne PI. */
+    @PUT
+    @Path("/{id}/business-context")
+    public ProgramIncrementDto updateBusinessContext(
+            @PathParam("id") String id, @NotNull UpdateBusinessContextRequest request) {
+        return ProgramIncrementDto.from(
+                useCase.updateBusinessContext(toUuid(id), request.businessContext(), request.artObjectives()));
+    }
+
+    /** Fügt einen Link hinzu; 200 mit dem PI, 400 bei ungültigem Titel oder URL, 404 ohne PI. */
+    @POST
+    @Path("/{id}/links")
+    public ProgramIncrementDto addLink(@PathParam("id") String id, @NotNull AddPiLinkRequest request) {
+        return ProgramIncrementDto.from(useCase.addLink(toUuid(id), request.title(), request.url()));
+    }
+
+    /** Entfernt einen Link; 200 mit dem PI, 404 ohne PI oder ohne Link (auch bei einer ungültigen Link-ID). */
+    @DELETE
+    @Path("/{id}/links/{linkId}")
+    public ProgramIncrementDto removeLink(@PathParam("id") String id, @PathParam("linkId") String linkId) {
+        UUID programIncrementId = toUuid(id);
+        UUID link;
+        try {
+            link = UUID.fromString(linkId);
+        } catch (IllegalArgumentException e) {
+            throw new PiLinkNotFoundException();
+        }
+        return ProgramIncrementDto.from(useCase.removeLink(programIncrementId, link));
     }
 
     /** Alle PIs, aufsteigend nach Startdatum. */

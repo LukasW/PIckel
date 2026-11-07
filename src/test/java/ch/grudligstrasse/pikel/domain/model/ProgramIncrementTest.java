@@ -245,6 +245,159 @@ class ProgramIncrementTest {
         assertEquals("Das Enddatum muss nach dem Startdatum liegen.", exception.getMessage());
     }
 
+    // US-8
+
+    private static final String TOO_LONG_TEXT_MESSAGE = "Der Text darf höchstens 10 000 Zeichen lang sein.";
+    private static final String VISION_URL = "https://wiki.example.ch/vision";
+
+    @Test
+    void planStartsWithoutBusinessContextObjectivesAndLinks() {
+        ProgramIncrement pi = ProgramIncrement.plan("PI 27.1", START, END, null);
+
+        assertEquals("", pi.businessContext());
+        assertEquals("", pi.artObjectives());
+        assertEquals(List.of(), pi.links());
+    }
+
+    @Test
+    void withBusinessContextReplacesBothTextsAndKeepsTheRest() {
+        PiLink vision = new PiLink(UUID.randomUUID(), "Vision", VISION_URL);
+        ProgramIncrement pi = new ProgramIncrement(
+                UUID.randomUUID(), "PI 27.1", START, END, 3, "Alter Kontext", "Alte Ziele", List.of(vision));
+
+        ProgramIncrement changed = pi.withBusinessContext("Fokus auf Self-Service", "Checkout in 2 Schritten");
+
+        assertEquals("Fokus auf Self-Service", changed.businessContext());
+        assertEquals("Checkout in 2 Schritten", changed.artObjectives());
+        assertEquals(pi.id(), changed.id());
+        assertEquals("PI 27.1", changed.name());
+        assertEquals(START, changed.startDate());
+        assertEquals(END, changed.endDate());
+        assertEquals(3, changed.iterationLengthWeeks());
+        assertEquals(List.of(vision), changed.links());
+    }
+
+    @Test
+    void withBusinessContextKeepsLineBreaks() {
+        ProgramIncrement pi = ProgramIncrement.plan("PI 27.1", START, END, null);
+
+        ProgramIncrement changed = pi.withBusinessContext("Zeile 1\nZeile 2", "Ziel 1\n\nZiel 2");
+
+        assertEquals("Zeile 1\nZeile 2", changed.businessContext());
+        assertEquals("Ziel 1\n\nZiel 2", changed.artObjectives());
+    }
+
+    @Test
+    void withBusinessContextTreatsNullAsEmptyText() {
+        ProgramIncrement pi = ProgramIncrement.plan("PI 27.1", START, END, null)
+                .withBusinessContext("Fokus auf Self-Service", "Checkout in 2 Schritten");
+
+        ProgramIncrement cleared = pi.withBusinessContext(null, null);
+
+        assertEquals("", cleared.businessContext());
+        assertEquals("", cleared.artObjectives());
+    }
+
+    @Test
+    void acceptsTextsOfMaximumLength() {
+        String text = "x".repeat(ProgramIncrement.MAX_TEXT_LENGTH);
+
+        ProgramIncrement changed =
+                ProgramIncrement.plan("PI 27.1", START, END, null).withBusinessContext(text, text);
+
+        assertEquals(text, changed.businessContext());
+        assertEquals(text, changed.artObjectives());
+    }
+
+    @Test
+    void rejectsBusinessContextLongerThan10000Characters() {
+        ProgramIncrement pi = ProgramIncrement.plan("PI 27.1", START, END, null);
+        String text = "x".repeat(10_001);
+
+        InvalidProgramIncrementException exception =
+                assertThrows(InvalidProgramIncrementException.class, () -> pi.withBusinessContext(text, ""));
+
+        assertEquals(TOO_LONG_TEXT_MESSAGE, exception.getMessage());
+    }
+
+    @Test
+    void rejectsArtObjectivesLongerThan10000Characters() {
+        ProgramIncrement pi = ProgramIncrement.plan("PI 27.1", START, END, null);
+        String text = "x".repeat(10_001);
+
+        InvalidProgramIncrementException exception =
+                assertThrows(InvalidProgramIncrementException.class, () -> pi.withBusinessContext("", text));
+
+        assertEquals(TOO_LONG_TEXT_MESSAGE, exception.getMessage());
+    }
+
+    // Ein PI aus der Datenbank geht durch denselben Konstruktor; ein ungültiges darf auch dort nicht entstehen.
+    @Test
+    void constructorRejectsBusinessContextLongerThan10000Characters() {
+        UUID id = UUID.randomUUID();
+        String text = "x".repeat(10_001);
+
+        InvalidProgramIncrementException exception = assertThrows(
+                InvalidProgramIncrementException.class,
+                () -> new ProgramIncrement(id, "PI 27.1", START, END, 2, text, "", List.of()));
+
+        assertEquals(TOO_LONG_TEXT_MESSAGE, exception.getMessage());
+    }
+
+    @Test
+    void constructorRejectsArtObjectivesLongerThan10000Characters() {
+        UUID id = UUID.randomUUID();
+        String text = "x".repeat(10_001);
+
+        InvalidProgramIncrementException exception = assertThrows(
+                InvalidProgramIncrementException.class,
+                () -> new ProgramIncrement(id, "PI 27.1", START, END, 2, "", text, List.of()));
+
+        assertEquals(TOO_LONG_TEXT_MESSAGE, exception.getMessage());
+    }
+
+    @Test
+    void withLinkAppendsLinkAtTheEndAndKeepsTexts() {
+        PiLink vision = new PiLink(UUID.randomUUID(), "Vision", VISION_URL);
+        PiLink roadmap = new PiLink(UUID.randomUUID(), "Roadmap", "http://wiki.example.ch/roadmap");
+        ProgramIncrement pi =
+                new ProgramIncrement(UUID.randomUUID(), "PI 27.1", START, END, 2, "Kontext", "Ziele", List.of(vision));
+
+        ProgramIncrement changed = pi.withLink(roadmap);
+
+        assertEquals(List.of(vision, roadmap), changed.links());
+        assertEquals("Kontext", changed.businessContext());
+        assertEquals("Ziele", changed.artObjectives());
+        assertEquals(pi.id(), changed.id());
+    }
+
+    @Test
+    void withoutLinkRemovesOnlyThatLinkAndKeepsOrder() {
+        PiLink vision = new PiLink(UUID.randomUUID(), "Vision", VISION_URL);
+        PiLink roadmap = new PiLink(UUID.randomUUID(), "Roadmap", "http://wiki.example.ch/roadmap");
+        PiLink board = new PiLink(UUID.randomUUID(), "Board", "https://wiki.example.ch/board");
+        ProgramIncrement pi = new ProgramIncrement(
+                UUID.randomUUID(), "PI 27.1", START, END, 2, "Kontext", "Ziele", List.of(vision, roadmap, board));
+
+        ProgramIncrement changed = pi.withoutLink(roadmap.id());
+
+        assertEquals(List.of(vision, board), changed.links());
+        assertEquals("Kontext", changed.businessContext());
+        assertEquals("Ziele", changed.artObjectives());
+    }
+
+    @Test
+    void withoutLinkRejectsUnknownLink() {
+        PiLink vision = new PiLink(UUID.randomUUID(), "Vision", VISION_URL);
+        ProgramIncrement pi =
+                new ProgramIncrement(UUID.randomUUID(), "PI 27.1", START, END, 2, "", "", List.of(vision));
+        UUID unknown = UUID.randomUUID();
+
+        PiLinkNotFoundException exception = assertThrows(PiLinkNotFoundException.class, () -> pi.withoutLink(unknown));
+
+        assertEquals("Den Link gibt es nicht.", exception.getMessage());
+    }
+
     private static Iteration iteration(int number, String name, String start, String end, boolean ip) {
         return new Iteration(number, name, LocalDate.parse(start), LocalDate.parse(end), ip);
     }

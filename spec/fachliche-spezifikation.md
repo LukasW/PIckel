@@ -37,6 +37,17 @@ Fachlicher Gesamtstand: Begriffe, Datenmodell mit Regeln, API. Zweck und Stakeho
 | `endDate` | Datum | Pflicht, nach `startDate` |
 | `iterationLengthWeeks` | Ganzzahl | 1 bis 4, ohne Angabe 2; der Zeitraum ergibt mindestens zwei Iterationen |
 | `iterations` | Liste von Iteration | berechnet, nicht gespeichert (siehe unten) |
+| `businessContext` | Text | ohne Formatierung, Zeilenumbrüche bleiben; leer erlaubt, höchstens 10 000 Zeichen |
+| `artObjectives` | Text | PI Objectives des ART; Regeln wie `businessContext` |
+| `links` | Liste von PiLink | in der Reihenfolge des Hinzufügens |
+
+### PiLink
+
+| Feld | Typ | Regel |
+|------|-----|-------|
+| `id` | UUID | vom Server vergeben |
+| `title` | Text | Pflicht, getrimmt, höchstens 100 Zeichen |
+| `url` | Text | Pflicht, beginnt mit `http://` oder `https://` (Schema ohne Rücksicht auf Gross- und Kleinschreibung) |
 
 ### Iteration (abgeleitet)
 
@@ -69,6 +80,9 @@ Gehört zum impliziten ART und gilt für alle PIs (ADR 0005).
 | `GET` | `/api/v1/program-increments` | Alle PIs, aufsteigend nach Startdatum |
 | `GET` | `/api/v1/program-increments/{id}` | Ein PI mit Iterationen; 404 mit `{ "message": … }`, wenn es die ID nicht gibt |
 | `POST` | `/api/v1/program-increments` | PI anlegen (`iterationLengthWeeks` optional) → 201 mit dem neuen PI und `Location`; 400 mit `{ "message": … }` bei Regelverletzung, fehlendem Inhalt, ungültigem JSON oder ungültigem Wert |
+| `PUT` | `/api/v1/program-increments/{id}/business-context` | `businessContext` und `artObjectives` ersetzen (fehlendes Feld = leer) → 200 mit dem PI; 400 bei zu langem Text, 404 ohne PI |
+| `POST` | `/api/v1/program-increments/{id}/links` | Link mit `title` und `url` anhängen → 200 mit dem PI; 400 bei Regelverletzung, 404 ohne PI |
+| `DELETE` | `/api/v1/program-increments/{id}/links/{linkId}` | Link entfernen → 200 mit dem PI; 404 mit `{ "message": … }` ohne PI oder ohne Link |
 | `GET` | `/api/v1/teams` | Alle Teams, alphabetisch nach Name |
 | `POST` | `/api/v1/teams` | Team erfassen (`name`) → 201 mit dem Team; 400 mit `{ "message": … }` bei ungültigem oder doppeltem Namen |
 | `PUT` | `/api/v1/teams/{id}` | Team umbenennen (`name`) → 200 mit dem Team; 400 wie beim Erfassen; 404, wenn es die ID nicht gibt |

@@ -1,6 +1,6 @@
 # Delta US-8 — Business-Kontext und ART-Ziele am PI (Issue #8)
 
-Story: `spec/user-stories/8-business-kontext.md` (neu) · Status: entwurf
+Story: `spec/user-stories/8-business-kontext.md` (neu) · Status: eingepflegt
 
 ## Warum
 
@@ -34,6 +34,18 @@ Ausgangslage, ohne zwischen Folien und Tool zu wechseln.
 - **Gegeben sei** das PI "PI 27.1" vom "2027-01-04" bis "2027-03-26"
 - **Wenn** ich für "PI 27.1" den Link "Vision" mit der URL "https://wiki.example.ch/vision" hinzufüge
 - **Dann** zeigt "PI 27.1" den Link "Vision"
+
+### Szenario: Business-Kontext wird geändert
+- **Gegeben sei** das PI "PI 27.1" vom "2027-01-04" bis "2027-03-26"
+- **Und** für "PI 27.1" ist der Business-Kontext "Fokus auf Self-Service" erfasst
+- **Wenn** ich für "PI 27.1" den Business-Kontext "Fokus auf Onboarding" erfasse
+- **Dann** zeigt "PI 27.1" den Business-Kontext "Fokus auf Onboarding"
+
+### Szenario: Link wird entfernt
+- **Gegeben sei** das PI "PI 27.1" vom "2027-01-04" bis "2027-03-26"
+- **Und** für "PI 27.1" sind die Links "Vision" und "Roadmap" erfasst
+- **Wenn** ich für "PI 27.1" den Link "Vision" entferne
+- **Dann** zeigt "PI 27.1" nur noch den Link "Roadmap"
 
 ### Szenario: Link ohne http oder https wird abgelehnt
 - **Gegeben sei** das PI "PI 27.1" vom "2027-01-04" bis "2027-03-26"

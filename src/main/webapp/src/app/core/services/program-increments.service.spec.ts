@@ -40,6 +40,9 @@ const PI_27_2: ProgramIncrement = {
       innovationAndPlanning: true,
     },
   ],
+  businessContext: '',
+  artObjectives: '',
+  links: [],
 };
 const PI_27_1: ProgramIncrement = {
   id: '1',
@@ -61,18 +64,33 @@ const PI_27_1: ProgramIncrement = {
     endDate,
     innovationAndPlanning: name === 'IP',
   })),
+  businessContext: '',
+  artObjectives: '',
+  links: [],
 };
+
+const VISION = { id: 'l1', title: 'Vision', url: 'https://wiki.example.ch/vision' };
 
 describe('ProgramIncrementsService', () => {
   let repository: {
     list: ReturnType<typeof vi.fn>;
     get: ReturnType<typeof vi.fn>;
     plan: ReturnType<typeof vi.fn>;
+    updateBusinessContext: ReturnType<typeof vi.fn>;
+    addLink: ReturnType<typeof vi.fn>;
+    removeLink: ReturnType<typeof vi.fn>;
   };
   let service: ProgramIncrementsService;
 
   beforeEach(() => {
-    repository = { list: vi.fn(), get: vi.fn(), plan: vi.fn() };
+    repository = {
+      list: vi.fn(),
+      get: vi.fn(),
+      plan: vi.fn(),
+      updateBusinessContext: vi.fn(),
+      addLink: vi.fn(),
+      removeLink: vi.fn(),
+    };
     TestBed.configureTestingModule({
       providers: [{ provide: ProgramIncrementsRepository, useValue: repository }],
     });
@@ -156,5 +174,111 @@ describe('ProgramIncrementsService', () => {
 
     expect(pi).toEqual(PI_27_1);
     expect(service.error()).toBeUndefined();
+  });
+
+  it('speichert Business-Kontext und PI Objectives und liefert das geänderte PI (US-8)', async () => {
+    const changed = {
+      ...PI_27_1,
+      businessContext: 'Fokus auf Self-Service',
+      artObjectives: 'Checkout in 2 Schritten',
+    };
+    repository.updateBusinessContext.mockResolvedValue(changed);
+
+    const pi = await service.updateBusinessContext('1', {
+      businessContext: 'Fokus auf Self-Service',
+      artObjectives: 'Checkout in 2 Schritten',
+    });
+
+    expect(repository.updateBusinessContext).toHaveBeenCalledWith('1', {
+      businessContext: 'Fokus auf Self-Service',
+      artObjectives: 'Checkout in 2 Schritten',
+    });
+    expect(pi).toEqual(changed);
+    expect(service.error()).toBeUndefined();
+  });
+
+  it('liefert kein PI und zeigt die Meldung des Servers, wenn der Text zu lang ist (US-8)', async () => {
+    repository.updateBusinessContext.mockRejectedValue(
+      new HttpErrorResponse({
+        status: 400,
+        error: { message: 'Der Text darf höchstens 10 000 Zeichen lang sein.' },
+      }),
+    );
+
+    const pi = await service.updateBusinessContext('1', {
+      businessContext: 'x'.repeat(10_001),
+      artObjectives: '',
+    });
+
+    expect(pi).toBeUndefined();
+    expect(service.error()).toBe('Der Text darf höchstens 10 000 Zeichen lang sein.');
+  });
+
+  it('fügt einen Link hinzu und liefert das PI mit dem Link (US-8)', async () => {
+    const changed = { ...PI_27_1, links: [VISION] };
+    repository.addLink.mockResolvedValue(changed);
+
+    const pi = await service.addLink('1', {
+      title: 'Vision',
+      url: 'https://wiki.example.ch/vision',
+    });
+
+    expect(repository.addLink).toHaveBeenCalledWith('1', {
+      title: 'Vision',
+      url: 'https://wiki.example.ch/vision',
+    });
+    expect(pi).toEqual(changed);
+    expect(service.error()).toBeUndefined();
+  });
+
+  it('liefert kein PI und zeigt die Meldung des Servers bei einer URL ohne http oder https (US-8)', async () => {
+    repository.addLink.mockRejectedValue(
+      new HttpErrorResponse({
+        status: 400,
+        error: { message: 'Die URL muss mit http:// oder https:// beginnen.' },
+      }),
+    );
+
+    const pi = await service.addLink('1', { title: 'Vision', url: 'javascript:alert(1)' });
+
+    expect(pi).toBeUndefined();
+    expect(service.error()).toBe('Die URL muss mit http:// oder https:// beginnen.');
+  });
+
+  it('vergisst die Meldung eines abgelehnten Links, sobald ein Link hinzugefügt wird (US-8)', async () => {
+    repository.addLink
+      .mockRejectedValueOnce(
+        new HttpErrorResponse({
+          status: 400,
+          error: { message: 'Die URL muss mit http:// oder https:// beginnen.' },
+        }),
+      )
+      .mockResolvedValueOnce({ ...PI_27_1, links: [VISION] });
+    await service.addLink('1', { title: 'Vision', url: 'javascript:alert(1)' });
+
+    await service.addLink('1', { title: 'Vision', url: 'https://wiki.example.ch/vision' });
+
+    expect(service.error()).toBeUndefined();
+  });
+
+  it('entfernt einen Link und liefert das PI ohne den Link (US-8)', async () => {
+    repository.removeLink.mockResolvedValue(PI_27_1);
+
+    const pi = await service.removeLink('1', 'l1');
+
+    expect(repository.removeLink).toHaveBeenCalledWith('1', 'l1');
+    expect(pi).toEqual(PI_27_1);
+    expect(service.error()).toBeUndefined();
+  });
+
+  it('liefert kein PI und zeigt die Meldung des Servers, wenn es den Link nicht gibt (US-8)', async () => {
+    repository.removeLink.mockRejectedValue(
+      new HttpErrorResponse({ status: 404, error: { message: 'Den Link gibt es nicht.' } }),
+    );
+
+    const pi = await service.removeLink('1', 'unbekannt');
+
+    expect(pi).toBeUndefined();
+    expect(service.error()).toBe('Den Link gibt es nicht.');
   });
 });

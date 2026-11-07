@@ -12,7 +12,10 @@ public record ProgramIncrementDto(
         LocalDate startDate,
         LocalDate endDate,
         int iterationLengthWeeks,
-        List<IterationDto> iterations) {
+        List<IterationDto> iterations,
+        String businessContext,
+        String artObjectives,
+        List<PiLinkDto> links) {
 
     static ProgramIncrementDto from(ProgramIncrement programIncrement) {
         return new ProgramIncrementDto(
@@ -21,6 +24,9 @@ public record ProgramIncrementDto(
                 programIncrement.startDate(),
                 programIncrement.endDate(),
                 programIncrement.iterationLengthWeeks(),
-                programIncrement.iterations().stream().map(IterationDto::from).toList());
+                programIncrement.iterations().stream().map(IterationDto::from).toList(),
+                programIncrement.businessContext(),
+                programIncrement.artObjectives(),
+                programIncrement.links().stream().map(PiLinkDto::from).toList());
     }
 }

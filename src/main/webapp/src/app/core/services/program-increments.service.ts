@@ -1,6 +1,11 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { inject, Injectable, signal } from '@angular/core';
-import { PlanProgramIncrement, ProgramIncrement } from '../models/program-increment.model';
+import {
+  BusinessContext,
+  NewPiLink,
+  PlanProgramIncrement,
+  ProgramIncrement,
+} from '../models/program-increment.model';
 import { ProgramIncrementsRepository } from '../ports/program-increments.repository';
 
 const GENERIC_ERROR = 'Das hat nicht geklappt. Bitte versuche es nochmals.';
@@ -54,6 +59,36 @@ export class ProgramIncrementsService {
     } catch (e: unknown) {
       this.error.set(toMessage(e));
       return false;
+    }
+  }
+
+  /** Speichert Business-Kontext und PI Objectives (US-8); liefert das PI oder `undefined` mit Meldung in `error`. */
+  updateBusinessContext(
+    id: string,
+    request: BusinessContext,
+  ): Promise<ProgramIncrement | undefined> {
+    return this.change(() => this.repository.updateBusinessContext(id, request));
+  }
+
+  /** Fügt einen Link hinzu (US-8); liefert das PI oder `undefined` mit Meldung in `error`. */
+  addLink(id: string, request: NewPiLink): Promise<ProgramIncrement | undefined> {
+    return this.change(() => this.repository.addLink(id, request));
+  }
+
+  /** Entfernt einen Link (US-8); liefert das PI oder `undefined` mit Meldung in `error`. */
+  removeLink(id: string, linkId: string): Promise<ProgramIncrement | undefined> {
+    return this.change(() => this.repository.removeLink(id, linkId));
+  }
+
+  private async change(
+    call: () => Promise<ProgramIncrement>,
+  ): Promise<ProgramIncrement | undefined> {
+    this.error.set(undefined);
+    try {
+      return await call();
+    } catch (e: unknown) {
+      this.error.set(toMessage(e));
+      return undefined;
     }
   }
 }

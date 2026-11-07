@@ -1,5 +1,6 @@
 package ch.grudligstrasse.pikel.application.service;
 
+import ch.grudligstrasse.pikel.domain.model.PiLink;
 import ch.grudligstrasse.pikel.domain.model.ProgramIncrement;
 import ch.grudligstrasse.pikel.domain.model.ProgramIncrementNotFoundException;
 import ch.grudligstrasse.pikel.domain.port.in.ProgramIncrementUseCase;
@@ -35,5 +36,28 @@ public class ProgramIncrementService implements ProgramIncrementUseCase {
     @Override
     public ProgramIncrement get(UUID id) {
         return repository.findOne(id).orElseThrow(ProgramIncrementNotFoundException::new);
+    }
+
+    @Override
+    @Transactional
+    public ProgramIncrement updateBusinessContext(UUID id, String businessContext, String artObjectives) {
+        return saved(get(id).withBusinessContext(businessContext, artObjectives));
+    }
+
+    @Override
+    @Transactional
+    public ProgramIncrement addLink(UUID id, String title, String url) {
+        return saved(get(id).withLink(PiLink.create(title, url)));
+    }
+
+    @Override
+    @Transactional
+    public ProgramIncrement removeLink(UUID id, UUID linkId) {
+        return saved(get(id).withoutLink(linkId));
+    }
+
+    private ProgramIncrement saved(ProgramIncrement programIncrement) {
+        repository.save(programIncrement);
+        return programIncrement;
     }
 }
