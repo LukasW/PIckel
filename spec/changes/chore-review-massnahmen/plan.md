@@ -20,7 +20,8 @@ Verhalten.
 - [x] `Dockerfile.jvm` bereinigt, Image-Build in `ci-pr.yml`
 - [x] `npm audit` in Gate und CI, Renovate mit OSV-Schwachstellenwarnungen, Prettier auch für CSS
 - [x] PIT mit `STRONGER`
-- [x] Branch Protection: im GitHub-Plan nicht verfügbar; Ersatz `guard-push.sh` mit Test in Gate und CI (`notes.md`)
+- [x] Branch Protection auf `main` (Repository dafür öffentlich gemacht) und `guard-push.sh` mit Test in Gate und
+  CI (`notes.md`)
 - [ ] Regelwerk nach der zweiten Story ausdünnen — erst dann möglich
 
 ## Test-Strategie

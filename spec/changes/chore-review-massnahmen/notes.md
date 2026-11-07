@@ -24,25 +24,31 @@
   «am Feld» war nur über den ganzen Seitentext belegt → Test sucht im `label` des Felds und prüft `aria-invalid`.
   Beide übernommen
 
-## Ersatz für Branch Protection
+## Branch Protection
 
-GitHub bietet Branch Protection und Rulesets für dieses private Repository im aktuellen Plan nicht an (HTTP 403,
-«Upgrade to GitHub Pro or make this repository public»). Ersatz im Repository: `guard-push.sh` (PreToolUse) lehnt
-Push auf `main` (auch `HEAD:refs/heads/main`, `HEAD` auf `main`, Push ohne Refspec auf `main`), `+refspec`, Force-
-und Delete-Optionen ab; `test-guard-push.sh` in Gate und CI. Das schützt nur vor dem Agenten, nicht vor Menschen
-oder anderen Werkzeugen.
+Für das private Repository bot GitHub im aktuellen Plan weder Branch Protection noch Rulesets an (HTTP 403). Der
+Nutzer hat das Repository deshalb am 7. November 2026 öffentlich gemacht; vorher fand Gitleaks in allen 8 Commits
+nichts, eine `.env` war nie versioniert. Seither gilt auf `main`:
+
+- Pflicht-Checks `Unit Tests`, `Integration + Smoke`, `Spec-Drift`, `Secret-Scan (Gitleaks)`; Branch muss nicht
+  aktuell sein, sonst baut der Nachtlauf mit `merge: ja` vor jedem Merge neu
+- Nur per PR, 0 Pflicht-Freigaben: Bei einer Person kann niemand den eigenen PR freigeben
+- Gilt auch für Admins; lineare Historie; kein Force-Push, kein Löschen; offene Kommentare müssen aufgelöst sein
+
+`guard-push.sh` bleibt: Er hält den Agenten schon lokal an, bevor GitHub ablehnt. Das Label `needs-human-review`
+erzwingt GitHub nicht, daran hält sich nur `/flow-ship`.
 
 ## Bewusst nicht umgesetzt
 
 - **PIT auf den Persistenz-Adapter:** Panache braucht die Bytecode-Anreicherung von Quarkus; abgesichert über das
   Sortier-Szenario in `CucumberIT` statt über Mutation
-- **Abhängigkeits-Scan per `dependency-review-action`:** Das Repository ist privat und hat kein GitHub Advanced
-  Security; stattdessen `npm audit` und Renovate mit OSV
+- **Abhängigkeits-Scan per `dependency-review-action`:** Beim Umsetzen war das Repository privat, ohne GitHub
+  Advanced Security; stattdessen `npm audit` und Renovate mit OSV. Seit es öffentlich ist, wäre die Action möglich
 - **`cp`/`mv` im Nachtlauf sperren:** Präfix-Regeln können Zielpfade nicht einschränken; die Sperre gegen Edits an
-  `.claude/` usw. bleibt damit umgehbar. Grenze bleiben `guard-push.sh`, das Label
+  `.claude/` usw. bleibt damit umgehbar. Grenze bleiben Branch Protection, `guard-push.sh`, das Label
   `needs-human-review` aus CI und das Review am Morgen
 
 ## Offen
 
-- Echte Branch Protection braucht GitHub Pro oder ein öffentliches Repository: Entscheid des Nutzers
+- `dependency-review-action` in `ci-pr.yml`, seit das Repository öffentlich ist
 - Regelwerk nach der zweiten Story ausdünnen
