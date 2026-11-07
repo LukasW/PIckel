@@ -25,7 +25,7 @@ public class TeamSteps {
     @Inject
     TeamRepositoryAdapter repository;
 
-    // «wird das Erfassen … abgelehnt» teilen sich Teams und Features (US-9); die Antwort liegt darum dort.
+    // Die Ablehnungs-Steps teilen sich Teams, Features (US-9) und Kapazität (US-7); die Antwort liegt darum dort.
     @Inject
     ScenarioContext context;
 
@@ -69,6 +69,7 @@ public class TeamSteps {
         response = given().contentType(ContentType.JSON)
                 .body(Map.of("name", newName))
                 .put(PATH + "/" + id);
+        context.response(response);
     }
 
     @Wenn("ich das Team {string} entferne")
@@ -79,6 +80,7 @@ public class TeamSteps {
     @Wenn("ich das Team mit der ID {string} entferne")
     public void ichDasTeamMitDerIdEntferne(String id) {
         response = given().delete(PATH + "/" + id);
+        context.response(response);
     }
 
     @Dann("erscheint {string} in der Teamliste")
@@ -113,7 +115,11 @@ public class TeamSteps {
 
     @Dann("wird die Änderung mit dem Status {int} und der Meldung {string} abgelehnt")
     public void wirdDieAenderungAbgelehnt(int status, String message) {
-        response.then().statusCode(status).contentType(ContentType.JSON).body("message", is(message));
+        context.lastResponse()
+                .then()
+                .statusCode(status)
+                .contentType(ContentType.JSON)
+                .body("message", is(message));
     }
 
     private String idOf(String name) {

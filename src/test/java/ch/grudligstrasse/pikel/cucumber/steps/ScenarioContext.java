@@ -32,6 +32,14 @@ public class ScenarioContext {
         this.response = response;
     }
 
+    /** Die letzte Antwort einer Änderung, für Ablehnungs-Steps, die mehrere Step-Klassen teilen. */
+    Response lastResponse() {
+        if (response == null) {
+            throw new IllegalStateException("Das Szenario hat noch nichts geschickt.");
+        }
+        return response;
+    }
+
     void programIncrementCreated(String name, String id) {
         programIncrementIds.put(name, id);
     }
