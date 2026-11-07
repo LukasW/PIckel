@@ -63,6 +63,7 @@ und jede fortlaufende Nummer (Datenbank-Migration, ADR, Story-Nummer) gegen `ori
   mit `Closes #<issue-nr>`. Daran erkennt `night-batch.sh`, dass das Issue auf dem Hauptzweig liegt
 - «Lokal aufräumen» entfällt; den Worktree räumt `night-batch.sh` weg
 - «Lernen»: die Antworten und Vorschläge als Kommentar am PR statt im Chat; nichts davon umsetzen
+- «Kosten» entfällt; `night-batch.sh` schreibt die exakten Kosten aller Phasen ans Issue
 - Kein `/clear` empfehlen
 
 ## Ende
