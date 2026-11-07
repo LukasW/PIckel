@@ -1,0 +1,47 @@
+<section class="mt-8" aria-labelledby="capacity-heading">
+  <h2 id="capacity-heading" class="mb-3 text-xl font-semibold">Kapazität in Story Points</h2>
+
+  @if (error(); as message) {
+    <p role="alert" class="mb-4 text-danger">{{ message }}</p>
+  }
+
+  @if (teamsService.teams().length === 0) {
+    <p class="text-muted">
+      Noch keine Teams. Erfasse zuerst die Teams.
+      <a routerLink="/teams" class="text-accent hover:underline">Zu den Teams</a>
+    </p>
+  } @else {
+    <div class="overflow-x-auto">
+      <table class="w-full rounded-lg border border-border bg-surface text-left">
+        <thead class="text-sm text-muted">
+          <tr>
+            <th class="px-4 py-2 font-medium">Team</th>
+            @for (iteration of iterations(); track iteration.number) {
+              <th class="px-4 py-2 font-medium">{{ iteration.name }}</th>
+            }
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-border">
+          @for (team of teamsService.teams(); track team.id) {
+            <tr>
+              <td class="px-4 py-2 font-medium">{{ team.name }}</td>
+              @for (iteration of iterations(); track iteration.number) {
+                <td class="px-4 py-2">
+                  <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    [value]="points(team, iteration)"
+                    (change)="save(team, iteration, $event)"
+                    [attr.aria-label]="'Kapazität ' + team.name + ', ' + iteration.name"
+                    class="w-20 rounded border border-border bg-background px-2 py-1"
+                  />
+                </td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>

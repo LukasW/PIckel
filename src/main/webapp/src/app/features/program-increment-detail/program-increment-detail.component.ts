@@ -14,6 +14,7 @@ import { ProgramIncrement } from '../../core/models/program-increment.model';
 import { ProgramIncrementsService } from '../../core/services/program-increments.service';
 import { notBlank } from '../../shared/validators/text.validators';
 import { FeatureBacklogComponent } from '../feature-backlog/feature-backlog.component';
+import { CapacityTableComponent } from './capacity-table.component';
 
 /** Wie `ProgramIncrement.MAX_TEXT_LENGTH` im Backend; das Formular meldet es nur früher. */
 const MAX_TEXT_LENGTH = 10_000;
@@ -24,7 +25,13 @@ const MAX_TEXT_LENGTH = 10_000;
  */
 @Component({
   selector: 'app-program-increment-detail',
-  imports: [DatePipe, RouterLink, ReactiveFormsModule, FeatureBacklogComponent],
+  imports: [
+    DatePipe,
+    RouterLink,
+    ReactiveFormsModule,
+    FeatureBacklogComponent,
+    CapacityTableComponent,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './program-increment-detail.component.html',
 })

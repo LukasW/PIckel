@@ -12,6 +12,8 @@ import { TeamsRepository } from './core/ports/teams.repository';
 import { TeamsHttpAdapter } from './core/api/teams-http.adapter';
 import { FeaturesRepository } from './core/ports/features.repository';
 import { FeaturesHttpAdapter } from './core/api/features-http.adapter';
+import { CapacitiesRepository } from './core/ports/capacities.repository';
+import { CapacitiesHttpAdapter } from './core/api/capacities-http.adapter';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -22,5 +24,6 @@ export const appConfig: ApplicationConfig = {
     { provide: ProgramIncrementsRepository, useExisting: ProgramIncrementsHttpAdapter },
     { provide: TeamsRepository, useExisting: TeamsHttpAdapter },
     { provide: FeaturesRepository, useExisting: FeaturesHttpAdapter },
+    { provide: CapacitiesRepository, useExisting: CapacitiesHttpAdapter },
   ],
 };

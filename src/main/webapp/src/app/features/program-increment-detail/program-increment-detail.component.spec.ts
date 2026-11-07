@@ -4,7 +4,9 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { appConfig } from '../../app.config';
 import { ProgramIncrement } from '../../core/models/program-increment.model';
 import { FeaturesRepository } from '../../core/ports/features.repository';
+import { CapacitiesRepository } from '../../core/ports/capacities.repository';
 import { ProgramIncrementsRepository } from '../../core/ports/program-increments.repository';
+import { TeamsRepository } from '../../core/ports/teams.repository';
 
 /** PI 27.1 (04.01.–26.03.2027) mit Iterationen zu 2 Wochen, wie es der Server liefert (US-5). */
 const PI_27_1: ProgramIncrement = {
@@ -62,6 +64,20 @@ describe('ProgramIncrementDetailComponent', () => {
         },
         // Das eingebettete Backlog (US-9) darf im Test keinen HTTP-Aufruf machen.
         { provide: FeaturesRepository, useValue: { list: listFeatures, add: vi.fn() } },
+        // Die eingebettete Kapazitätstabelle (US-7) lädt Teams und Kapazitäten; ohne Mocks ginge sie ans Netz.
+        {
+          provide: TeamsRepository,
+          useValue: {
+            list: vi.fn().mockResolvedValue([]),
+            add: vi.fn(),
+            rename: vi.fn(),
+            remove: vi.fn(),
+          },
+        },
+        {
+          provide: CapacitiesRepository,
+          useValue: { list: vi.fn().mockResolvedValue([]), set: vi.fn() },
+        },
       ],
     });
     harness = await RouterTestingHarness.create();
@@ -178,6 +194,14 @@ describe('ProgramIncrementDetailComponent', () => {
     });
     expect(lines[5]).toContain('IP-Iteration');
     expect(lines.slice(0, 5).filter((line) => line.includes('IP-Iteration'))).toEqual([]);
+  });
+
+  it('bindet die Kapazitätstabelle des PI auf der Detailseite ein (US-7)', async () => {
+    get.mockResolvedValue(PI_27_1);
+
+    const el = await open('/program-increments/1');
+
+    expect(el.querySelector('app-capacity-table'), 'Kapazitätstabelle').not.toBeNull();
   });
 
   it('zeigt die Meldung, wenn es das PI nicht gibt (US-5)', async () => {

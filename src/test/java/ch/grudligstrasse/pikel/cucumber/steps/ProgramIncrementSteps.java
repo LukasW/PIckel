@@ -56,6 +56,13 @@ public class ProgramIncrementSteps {
         context.programIncrementCreated(name, id);
     }
 
+    @Gegebensei("das PI {string} vom {string} bis {string} mit Iterationen zu {int} Wochen")
+    public void dasPiMitIterationslaengeExistiert(String name, String start, String end, int weeks) {
+        ichDasPiMitIterationslaengeAnlege(name, start, end, weeks);
+        String id = response.then().statusCode(201).extract().path("id");
+        context.programIncrementCreated(name, id);
+    }
+
     @Wenn("ich das PI {string} vom {string} bis {string} anlege")
     public void ichDasPiAnlege(String name, String start, String end) {
         response = given().contentType(ContentType.JSON)
