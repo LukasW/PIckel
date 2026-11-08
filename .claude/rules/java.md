@@ -15,6 +15,8 @@ paths:
   Use Case
 - **DB-Spalten snake_case.** Schema nur über eine neue Migration `db/migration/V<n>__<slug>.sql` plus Eintrag in
   `db/changeLog.xml`; bestehende Migrationen nie ändern, weil Liquibase Checksummen prüft
+- **Dev-Daten sind keine Migration:** `db/dev/dev-data.sql` (Kontext `dev`, `runOnChange`) darf geändert werden,
+  bleibt idempotent (feste UUIDs, `ON CONFLICT DO NOTHING`) und steht als letztes changeSet
 - **Formatierung macht Spotless** (Palantir Java Format): `./mvnw spotless:apply` statt von Hand einrücken;
   `verify` und CI scheitern an unformatiertem Code
 - **Namen:** Domain `ProgramIncrement`, Entity `ProgramIncrementEntity`, Port `ProgramIncrementRepository`, Adapter
