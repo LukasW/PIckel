@@ -97,5 +97,126 @@ t 2 'git push origin HEAD' "$tmp"
 t 0 'git push origin feature/x' "$tmp"
 rm -rf "$tmp"
 
+# --- Issue #26: Umgehungen über die Schreibweise (Plan «Test-Strategie») --------------------------------------------
+# Ein Segment ist ein Push, wenn ein Wort mit Basisname git und danach ein Wort push vorkommt; geprüft wird auf dem
+# normalisierten Befehl (flow_shell_segments)
+t 2 'git -c k=v push origin main'
+t 2 'git --no-pager push origin main'
+t 2 '"git" push origin main'
+t 2 $'git push origin \\\nHEAD:main'
+t 2 '/usr/bin/git push origin main'
+t 2 'git -C . -c a=b --no-pager push origin HEAD:main'
+t 2 'sh -c "git push origin main"'
+# Bewusster Fehlalarm (Entscheid 4, fail closed): Text in Anführungszeichen gilt als Befehl; Ausweg git commit -F
+t 2 'git commit -m "push origin main"'
+# Erlaubt: Push aus dem Devcontainer mit gh als Credential-Helper, globale Option ohne Push, Glob mit Ziel ausserhalb
+# von main
+t 0 "git -c credential.helper= -c 'credential.https://github.com.helper=!gh auth git-credential' push -u origin feature/x"
+t 0 'git --no-pager log'
+t 0 "git push origin 'refs/tags/*'"
+t 0 "git push origin 'refs/heads/feature/*:refs/heads/feature/*'"
+
+# Zusätze (Entscheid 1): temporäres Repository mit origin, aktueller Zweig ein Feature-Zweig
+tmp=$(mktemp -d)
+trap 'rm -rf "$tmp"' EXIT
+g() { git -C "$tmp/work" -c user.name=t -c user.email=t@example.com -c init.defaultBranch=main "$@" >/dev/null 2>&1; }
+git init -q --bare -b main "$tmp/origin.git"
+git init -q -b main "$tmp/work"
+mkdir -p "$tmp/work/.claude" && cp "$root/.claude/flow.md" "$tmp/work/.claude/"
+g commit -q --allow-empty -m start
+g remote add origin "$tmp/origin.git"
+g push -q origin main main:refs/heads/feature/x
+g fetch -q origin
+g checkout -q -b feature/y
+if [ "$(git -C "$tmp/work" symbolic-ref --short HEAD)" != feature/y ] \
+  || ! git -C "$tmp/work" rev-parse --verify -q refs/remotes/origin/main >/dev/null; then
+  echo "FAIL Aufbau des temporären Repositorys"; fails=$((fails+1))
+fi
+# --all und --branches schieben auch main; ein Glob-Refspec mit Ziel refs/heads/* trifft main
+t 2 'git push --all origin' "$tmp/work"
+t 2 'git push --branches origin' "$tmp/work"
+t 2 "git push origin 'refs/heads/*:refs/heads/*'" "$tmp/work"
+# Feature-Zweig ohne Upstream: Push ohne Refspec bleibt erlaubt
+t 0 'git push' "$tmp/work"
+t 0 'git push origin' "$tmp/work"
+# Upstream origin/main mit push.default=upstream: @{push} ist main
+g config push.default upstream
+g branch -q --set-upstream-to=origin/main
+t 2 'git push' "$tmp/work"
+t 2 'git push origin' "$tmp/work"
+# Gleich, nur der Upstream ist ein Feature-Zweig: @{push} ist nicht main
+g branch -q --set-upstream-to=origin/feature/x
+t 0 'git push' "$tmp/work"
+rm -rf "$tmp"
+trap - EXIT
+
+# --- Issue #26, Nachtrag Reviewer-Runde (Entscheid 5) ---------------------------------------------------------------
+# Unabhängig vom aktuellen Zweig: Umleitung am Wort, gebündelte Kurzoptionen, abgekürzte Langoptionen, Refspec «:»,
+# Ziel heads/main, git-push als Befehl, Glob-Ziel ohne refs/heads/
+t 2 'git push origin main>/dev/null'
+t 2 'git push -fu origin feature/x'
+t 2 'git push -uf origin feature/x'
+t 2 'git push -ud origin feature/x'
+t 2 'git push --del origin feature/x'
+t 2 'git push --force-w origin feature/x'
+t 2 'git push --al origin'
+t 2 'git push --mirr origin'
+t 2 'git push --bra origin'
+t 2 'git push --force-i origin feature/x'
+t 2 'git push --force-w=feature/x origin feature/x'
+t 2 'git push origin :'
+t 2 'git push origin heads/main'
+t 2 'git push origin feature/x:heads/main'
+t 2 'git-push origin main'
+t 2 '/usr/lib/git-core/git-push origin main'
+t 2 "git push origin 'm*:m*'"
+# Gegenstücke: Kurz- und Langoptionen, die kein Präfix einer verbotenen sind, Ziele ausserhalb von main
+t 0 'git push -uv origin feature/x'
+t 0 'git push --dry-run origin feature/x'
+t 0 'git push --verbose origin feature/x'
+t 0 'git push --set-upstream origin feature/x'
+t 0 'git push origin heads/feature/x'
+t 0 'git-push origin feature/x'
+t 0 "git push origin 'f*:f*'"
+
+# Temporäres Repository: origin mit main, feature/x und feature/main; zuerst auf main, dann auf einem Feature-Zweig
+tmp=$(mktemp -d)
+trap 'rm -rf "$tmp"' EXIT
+git init -q --bare -b main "$tmp/origin.git"
+git init -q -b main "$tmp/work"
+mkdir -p "$tmp/work/.claude" && cp "$root/.claude/flow.md" "$tmp/work/.claude/"
+g commit -q --allow-empty -m start
+g remote add origin "$tmp/origin.git"
+g push -q origin main main:refs/heads/feature/x main:refs/heads/feature/main
+g fetch -q origin
+if [ "$(git -C "$tmp/work" symbolic-ref --short HEAD)" != main ] \
+  || ! git -C "$tmp/work" rev-parse --verify -q refs/remotes/origin/feature/main >/dev/null; then
+  echo "FAIL Aufbau des temporären Repositorys (Nachtrag)"; fails=$((fails+1))
+fi
+# Auf main: @ gilt wie HEAD, ein Refspec mit $ (Rest von $(…) oder einer Variablen) ebenso
+t 2 'git push origin @' "$tmp/work"
+t 2 'git push origin $(git branch --show-current)' "$tmp/work"
+t 2 'git push -u origin "$(git rev-parse --abbrev-ref HEAD)"' "$tmp/work"
+t 2 'git push origin $BRANCH' "$tmp/work"
+# git stash push ist kein Push, auch mit --all und auf main
+t 0 'git stash push' "$tmp/work"
+t 0 'git stash push --all' "$tmp/work"
+t 0 'git stash push -m wip' "$tmp/work"
+# Bewusster Fehlalarm (fail closed): «push» als Wort nach git gilt als Push ohne Refspec auf main
+t 2 'git log --grep push' "$tmp/work"
+# Auf einem Feature-Zweig: dieselben Refspecs erlaubt
+g checkout -q -b feature/y
+t 0 'git push origin @' "$tmp/work"
+t 0 'git push origin $(git branch --show-current)' "$tmp/work"
+t 0 'git push -u origin "$(git rev-parse --abbrev-ref HEAD)"' "$tmp/work"
+t 0 'git log --grep push' "$tmp/work"
+# @{push} trifft nur refs/remotes/<remote>/main: Upstream origin/feature/main ist kein Push auf main
+g config push.default upstream
+g branch -q --set-upstream-to=origin/feature/main
+t 0 'git push' "$tmp/work"
+t 0 'git push origin' "$tmp/work"
+rm -rf "$tmp"
+trap - EXIT
+
 [ "$fails" = 0 ] || { echo "[ERROR] guard-push: $fails Fälle falsch"; exit 1; }
 echo "guard-push: alle Fälle ok"

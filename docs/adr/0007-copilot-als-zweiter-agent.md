@@ -53,3 +53,9 @@ Ein Spike mit der Copilot CLI 1.0.107 (Messungen in `spec/changes/24-copilot-zwe
 - Die Skills nennen in `compatibility`, was sie voraussetzen; Claude-spezifische Werkzeugnamen sind neutral
   umschrieben
 - VS Code und Subagenten brauchen ein eigenes Issue mit eigenem Spike
+- **Bedrohungsmodell der Guards** (#26): `guard-push` und `guard-env` prüfen den Befehl so, wie die Shell ihn sieht
+  (ohne Anführungszeichen, Backslashes, Zeilenfortsetzungen; Platzhalter und Symlinks aufgelöst). Sie fangen Versehen
+  und naheliegende Umgehungen ab, wie sie ein Agent oder ein eingeschleuster Issue-Text erzeugt, sind aber keine
+  Sandbox: Ein Skript, eine Variable, `eval` mit zusammengesetztem Text, ein Git-Alias, ein harter Link oder eine
+  Suche über einen ganzen Ordner kommen weiter durch. Die Zusage «`guard-push` ersetzt die Branch Protection» gilt
+  in diesem Umfang

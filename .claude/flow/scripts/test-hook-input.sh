@@ -462,5 +462,54 @@ o=$(printf '%s' "$(jq -cn --arg s "claude-rr3-$$" --arg f "$root/src/main/java/c
 if [ "$code" = 0 ] && [ -z "$o" ]; then ok "reviewer-reminder: Claude-Format, Read auf eine Java-Datei bleibt still"
 else fail "reviewer-reminder: Claude-Format, Read" "Exit $code, stdout «$o» (erwartet Exit 0, keine Ausgabe)"; fi
 
+# --- flow_shell_segments (Issue #26, Plan «Normalisierung») -----------------------------------------------------------
+# Zeilenfortsetzung entfernen, an ; & | ( ) ` und Umbruch trennen (ein Segment pro Zeile, leere weglassen), dann
+# " ' \ entfernen. Leerzeichen am Rand eines Segments sind nicht spezifiziert: verglichen wird ohne sie, Zeilen nur
+# aus Leerzeichen zählen als leer.
+segments_of() {
+  run_lib flow_shell_segments "$1"
+  segs=$(printf '%s\n' "$out" | sed -E 's/^[[:space:]]+//; s/[[:space:]]+$//' | sed '/^$/d')
+}
+expect_segments() {
+  local name="$1" cmd="$2" want="$3"
+  segments_of "$cmd"
+  if [ "$code" = 0 ] && [ "$segs" = "$want" ]; then ok "flow_shell_segments: $name"
+  else fail "flow_shell_segments: $name" "Exit $code, Segmente «$segs», stderr «$err» (erwartet Exit 0, «$want»)"; fi
+}
+expect_segments "Zeilenfortsetzung ergibt ein Segment" $'git push origin \\\nHEAD:main' 'git push origin HEAD:main'
+expect_segments "Anführungszeichen um ein Wort fallen weg" '"git" push origin main' 'git push origin main'
+expect_segments "einfache Anführungszeichen fallen weg" "'git' push" 'git push'
+expect_segments "getrennte Anführungszeichen im Wort fallen weg" 'cat .e""nv' 'cat .env'
+expect_segments "Backslash im Wort fällt weg" 'cat .\env' 'cat .env'
+expect_segments "Trennen an ; & und |" 'git status; git log && git diff | less & echo x' \
+  $'git status\ngit log\ngit diff\nless\necho x'
+expect_segments "Trennen am Umbruch" $'git status\ngit push origin main' $'git status\ngit push origin main'
+expect_segments "Trennen an Backticks" 'echo `git push x` y' $'echo\ngit push x\ny'
+expect_segments "Text in Anführungszeichen wird zum Befehl (sh -c)" 'sh -c "git push origin main"' 'sh -c git push origin main'
+expect_segments "Subshell in Klammern ist ein eigenes Segment" '(git push x)' 'git push x'
+
+segments_of 'echo $(git push x)'
+if [ "$code" = 0 ] && printf '%s\n' "$segs" | grep -qxF 'git push x' && ! printf '%s\n' "$segs" | grep -q 'echo.*push'; then
+  ok "flow_shell_segments: \$(…) ergibt ein eigenes Segment"
+else fail "flow_shell_segments: \$(…)" "Exit $code, Segmente «$segs», stderr «$err» (erwartet eine Zeile «git push x», getrennt von echo)"; fi
+
+for empty in '' ';;' $'\n\n' ' ; & | '; do
+  run_lib flow_shell_segments "$empty"
+  if [ "$code" = 0 ] && [ -z "$(printf '%s' "$out" | tr -d '[:space:]')" ]; then ok "flow_shell_segments: «${empty//$'\n'/\\n}» ergibt keine Zeile"
+  else fail "flow_shell_segments: «${empty//$'\n'/\\n}»" "Exit $code, Ausgabe «$out», stderr «$err» (erwartet Exit 0, keine Zeile)"; fi
+done
+
+# Nachtrag Reviewer-Runde (#26): < und > werden zu Leerzeichen; verglichen wird mit zusammengefassten Leerzeichen
+expect_words() {
+  local name="$1" cmd="$2" want="$3" got
+  segments_of "$cmd"
+  got=$(printf '%s\n' "$segs" | tr -s ' \t' '  ')
+  if [ "$code" = 0 ] && [ "$got" = "$want" ]; then ok "flow_shell_segments: $name"
+  else fail "flow_shell_segments: $name" "Exit $code, Segmente «$segs», stderr «$err» (erwartet Exit 0, «$want»)"; fi
+}
+expect_words "Umleitung > klebt nicht am Wort" 'git push origin main>/dev/null' 'git push origin main /dev/null'
+expect_words "Umleitung < klebt nicht am Wort" 'cat<x' 'cat x'
+expect_words "Umleitung mit Dateideskriptor" 'cat 0<.en[v]' 'cat 0 .en[v]'
+
 [ "$fails" = 0 ] || { echo "[ERROR] hook-input: $fails Fälle falsch"; exit 1; }
 echo "hook-input: alle Fälle ok"
