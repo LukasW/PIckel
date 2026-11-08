@@ -81,8 +81,7 @@ if [ -n "$risky" ]; then
   fi
 fi
 
-command -v gitleaks >/dev/null || die "gitleaks fehlt (brew install gitleaks)"
-step secrets gitleaks git --redact --no-banner --log-opts="origin/$base..HEAD" .
+step secrets scripts/gitleaks.sh git --redact --no-banner --log-opts="origin/$base..HEAD" .
 
 # Das Label zum Übersteuern setzt nur ein Mensch; es gilt hier wie im CI-Job «Spec-Drift»
 override=$(printf 'spec-%s' unchanged)
