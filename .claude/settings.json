@@ -16,6 +16,7 @@
       "Bash(bash .claude/flow/scripts/check-story-drift.sh:*)",
       "Bash(.claude/flow/scripts/check-test-edit.sh:*)",
       "Bash(.claude/flow/scripts/check-story-drift.sh:*)",
+      "Bash(.claude/flow/scripts/issue-cost.sh:*)",
       "Bash(mkdir:*)",
       "Bash(cp:*)",
       "Bash(mv:*)",
