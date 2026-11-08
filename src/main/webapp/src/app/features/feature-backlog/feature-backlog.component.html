@@ -5,85 +5,26 @@
   (ngSubmit)="submit()"
   novalidate
   class="mb-6 grid gap-3 rounded-lg border border-border bg-surface p-4 sm:grid-cols-2"
-  [attr.aria-label]="editing() ? 'Feature bearbeiten' : 'Neues Feature erfassen'"
+  aria-label="Neues Feature erfassen"
 >
-  <label class="flex flex-col gap-1 text-sm sm:col-span-2">
-    Titel
-    <input
-      formControlName="title"
-      [attr.aria-invalid]="hasError('title', 'required') || hasError('title', 'maxlength')"
-      class="rounded border border-border bg-background px-2 py-1"
-    />
-    @if (hasError('title', 'required')) {
-      <span class="text-danger">Der Titel darf nicht leer sein.</span>
-    }
-    @if (hasError('title', 'maxlength')) {
-      <span class="text-danger"
-        >Der Titel darf höchstens {{ maxTitleLength }} Zeichen lang sein.</span
-      >
-    }
-  </label>
-  <label class="flex flex-col gap-1 text-sm sm:col-span-2">
-    Beschreibung
-    <textarea
-      formControlName="description"
-      rows="3"
-      [attr.aria-invalid]="hasError('description', 'maxlength')"
-      class="rounded border border-border bg-background px-2 py-1"
-    ></textarea>
-    @if (hasError('description', 'maxlength')) {
-      <span class="text-danger"
-        >Die Beschreibung darf höchstens {{ maxDescriptionLength }} Zeichen lang sein.</span
-      >
-    }
-  </label>
-  <label class="flex flex-col gap-1 text-sm">
-    WSJF-Rang
-    <input
-      formControlName="wsjfRank"
-      inputmode="numeric"
-      [attr.aria-invalid]="hasError('wsjfRank', 'integer')"
-      class="rounded border border-border bg-background px-2 py-1"
-    />
-    @if (hasError('wsjfRank', 'integer')) {
-      <span class="text-danger">Der WSJF-Rang muss eine ganze Zahl ab 1 sein.</span>
-    }
-  </label>
-  <label class="flex flex-col gap-1 text-sm">
-    Owner
-    <input
-      formControlName="owner"
-      [attr.aria-invalid]="hasError('owner', 'maxlength')"
-      class="rounded border border-border bg-background px-2 py-1"
-    />
-    @if (hasError('owner', 'maxlength')) {
-      <span class="text-danger"
-        >Der Owner darf höchstens {{ maxOwnerLength }} Zeichen lang sein.</span
-      >
-    }
-  </label>
-  <label class="flex flex-col gap-1 text-sm">
-    Schätzung (Story Points)
-    <input
-      formControlName="estimate"
-      inputmode="numeric"
-      [attr.aria-invalid]="hasError('estimate', 'integer')"
-      class="rounded border border-border bg-background px-2 py-1"
-    />
-    @if (hasError('estimate', 'integer')) {
-      <span class="text-danger">Die Schätzung muss eine ganze Zahl ab 0 sein.</span>
-    }
-  </label>
+  <app-feature-fields [form]="form" [submitted]="submitted()" />
   <div class="flex items-end gap-3">
     <button type="submit" class="rounded bg-accent px-3 py-1.5 text-accent-foreground">
-      {{ editing() ? 'Speichern' : 'Feature erfassen' }}
+      Feature erfassen
     </button>
-    @if (editing()) {
-      <button type="button" (click)="cancelEdit()" class="text-sm text-muted">Abbrechen</button>
-    }
   </div>
 </form>
 
+<p class="mb-2 text-sm text-muted">
+  CSV-Datei in UTF-8 mit Kopfzeile, getrennt durch Semikolon oder Komma. Spalten: Titel (Pflicht),
+  Beschreibung, WSJF-Rang, Owner, Schätzung.
+  <a
+    [href]="sampleCsvHref"
+    download="pikel-backlog-beispiel.csv"
+    class="ml-1 text-accent hover:underline"
+    >Beispieldatei herunterladen</a
+  >
+</p>
 <label class="mb-4 flex flex-col gap-1 text-sm">
   CSV importieren
   <input
@@ -104,8 +45,11 @@
 @if (service.error(); as error) {
   <p role="alert" class="mb-4 text-danger">{{ error }}</p>
 }
+<!-- Meldungen von Erfassen und Entfernen stehen in der Zeile (US-16); hier nur ein gescheitertes Laden. -->
 @if (dependencies.error(); as error) {
-  <p role="alert" class="mb-4 text-danger">{{ error }}</p>
+  @if (!dependencyError()) {
+    <p role="alert" class="mb-4 text-danger">{{ error }}</p>
+  }
 }
 
 @if (service.loading()) {
@@ -114,37 +58,57 @@
   <ul class="divide-y divide-border rounded-lg border border-border bg-surface">
     @for (feature of service.features(); track feature.id) {
       <li class="flex flex-wrap items-center gap-3 px-4 py-3" data-testid="feature-row">
-        <span class="w-10 text-sm text-muted">
-          @if (feature.wsjfRank !== undefined && feature.wsjfRank !== null) {
-            #{{ feature.wsjfRank }}
-          }
-        </span>
-        <span class="flex-1 font-medium">{{ feature.title }}</span>
-        @if (feature.owner) {
-          <span class="text-sm text-muted">{{ feature.owner }}</span>
-        }
-        @if (feature.estimate !== undefined && feature.estimate !== null) {
-          <span class="text-sm text-muted">{{ feature.estimate }} SP</span>
-        }
-        @if (confirmingRemoval() === feature.id) {
-          <span class="text-sm">Wirklich löschen?</span>
-          <button
-            type="button"
-            (click)="confirmRemoval(feature)"
-            class="rounded border border-border px-3 py-1 text-sm text-danger"
+        @if (editing() === feature.id) {
+          <form
+            [formGroup]="editForm"
+            (ngSubmit)="saveEdit()"
+            novalidate
+            class="grid w-full gap-3 sm:grid-cols-2"
+            aria-label="Feature bearbeiten"
           >
-            Wirklich löschen
-          </button>
-          <button type="button" (click)="cancelRemoval()" class="text-sm text-muted">
-            Abbrechen
-          </button>
+            <app-feature-fields [form]="editForm" [submitted]="editSubmitted()" />
+            <div class="flex items-end gap-3">
+              <button type="submit" class="rounded bg-accent px-3 py-1.5 text-accent-foreground">
+                Speichern
+              </button>
+              <button type="button" (click)="cancelEdit()" class="text-sm text-muted">
+                Abbrechen
+              </button>
+            </div>
+          </form>
         } @else {
-          <button type="button" (click)="startEdit(feature)" class="text-sm text-accent">
-            Bearbeiten
-          </button>
-          <button type="button" (click)="askRemoval(feature)" class="text-sm text-danger">
-            Löschen
-          </button>
+          <span class="w-10 text-sm text-muted">
+            @if (feature.wsjfRank !== undefined && feature.wsjfRank !== null) {
+              #{{ feature.wsjfRank }}
+            }
+          </span>
+          <span class="flex-1 font-medium">{{ feature.title }}</span>
+          @if (feature.owner) {
+            <span class="text-sm text-muted">{{ feature.owner }}</span>
+          }
+          @if (feature.estimate !== undefined && feature.estimate !== null) {
+            <span class="text-sm text-muted">{{ feature.estimate }} SP</span>
+          }
+          @if (confirmingRemoval() === feature.id) {
+            <span class="text-sm">Wirklich löschen?</span>
+            <button
+              type="button"
+              (click)="confirmRemoval(feature)"
+              class="rounded border border-border px-3 py-1 text-sm text-danger"
+            >
+              Wirklich löschen
+            </button>
+            <button type="button" (click)="cancelRemoval()" class="text-sm text-muted">
+              Abbrechen
+            </button>
+          } @else {
+            <button type="button" (click)="startEdit(feature)" class="text-sm text-accent">
+              Bearbeiten
+            </button>
+            <button type="button" (click)="askRemoval(feature)" class="text-sm text-danger">
+              Löschen
+            </button>
+          }
         }
         @let needed = featuresWithIds(dependencies.needs(feature.id));
         @if (needed.length > 0) {
@@ -176,17 +140,27 @@
           <select
             #neededSelect
             aria-label="Braucht Feature"
+            (change)="chooseNeeded(feature, neededSelect.value)"
             class="rounded border border-border bg-background px-2 py-1"
           >
-            <option value=""></option>
+            <option value="" selected>Feature wählen …</option>
             @for (other of candidatesFor(feature); track other.id) {
               <option [value]="other.id">{{ other.title }}</option>
             }
           </select>
-          <button type="button" (click)="addDependency(feature, neededSelect)" class="text-accent">
+          <button
+            type="button"
+            (click)="addDependency(feature, neededSelect)"
+            [disabled]="!neededChoice(feature)"
+            class="text-accent disabled:text-muted"
+          >
             Abhängigkeit hinzufügen
           </button>
         </div>
+        @let rowError = dependencyError();
+        @if (rowError?.featureId === feature.id) {
+          <p role="alert" class="w-full text-sm text-danger">{{ rowError?.message }}</p>
+        }
       </li>
     } @empty {
       <li class="px-4 py-3 text-muted">

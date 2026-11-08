@@ -17,7 +17,9 @@ alle Teams im Planning dieselbe Ausgangslage sehen.
    10 000 Zeichen
 2. Am PI lassen sich Links mit Titel (Pflicht, höchstens 100 Zeichen) und URL (Pflicht, `http` oder `https`)
    hinzufügen und entfernen
-3. Die Detailseite des PI zeigt Text mit Zeilenumbrüchen und die Links, die sich in einem neuen Tab öffnen
+3. Die Detailseite des PI zeigt Text mit Zeilenumbrüchen und die Links, die sich in einem neuen Tab öffnen. Das
+   Formular für Business-Kontext und PI Objectives öffnet sich über «Bearbeiten» (ohne Inhalt «Erfassen»), das für
+   Links über «Link hinzufügen»; Speichern oder Abbrechen schliesst es, Abbrechen verwirft die Eingabe
 4. Ohne Inhalt zeigt der Bereich einen Hinweis, dass noch kein Business-Kontext erfasst ist
 
 ## BDD-Szenarien
@@ -34,9 +36,18 @@ Siehe [`src/test/resources/features/program-increments/8-business-kontext.featur
   `domain/model/PiLinkTest`, `ProgramIncrementTest`, `ProgramIncrementServiceTest`; CucumberIT «Link wird
   hinzugefügt», «Link wird entfernt», «Link ohne http oder https wird abgelehnt»; Vitest Detailseite und Service
 - AK 3 und 4 (Detailseite): Vitest `program-increment-detail.component.spec.ts` (Testnamen mit Suffix `(US-8)`)
+- AK 3 (Formulare hinter Knöpfen): `@Unit` «Business-Kontext wird über Bearbeiten geändert»; Vitest
+  `program-increment-detail.component.spec.ts` → «ändert den Business-Kontext über «Bearbeiten» (US-8)», «zeigt mit
+  Inhalt den Knopf «Bearbeiten», nicht «Erfassen» (US-8)», «zeigt ohne Inhalt den Hinweis mit dem Knopf «Erfassen»,
+  der ein leeres Formular öffnet (US-8)», «zeigt den Knopf «Bearbeiten», wenn nur ein Link erfasst ist (US-8)»,
+  «zeigt den Knopf «Bearbeiten», wenn nur PI Objectives erfasst sind (US-8)»,
+  «schliesst beim Abbrechen das Formular und verwirft die Eingabe (US-8)», «lässt das Formular mit der Eingabe offen,
+  wenn der Server das Speichern ablehnt (US-8)», «zeigt das Link-Formular erst nach «Link hinzufügen» (US-8)»,
+  «schliesst beim Abbrechen das Link-Formular und verwirft die Eingabe (US-8)»
 - Szenario «Zu langer Business-Kontext wird abgelehnt» (`@Unit`): JUnit `ProgramIncrementTest →
-  rejectsBusinessContextLongerThan10000Characters`
+rejectsBusinessContextLongerThan10000Characters`
 
 ## Änderungen
 
 - #8: Business-Kontext und ART-Ziele am PI — `spec/changes/8-business-kontext/delta.md`
+- #50: Nacharbeiten aus dem Playwright-Test — `spec/changes/50-nacharbeiten-playwright/delta.md`

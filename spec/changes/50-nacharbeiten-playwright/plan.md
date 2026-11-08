@@ -19,6 +19,8 @@ Nur Frontend: keine Änderung an Domain, REST-API oder Schema.
 ## Zu erstellende Dateien
 
 - [ ] keine (die Beispieldatei für den CSV-Import entsteht im Browser, siehe Architektur-Entscheide)
+- [x] PR 2, ungeplant: `src/main/webapp/src/app/features/feature-backlog/feature-fields.component.{ts,html}` —
+  Felder von Erfassen und Bearbeiten (`notes.md`)
 
 ## Zu ändernde Dateien
 
@@ -105,18 +107,18 @@ PR 1 (Branch `fix/50-ip-drop`):
   aus dem Issue (Karte auf Greif/IP → bleibt, Meldung)
 
 PR 2 (Branch `feat/50-bedienung`):
-- [ ] 5. Kopfzeile (US-1) und Board-Kopf mit leerem Backlog (US-12) — erledigt, wenn die Vitest-Tests zu den
+- [x] 5. Kopfzeile (US-1) und Board-Kopf mit leerem Backlog (US-12) — erledigt, wenn die Vitest-Tests zu den
   Szenarien «Kopfzeile führt zur PI-Übersicht», «Board zeigt die Überschrift der Team-Spalte», «Leeres Backlog auf
   dem Board zeigt einen Hinweis», «Board ohne Features verweist auf die Detailseite» grün sind
-- [ ] 6. CSV-Hinweis mit Beispieldatei (US-11) — erledigt, wenn der Vitest-Test zum Szenario «Oberfläche nennt das
+- [x] 6. CSV-Hinweis mit Beispieldatei (US-11) — erledigt, wenn der Vitest-Test zum Szenario «Oberfläche nennt das
   CSV-Format und bietet eine Beispieldatei» grün ist
-- [ ] 7. Auswahl der Abhängigkeiten (US-16) — erledigt, wenn der Vitest-Test zu «Auswahl bietet nur noch nicht
+- [x] 7. Auswahl der Abhängigkeiten (US-16) — erledigt, wenn der Vitest-Test zu «Auswahl bietet nur noch nicht
   verbundene Features an» und die geänderten Tests aus dem Delta grün sind
-- [ ] 8. Meldung je Zeile bei Abhängigkeiten (US-16) — erledigt, wenn der Vitest-Test zu «Abgelehnte Abhängigkeit
+- [x] 8. Meldung je Zeile bei Abhängigkeiten (US-16) — erledigt, wenn der Vitest-Test zu «Abgelehnte Abhängigkeit
   meldet sich beim Feature» und die geänderten Alarm-Tests grün sind
-- [ ] 9. Bearbeiten in der Zeile (US-10) — erledigt, wenn der Vitest-Test zu «Feature wird in seiner Zeile
+- [x] 9. Bearbeiten in der Zeile (US-10) — erledigt, wenn der Vitest-Test zu «Feature wird in seiner Zeile
   bearbeitet» und die angepassten US-10-Tests grün sind
-- [ ] 10. Business-Kontext und Links hinter Knöpfen (US-8) — erledigt, wenn der Vitest-Test zu «Business-Kontext
+- [x] 10. Business-Kontext und Links hinter Knöpfen (US-8) — erledigt, wenn der Vitest-Test zu «Business-Kontext
   wird über Bearbeiten geändert» und die angepassten US-8-Tests grün sind
 - [ ] 11. Feature-Dateien und Stories einpflegen, Screenshot des Board-Kopfs bei 1400 px im PR — erledigt, wenn
   `check-story-drift.sh` nichts meldet und `scripts/gate.sh` grün ist
@@ -126,30 +128,30 @@ PR 2 (Branch `feat/50-bedienung`):
 Alles auf Ebene Unit (Vitest): kein neuer Endpunkt, keine Persistenz. Die Szenarien sind `@Unit` mit
 `# Vitest: <spec> → <testname>`.
 
-- [ ] Unit (US-13): Ein Loslassen ohne `isPointerOverContainer` ruft weder `schedule` noch `unschedule` auf, egal aus
+- [x] Unit (US-13): Ein Loslassen ohne `isPointerOverContainer` ruft weder `schedule` noch `unschedule` auf, egal aus
   welcher Liste die Karte kam (Backlog, Zelle) und welche Liste sie zuletzt überfuhr
-- [ ] Unit (US-13): Liegt der Ablagepunkt in einer IP-Zelle, erscheint «In der IP-Iteration wird keine
+- [x] Unit (US-13): Liegt der Ablagepunkt in einer IP-Zelle, erscheint «In der IP-Iteration wird keine
   Feature-Arbeit geplant.» als Alarm über dem Board, ohne Serveraufruf; ausserhalb von IP und Raster keine Meldung
-- [ ] Unit (US-13): Ein Ablegen mit `isPointerOverContainer` in eine andere Zelle oder ins Backlog speichert wie
+- [x] Unit (US-13): Ein Ablegen mit `isPointerOverContainer` in eine andere Zelle oder ins Backlog speichert wie
   bisher (bestehende Tests bleiben unverändert grün)
-- [ ] Unit (US-1): Die Kopfzeile hat auf jeder Seite einen Link «Program Increments» auf `/`
-- [ ] Unit (US-12): Erste Kopfspalte zeigt sichtbar «Team» (nicht `sr-only`); Backlog leer bei eingeplanten Features
+- [x] Unit (US-1): Die Kopfzeile hat auf jeder Seite einen Link «Program Increments» auf `/`
+- [x] Unit (US-12): Erste Kopfspalte zeigt sichtbar «Team» (nicht `sr-only`); Backlog leer bei eingeplanten Features
   → «Alle Features sind eingeplant.»; Board ohne Features → «Noch keine Features.» mit Link auf
   `/program-increments/:id`
-- [ ] Unit (US-11): Hinweis nennt die fünf Spalten; der Download-Link hat `download` und eine `data:text/csv`-URL,
+- [x] Unit (US-11): Hinweis nennt die fünf Spalten; der Download-Link hat `download` und eine `data:text/csv`-URL,
   deren Inhalt mit der Kopfzeile `Titel;Beschreibung;WSJF-Rang;Owner;Schätzung` beginnt und nicht mit `unsafe:`
-- [ ] Unit (US-16): Auswahl bei «Shop» (braucht «Login», wird von «Karte» gebraucht) enthält weder «Login» noch
+- [x] Unit (US-16): Auswahl bei «Shop» (braucht «Login», wird von «Karte» gebraucht) enthält weder «Login» noch
   «Karte» noch «Shop»; Platzhalter «Feature wählen …»; Knopf `disabled` ohne Wahl
-- [ ] Unit (US-16): Abgelehnte Abhängigkeit → Meldung in der Zeile des Features, nicht über der Liste; nach der
+- [x] Unit (US-16): Abgelehnte Abhängigkeit → Meldung in der Zeile des Features, nicht über der Liste; nach der
   nächsten Aktion an Abhängigkeiten (Erfassen oder Entfernen, auch in einer anderen Zeile) verschwunden. Gilt auch
   für gescheitertes Entfernen
-- [ ] Unit (US-10): «Bearbeiten» macht die Zeile zum Formular mit den Angaben; Erfassungsformular bleibt leer und
+- [x] Unit (US-10): «Bearbeiten» macht die Zeile zum Formular mit den Angaben; Erfassungsformular bleibt leer und
   zeigt «Feature erfassen»; Validierung wie beim Erfassen am Feld der Zeile; Abbrechen verwirft; ein zweites
   «Bearbeiten» schliesst das erste ohne Speichern
-- [ ] Unit (US-8): Mit Inhalt kein Eingabefeld, der Text steht genau einmal; «Bearbeiten» öffnet das Formular mit
+- [x] Unit (US-8): Mit Inhalt kein Eingabefeld, der Text steht genau einmal; «Bearbeiten» öffnet das Formular mit
   dem Text; Speichern schliesst es und zeigt den neuen Text; Abbrechen verwirft; ohne Inhalt Hinweis mit «Erfassen»;
   «Link hinzufügen» öffnet das Link-Formular, nach dem Hinzufügen ist es zu
-- [ ] Bestehende Tests, die sich ändern: die im Delta unter «Geändert → Tests» genannten (US-16, US-10, US-8)
+- [x] Bestehende Tests, die sich ändern: die im Delta unter «Geändert → Tests» genannten (US-16, US-10, US-8)
 - [ ] Prüfung von Hand: Trennlinie im Board-Kopf (jsdom misst kein Layout; Screenshot im PR wie bei US-12 AK 7);
   echtes Ziehen mit der Maus über IP und neben das Raster (das CDK-Ziehen selbst prüft Vitest nicht; Playwright-Skript
   aus dem Test zum Issue, E2E ist nicht eingerichtet)

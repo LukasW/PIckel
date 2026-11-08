@@ -20,6 +20,8 @@ dem Issue-Tracker abtippen muss.
    den Grund
 4. Nach dem Import meldet die Oberfläche die Anzahl der importierten Features
 5. Dateien über 1 MB oder mit mehr als 1000 Datenzeilen werden abgelehnt
+6. Beim Import nennt die Oberfläche die Spalten `Titel` (Pflicht), `Beschreibung`, `WSJF-Rang`, `Owner` und
+   `Schätzung` und bietet eine Beispieldatei zum Herunterladen
 
 Format: UTF-8, Kopfzeile Pflicht mit den Spalten `Titel`, `Beschreibung`, `WSJF-Rang`, `Owner`, `Schätzung`; nur
 `Titel` muss vorkommen, die Reihenfolge ist frei. Regeln wie beim Erfassen (US-9); unbekannte Spalten werden
@@ -31,6 +33,14 @@ Nicht in dieser Story: Synchronisation mit Jira, Dubletten-Erkennung.
 
 Siehe [`src/test/resources/features/features/11-csv-import.feature`](../../src/test/resources/features/features/11-csv-import.feature).
 
+## Tests
+
+- AK 6 (Format und Beispieldatei): `@Unit` «Oberfläche nennt das CSV-Format und bietet eine Beispieldatei»; Vitest
+  `feature-backlog.component.spec.ts` → «nennt beim Import die Spalten der CSV-Datei, «Titel» als Pflicht (US-11)»,
+  «bietet eine Beispieldatei mit der Kopfzeile der Spalten zum Herunterladen an (US-11)»
+- Übrige Kriterien: siehe Feature-Datei
+
 ## Änderungen
 
 - #11: Features per CSV importieren — `spec/changes/11-csv-import/delta.md`
+- #50: Nacharbeiten aus dem Playwright-Test — `spec/changes/50-nacharbeiten-playwright/delta.md`

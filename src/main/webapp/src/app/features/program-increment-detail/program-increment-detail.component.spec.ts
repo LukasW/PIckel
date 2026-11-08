@@ -105,24 +105,56 @@ describe('ProgramIncrementDetailComponent', () => {
   }
 
   /**
-   * Eingabefeld des Business-Kontexts; steckt es hinter einem Knopf «Bearbeiten», wird er zuerst gedrückt. Die
-   * Spezifikation legt nur fest, dass sich die Texte auf der Detailseite erfassen lassen, nicht ob sofort sichtbar.
+   * Der Abschnitt «Business-Kontext». Die Suche bleibt darin, weil das eingebettete Backlog eigene Knöpfe
+   * «Bearbeiten» und ein eigenes Feld `title` hat.
    */
-  async function textarea(el: HTMLElement, name: string): Promise<HTMLTextAreaElement> {
-    const selector = `textarea[formControlName="${name}"]`;
-    if (!el.querySelector(selector)) {
-      button(el, 'Bearbeiten')?.click();
-      await settle();
-    }
-    const found = el.querySelector(selector);
+  function contextSection(el: HTMLElement): HTMLElement {
+    const heading = Array.from(el.querySelectorAll('h2')).find(
+      (h) => (h.textContent ?? '').trim() === 'Business-Kontext',
+    );
+    const section = heading?.closest('section');
+    expect(section, 'Abschnitt «Business-Kontext»').toBeTruthy();
+    return section as HTMLElement;
+  }
+
+  /** Drückt im Abschnitt «Business-Kontext» den Knopf mit dieser Beschriftung; er muss da sein. */
+  async function press(el: HTMLElement, text: string): Promise<void> {
+    const found = button(contextSection(el), text);
+    expect(found, `Knopf «${text}»`).toBeDefined();
+    found!.click();
+    await settle();
+  }
+
+  /** Öffnet das Formular für Business-Kontext und PI Objectives: mit Inhalt «Bearbeiten», ohne «Erfassen». */
+  async function openContextForm(el: HTMLElement, label: 'Bearbeiten' | 'Erfassen'): Promise<void> {
+    expect(textareas(el), 'Formular vor dem Öffnen').toEqual([]);
+    await press(el, label);
+  }
+
+  /** Öffnet das Formular für Links über den Knopf «Link hinzufügen». */
+  async function openLinkForm(el: HTMLElement): Promise<void> {
+    expect(contextSection(el).querySelector('input'), 'Link-Formular vor dem Öffnen').toBeNull();
+    await press(el, 'Link hinzufügen');
+  }
+
+  function textareas(el: HTMLElement): HTMLTextAreaElement[] {
+    return Array.from(contextSection(el).querySelectorAll('textarea'));
+  }
+
+  function textarea(el: HTMLElement, name: string): HTMLTextAreaElement {
+    const found = contextSection(el).querySelector(`textarea[formControlName="${name}"]`);
     expect(found, `Eingabefeld ${name}`).not.toBeNull();
     return found as HTMLTextAreaElement;
   }
 
   function linkInput(el: HTMLElement, name: string): HTMLInputElement {
-    const found = el.querySelector(`input[formControlName="${name}"]`);
+    const found = contextSection(el).querySelector(`input[formControlName="${name}"]`);
     expect(found, `Eingabefeld ${name}`).not.toBeNull();
     return found as HTMLInputElement;
+  }
+
+  function occurrences(text: string, part: string): number {
+    return text.split(part).length - 1;
   }
 
   function type(field: HTMLInputElement | HTMLTextAreaElement, value: string): void {
@@ -324,6 +356,139 @@ describe('ProgramIncrementDetailComponent', () => {
     expect(el.textContent).not.toContain(EMPTY_HINT);
   });
 
+  it('zeigt den Knopf «Bearbeiten», wenn nur ein Link erfasst ist (US-8)', async () => {
+    get.mockResolvedValue({ ...PI_27_1, links: [VISION] });
+
+    const section = contextSection(await open('/program-increments/1'));
+
+    expect(button(section, 'Bearbeiten'), 'Knopf «Bearbeiten»').toBeDefined();
+    expect(button(section, 'Erfassen'), 'Knopf «Erfassen»').toBeUndefined();
+  });
+
+  it('zeigt den Knopf «Bearbeiten», wenn nur PI Objectives erfasst sind (US-8)', async () => {
+    get.mockResolvedValue({ ...PI_27_1, artObjectives: 'Checkout in 2 Schritten' });
+
+    const section = contextSection(await open('/program-increments/1'));
+
+    expect(button(section, 'Bearbeiten'), 'Knopf «Bearbeiten»').toBeDefined();
+    expect(button(section, 'Erfassen'), 'Knopf «Erfassen»').toBeUndefined();
+  });
+
+  it('lässt das Formular mit der Eingabe offen, wenn der Server das Speichern ablehnt (US-8)', async () => {
+    get.mockResolvedValue({ ...PI_27_1, businessContext: 'Digitalisierung' });
+    updateBusinessContext.mockRejectedValue(
+      new HttpErrorResponse({ status: 400, error: { message: 'Abgelehnt vom Server.' } }),
+    );
+    const el = await open('/program-increments/1');
+    await openContextForm(el, 'Bearbeiten');
+    type(textarea(el, 'businessContext'), 'Self-Service-Portal');
+
+    await submit(textarea(el, 'businessContext'));
+
+    expect(el.querySelector('[role="alert"]')?.textContent ?? '').toContain(
+      'Abgelehnt vom Server.',
+    );
+    expect(textarea(el, 'businessContext').value).toBe('Self-Service-Portal');
+    expect(shown(el, 'business-context')?.textContent?.trim()).toBe('Digitalisierung');
+  });
+
+  it('ändert den Business-Kontext über «Bearbeiten» (US-8)', async () => {
+    get.mockResolvedValue({ ...PI_27_1, businessContext: 'Digitalisierung' });
+    updateBusinessContext.mockResolvedValue({ ...PI_27_1, businessContext: 'Self-Service-Portal' });
+    const el = await open('/program-increments/1');
+
+    expect(occurrences(el.textContent ?? '', 'Digitalisierung')).toBe(1);
+    expect(textareas(el)).toEqual([]);
+
+    await press(el, 'Bearbeiten');
+    const context = textarea(el, 'businessContext');
+    expect(context.value).toBe('Digitalisierung');
+    type(context, 'Self-Service-Portal');
+    await submit(context);
+
+    expect(updateBusinessContext).toHaveBeenCalledWith('1', {
+      businessContext: 'Self-Service-Portal',
+      artObjectives: '',
+    });
+    expect(shown(el, 'business-context')?.textContent?.trim()).toBe('Self-Service-Portal');
+    expect(el.textContent).not.toContain('Digitalisierung');
+    expect(textareas(el)).toEqual([]);
+  });
+
+  it('zeigt mit Inhalt den Knopf «Bearbeiten», nicht «Erfassen» (US-8)', async () => {
+    get.mockResolvedValue({ ...PI_27_1, businessContext: 'Digitalisierung' });
+
+    const section = contextSection(await open('/program-increments/1'));
+
+    expect(button(section, 'Bearbeiten'), 'Knopf «Bearbeiten»').toBeDefined();
+    expect(button(section, 'Erfassen'), 'Knopf «Erfassen»').toBeUndefined();
+  });
+
+  it('zeigt ohne Inhalt den Hinweis mit dem Knopf «Erfassen», der ein leeres Formular öffnet (US-8)', async () => {
+    get.mockResolvedValue(PI_27_1);
+    const el = await open('/program-increments/1');
+    const section = contextSection(el);
+
+    expect(section.textContent).toContain(EMPTY_HINT);
+    expect(button(section, 'Bearbeiten'), 'Knopf «Bearbeiten»').toBeUndefined();
+    expect(textareas(el)).toEqual([]);
+
+    await press(el, 'Erfassen');
+
+    expect(textarea(el, 'businessContext').value).toBe('');
+    expect(textarea(el, 'artObjectives').value).toBe('');
+  });
+
+  it('schliesst beim Abbrechen das Formular und verwirft die Eingabe (US-8)', async () => {
+    get.mockResolvedValue({
+      ...PI_27_1,
+      businessContext: 'Digitalisierung',
+      artObjectives: 'Checkout in 2 Schritten',
+    });
+    const el = await open('/program-increments/1');
+    await openContextForm(el, 'Bearbeiten');
+    type(textarea(el, 'businessContext'), 'Verworfen');
+    type(textarea(el, 'artObjectives'), 'Auch verworfen');
+
+    await press(el, 'Abbrechen');
+
+    expect(updateBusinessContext).not.toHaveBeenCalled();
+    expect(textareas(el)).toEqual([]);
+    expect(shown(el, 'business-context')?.textContent?.trim()).toBe('Digitalisierung');
+    expect(el.textContent).not.toContain('Verworfen');
+    await openContextForm(el, 'Bearbeiten');
+    expect(textarea(el, 'businessContext').value).toBe('Digitalisierung');
+    expect(textarea(el, 'artObjectives').value).toBe('Checkout in 2 Schritten');
+  });
+
+  it('zeigt das Link-Formular erst nach «Link hinzufügen» (US-8)', async () => {
+    get.mockResolvedValue({ ...PI_27_1, businessContext: 'Digitalisierung' });
+    const el = await open('/program-increments/1');
+
+    expect(contextSection(el).querySelector('input'), 'Link-Formular').toBeNull();
+
+    await press(el, 'Link hinzufügen');
+
+    expect(linkInput(el, 'title').value).toBe('');
+    expect(linkInput(el, 'url').value).toBe('');
+  });
+
+  it('schliesst beim Abbrechen das Link-Formular und verwirft die Eingabe (US-8)', async () => {
+    get.mockResolvedValue(PI_27_1);
+    const el = await open('/program-increments/1');
+    await openLinkForm(el);
+    type(linkInput(el, 'title'), 'Vision');
+    type(linkInput(el, 'url'), 'https://wiki.example.ch/vision');
+
+    await press(el, 'Abbrechen');
+
+    expect(addLink).not.toHaveBeenCalled();
+    expect(contextSection(el).querySelector('input'), 'Link-Formular').toBeNull();
+    await openLinkForm(el);
+    expect(linkInput(el, 'title').value).toBe('');
+    expect(linkInput(el, 'url').value).toBe('');
+  });
+
   it('füllt die Eingabefelder mit den erfassten Texten (US-8)', async () => {
     get.mockResolvedValue({
       ...PI_27_1,
@@ -331,9 +496,10 @@ describe('ProgramIncrementDetailComponent', () => {
       artObjectives: 'Checkout in 2 Schritten',
     });
     const el = await open('/program-increments/1');
+    await openContextForm(el, 'Bearbeiten');
 
-    expect((await textarea(el, 'businessContext')).value).toBe('Fokus auf Self-Service');
-    expect((await textarea(el, 'artObjectives')).value).toBe('Checkout in 2 Schritten');
+    expect(textarea(el, 'businessContext').value).toBe('Fokus auf Self-Service');
+    expect(textarea(el, 'artObjectives').value).toBe('Checkout in 2 Schritten');
   });
 
   it('erfasst Business-Kontext und PI Objectives und zeigt das gespeicherte PI (US-8)', async () => {
@@ -344,9 +510,10 @@ describe('ProgramIncrementDetailComponent', () => {
       artObjectives: 'Checkout in 2 Schritten',
     });
     const el = await open('/program-increments/1');
-    const context = await textarea(el, 'businessContext');
+    await openContextForm(el, 'Erfassen');
+    const context = textarea(el, 'businessContext');
     type(context, 'Fokus auf Self-Service\nNeue Kundengruppe');
-    type(await textarea(el, 'artObjectives'), 'Checkout in 2 Schritten');
+    type(textarea(el, 'artObjectives'), 'Checkout in 2 Schritten');
 
     await submit(context);
 
@@ -365,7 +532,8 @@ describe('ProgramIncrementDetailComponent', () => {
     get.mockResolvedValue(PI_27_1);
     updateBusinessContext.mockResolvedValue(PI_27_1);
     const el = await open('/program-increments/1');
-    const context = await textarea(el, 'businessContext');
+    await openContextForm(el, 'Erfassen');
+    const context = textarea(el, 'businessContext');
     type(context, 'x'.repeat(10_000));
 
     await submit(context);
@@ -379,7 +547,8 @@ describe('ProgramIncrementDetailComponent', () => {
   it('zeigt einen zu langen Text am Feld an, ohne zu speichern (US-8)', async () => {
     get.mockResolvedValue(PI_27_1);
     const el = await open('/program-increments/1');
-    const objectives = await textarea(el, 'artObjectives');
+    await openContextForm(el, 'Erfassen');
+    const objectives = textarea(el, 'artObjectives');
     type(objectives, 'x'.repeat(10_001));
 
     await submit(objectives);
@@ -394,6 +563,7 @@ describe('ProgramIncrementDetailComponent', () => {
     get.mockResolvedValue(PI_27_1);
     addLink.mockResolvedValue({ ...PI_27_1, links: [VISION] });
     const el = await open('/program-increments/1');
+    await openLinkForm(el);
     type(linkInput(el, 'title'), 'Vision');
     type(linkInput(el, 'url'), 'https://wiki.example.ch/vision');
 
@@ -404,6 +574,8 @@ describe('ProgramIncrementDetailComponent', () => {
       url: 'https://wiki.example.ch/vision',
     });
     expect(el.querySelector(`a[href="${VISION.url}"]`)?.textContent?.trim()).toBe('Vision');
+    // Nach dem Hinzufügen ist das Link-Formular zu; geöffnet ist es wieder leer.
+    await openLinkForm(el);
     expect(linkInput(el, 'title').value).toBe('');
     expect(linkInput(el, 'url').value).toBe('');
   });
@@ -412,18 +584,21 @@ describe('ProgramIncrementDetailComponent', () => {
     get.mockResolvedValue(PI_27_1);
     addLink.mockResolvedValue({ ...PI_27_1, links: [VISION] });
     const el = await open('/program-increments/1');
-    type(await textarea(el, 'businessContext'), 'Noch nicht gespeichert');
+    await openContextForm(el, 'Erfassen');
+    type(textarea(el, 'businessContext'), 'Noch nicht gespeichert');
+    await press(el, 'Link hinzufügen');
     type(linkInput(el, 'title'), 'Vision');
     type(linkInput(el, 'url'), 'https://wiki.example.ch/vision');
 
     await submit(linkInput(el, 'title'));
 
-    expect((await textarea(el, 'businessContext')).value).toBe('Noch nicht gespeichert');
+    expect(textarea(el, 'businessContext').value).toBe('Noch nicht gespeichert');
   });
 
   it('fügt ohne Titel keinen Link hinzu (US-8)', async () => {
     get.mockResolvedValue(PI_27_1);
     const el = await open('/program-increments/1');
+    await openLinkForm(el);
     type(linkInput(el, 'url'), 'https://wiki.example.ch/vision');
 
     await submit(linkInput(el, 'url'));
@@ -434,6 +609,7 @@ describe('ProgramIncrementDetailComponent', () => {
   it('fügt ohne URL keinen Link hinzu (US-8)', async () => {
     get.mockResolvedValue(PI_27_1);
     const el = await open('/program-increments/1');
+    await openLinkForm(el);
     type(linkInput(el, 'title'), 'Vision');
 
     await submit(linkInput(el, 'title'));
@@ -450,6 +626,7 @@ describe('ProgramIncrementDetailComponent', () => {
       }),
     );
     const el = await open('/program-increments/1');
+    await openLinkForm(el);
     type(linkInput(el, 'title'), 'Vision');
     type(linkInput(el, 'url'), 'javascript:alert(1)');
 

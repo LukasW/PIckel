@@ -77,3 +77,12 @@ Funktionalität: US-11 Features per CSV importieren
     Wenn ich eine CSV-Datei mit 2 Features zum Import wähle
     Dann meldet die Oberfläche "2 Features importiert."
     Und zeigt das Backlog die importierten Features
+
+  # Vitest: src/main/webapp/src/app/features/feature-backlog/feature-backlog.component.spec.ts → nennt beim Import die Spalten der CSV-Datei, «Titel» als Pflicht (US-11)
+  # Vitest: src/main/webapp/src/app/features/feature-backlog/feature-backlog.component.spec.ts → bietet eine Beispieldatei mit der Kopfzeile der Spalten zum Herunterladen an (US-11)
+  @Unit
+  Szenario: Oberfläche nennt das CSV-Format und bietet eine Beispieldatei
+    Gegeben sei das Backlog eines PI
+    Wenn ich den Import ansehe
+    Dann nennt die Oberfläche die Spalten "Titel", "Beschreibung", "WSJF-Rang", "Owner" und "Schätzung"
+    Und eine Beispieldatei mit dieser Kopfzeile lässt sich herunterladen
