@@ -127,6 +127,9 @@ class ArchitectureTest {
             .because("HTTP nur im REST-Adapter ankommt");
 
     @ArchTest
+    static final ArchRule rest_path_params_are_not_uuid = RestAdapterRules.noUuidPathParams();
+
+    @ArchTest
     static final ArchRule exception_mappers_live_in_rest_adapter = classes()
             .that()
             .implement(ExceptionMapper.class)
