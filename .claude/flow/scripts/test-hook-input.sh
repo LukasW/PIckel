@@ -359,7 +359,7 @@ else fail "reviewer-reminder" "Exit $code, stdout «$o»"; fi
 
 # Patch mit zwei Dateien: jede zählt, auch wenn die alphabetisch erste keine Review-Regel trifft
 sid2="hookinput2-$$"
-o=$(printf '%s' "$(jq -cn --arg s "$sid2" --arg a "$root/docs/arc42.md" --arg j "$root/src/main/java/ch/grudligstrasse/pikel/domain/model/X.java" \
+o=$(printf '%s' "$(jq -cn --arg s "$sid2" --arg a "$root/docs/arc42.md" --arg j "$root/src/main/java/ch/grudligstrasse/pickel/domain/model/X.java" \
   '{session_id:$s,tool_name:"Edit",tool_input:("*** Begin Patch\n*** Update File: " + $j + "\n*** Update File: " + $a + "\n*** End Patch\n")}')" \
   | CLAUDE_PROJECT_DIR="$root" TMPDIR="$tmp" bash "$REMINDER" 2>/dev/null); code=$?
 if [ "$code" = 0 ] && [ -n "$o" ] && printf '%s' "$o" | jq -e '.additionalContext | contains("hexagonal-reviewer")' >/dev/null 2>&1; then
@@ -451,12 +451,12 @@ o=$(printf '%s' "$(jq -cn --arg s "own-rr-$$" --arg f "$root/src/test/resources/
 if [ "$code" = 0 ] && [ -n "$o" ] && printf '%s' "$o" | jq -e '.additionalContext | contains("bdd-cucumber-author")' >/dev/null 2>&1; then
   ok "reviewer-reminder: eigenes Format, apply_patch auf eine Feature-Datei erinnert"
 else fail "reviewer-reminder: eigenes Format, apply_patch" "Exit $code, stdout «$o»"; fi
-o=$(printf '%s' "$(jq -cn --arg s "own-rr2-$$" --arg f "$root/src/main/java/ch/grudligstrasse/pikel/domain/model/X.java" \
+o=$(printf '%s' "$(jq -cn --arg s "own-rr2-$$" --arg f "$root/src/main/java/ch/grudligstrasse/pickel/domain/model/X.java" \
   '{sessionId:$s,timestamp:1793955600000,cwd:"/w",toolCallId:"rr_2",toolName:"view",toolArgs:{path:$f},toolResult:{resultType:"success",textResultForLlm:"ok"}}')" \
   | CLAUDE_PROJECT_DIR="$root" TMPDIR="$tmp" bash "$REMINDER" 2>/dev/null); code=$?
 if [ "$code" = 0 ] && [ -z "$o" ]; then ok "reviewer-reminder: eigenes Format, view auf eine Java-Datei bleibt still"
 else fail "reviewer-reminder: eigenes Format, view" "Exit $code, stdout «$o» (erwartet Exit 0, keine Ausgabe)"; fi
-o=$(printf '%s' "$(jq -cn --arg s "claude-rr3-$$" --arg f "$root/src/main/java/ch/grudligstrasse/pikel/domain/model/X.java" \
+o=$(printf '%s' "$(jq -cn --arg s "claude-rr3-$$" --arg f "$root/src/main/java/ch/grudligstrasse/pickel/domain/model/X.java" \
   '{session_id:$s,tool_use_id:"toolu_rr3",tool_name:"Read",tool_input:{file_path:$f}}')" \
   | CLAUDE_PROJECT_DIR="$root" TMPDIR="$tmp" bash "$REMINDER" 2>/dev/null); code=$?
 if [ "$code" = 0 ] && [ -z "$o" ]; then ok "reviewer-reminder: Claude-Format, Read auf eine Java-Datei bleibt still"

@@ -1,7 +1,7 @@
 # US-11: Features per CSV importieren
 
 **ID:** US-11
-**Issue:** [#11](https://github.com/LukasW/PIkel/issues/11)
+**Issue:** [#11](https://github.com/LukasW/PIckel/issues/11)
 **Status:** Umgesetzt
 **Priorität:** Mittel
 **Schätzung:** 5

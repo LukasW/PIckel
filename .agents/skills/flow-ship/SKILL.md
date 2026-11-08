@@ -1,7 +1,7 @@
 ---
 name: flow-ship
 description: Schliesst ein Issue ab — DoD, Spec-Drift und CI prüfen, PR squash-mergen, aufräumen, Lernfragen. Einsetzen nach /flow-implement, wenn der PR freigegeben ist.
-compatibility: Claude Code oder Copilot CLI (in einem vertrauten Ordner, ADR 0007) im Repository PIkel. Braucht git, gh (GitHub) und den Maven Wrapper; Projektangaben in .claude/flow.md.
+compatibility: Claude Code oder Copilot CLI (in einem vertrauten Ordner, ADR 0007) im Repository PIckel. Braucht git, gh (GitHub) und den Maven Wrapper; Projektangaben in .claude/flow.md.
 argument-hint: "[--nachtlauf]"
 disable-model-invocation: true
 model: sonnet

@@ -1,7 +1,7 @@
 # US-7: Kapazität pro Team und Iteration erfassen
 
 **ID:** US-7
-**Issue:** [#7](https://github.com/LukasW/PIkel/issues/7)
+**Issue:** [#7](https://github.com/LukasW/PIckel/issues/7)
 **Status:** Umgesetzt
 **Priorität:** Hoch
 **Schätzung:** 5

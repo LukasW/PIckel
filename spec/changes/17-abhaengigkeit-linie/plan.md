@@ -18,16 +18,16 @@ Geometrie ist eine reine Funktion. Fokus oder Hover auf einer Karte hebt deren L
   vier `@Unit` mit `# Vitest:`-Verweisen
 
 ## Zu ändernde Dateien
-- [x] `src/main/java/ch/grudligstrasse/pikel/domain/model/ProgramBoard.java` — Komponente
+- [x] `src/main/java/ch/grudligstrasse/pickel/domain/model/ProgramBoard.java` — Komponente
   `List<FeatureDependency> dependencies` (Kopie im Compact Constructor)
-- [x] `src/main/java/ch/grudligstrasse/pikel/application/service/BoardService.java` — `FeatureDependencyUseCase`
+- [x] `src/main/java/ch/grudligstrasse/pickel/application/service/BoardService.java` — `FeatureDependencyUseCase`
   injizieren, `list(piId)` ins Board
-- [x] `src/main/java/ch/grudligstrasse/pikel/adapter/in/rest/BoardDto.java` — Feld `dependencies`
+- [x] `src/main/java/ch/grudligstrasse/pickel/adapter/in/rest/BoardDto.java` — Feld `dependencies`
   (`List<FeatureDependencyDto>`, bestehender DTO)
-- [x] `src/test/java/ch/grudligstrasse/pikel/application/service/BoardServiceTest.java` — `@Mock
+- [x] `src/test/java/ch/grudligstrasse/pickel/application/service/BoardServiceTest.java` — `@Mock
   FeatureDependencyUseCase`, neuer Test
-- [x] `src/test/java/ch/grudligstrasse/pikel/domain/model/ProgramBoardTest.java` — Konstruktoraufruf ergänzen
-- [x] `src/test/java/ch/grudligstrasse/pikel/cucumber/steps/BoardSteps.java` — Dann-Step «liefert das Board die
+- [x] `src/test/java/ch/grudligstrasse/pickel/domain/model/ProgramBoardTest.java` — Konstruktoraufruf ergänzen
+- [x] `src/test/java/ch/grudligstrasse/pickel/cucumber/steps/BoardSteps.java` — Dann-Step «liefert das Board die
   Abhängigkeit {string} braucht {string}»
 - [x] `src/main/webapp/src/app/core/models/board.model.ts` — `dependencies: readonly FeatureDependency[]`, Typ
   `DependencyLink` (`neededFeatureId`, `needingFeatureId`)

@@ -6,7 +6,7 @@
 # Das Binary kommt angemeldet über `gh release download` (GH_TOKEN bzw. gh-Anmeldung), nicht über den anonymen
 # Release-Download: Fällt dieser aus (HTTP 504, Issue #40), scheiterte der Pflicht-Check, ohne zu scannen. Die
 # Prüfsumme hält das Binary fest; ein abweichendes Archiv bricht ab. Zwischenablage: ${GITLEAKS_CACHE}, sonst
-# ~/.cache/pikel/gitleaks/<version>.
+# ~/.cache/pickel/gitleaks/<version>.
 set -euo pipefail
 
 version=8.24.3
@@ -32,7 +32,7 @@ case "$(uname -m)" in
 esac
 platform="${os}_${arch}"
 
-dir="${GITLEAKS_CACHE:-$HOME/.cache/pikel/gitleaks/$version}"
+dir="${GITLEAKS_CACHE:-$HOME/.cache/pickel/gitleaks/$version}"
 bin="$dir/gitleaks"
 
 if [ ! -x "$bin" ]; then

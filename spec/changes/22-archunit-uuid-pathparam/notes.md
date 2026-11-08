@@ -1,6 +1,6 @@
 # Notizen — #22
 
-- Fixtures unter `ch.grudligstrasse.pikel.archfixture.adapter.in.rest` (Testquellen): Die Regel filtert deshalb auf
+- Fixtures unter `ch.grudligstrasse.pickel.archfixture.adapter.in.rest` (Testquellen): Die Regel filtert deshalb auf
   `..adapter.in.rest..` statt auf das volle Produktionspaket; `ArchitectureTest` sieht die Fixtures nicht
   (`DoNotIncludeTests`)
 - `test-author` hatte die Prüfung in `ArchitectureTest` als `@ArchTest`-Methode angelegt, weil das Gerüst beim

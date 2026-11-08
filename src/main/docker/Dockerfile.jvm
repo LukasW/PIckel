@@ -1,9 +1,9 @@
-# Container für PIkel im JVM-Modus.
+# Container für PIckel im JVM-Modus.
 #
 #   ./mvnw package -DskipTests
-#   docker build -f src/main/docker/Dockerfile.jvm -t pikel-jvm .
+#   docker build -f src/main/docker/Dockerfile.jvm -t pickel-jvm .
 #   docker run --rm -p 8080:8080 \
-#     -e QUARKUS_DATASOURCE_JDBC_URL=… -e QUARKUS_DATASOURCE_USERNAME=… -e QUARKUS_DATASOURCE_PASSWORD=… pikel-jvm
+#     -e QUARKUS_DATASOURCE_JDBC_URL=… -e QUARKUS_DATASOURCE_USERNAME=… -e QUARKUS_DATASOURCE_PASSWORD=… pickel-jvm
 #
 # JVM-Optionen über JAVA_TOOL_OPTIONS; die JVM liest die Variable selbst, ein Startskript ist nicht nötig.
 # Die Plattform bestimmt `docker build --platform`, nicht das Dockerfile.

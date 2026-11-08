@@ -1,7 +1,7 @@
 ---
 name: flow-task
 description: Legt aus einer Beschreibung ein Issue (nur Auftrag und Verweis) und bei einer Story den Delta-Entwurf mit Akzeptanzkriterien und Szenarien im Change-Ordner an. Einsetzen, wenn eine neue Idee, Story oder ein technischer Task erfasst werden soll.
-compatibility: Claude Code oder Copilot CLI (in einem vertrauten Ordner, ADR 0007) im Repository PIkel. Braucht git, gh (GitHub) und den Maven Wrapper; Projektangaben in .claude/flow.md.
+compatibility: Claude Code oder Copilot CLI (in einem vertrauten Ordner, ADR 0007) im Repository PIckel. Braucht git, gh (GitHub) und den Maven Wrapper; Projektangaben in .claude/flow.md.
 argument-hint: <beschreibung>
 disable-model-invocation: true
 model: opus
@@ -72,7 +72,7 @@ Prüfe die Beschreibung auf Lücken. Typische Kandidaten:
 
 **Titel:** nach `flow.md` → «User Stories», sonst `US-<us-nr>: [Prägnanter Titel]` (max. 70 Zeichen).
 
-> In PIkel **ist die Story-Nummer die Issue-Nummer.** Issue mit Platzhalter-Titel `US: …` anlegen, die vergebene
+> In PIckel **ist die Story-Nummer die Issue-Nummer.** Issue mit Platzhalter-Titel `US: …` anlegen, die vergebene
 > Nummer lesen und den Titel auf `US-<nr>: …` ändern. Die Nummer nie vorab raten: Parallel angelegte Issues würden
 > sonst dieselbe Nummer bekommen.
 

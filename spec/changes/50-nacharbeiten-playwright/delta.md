@@ -58,7 +58,7 @@ keine
 ### AK: Die Kopfzeile verlinkt auf jeder Seite die PI-Übersicht («Program Increments») und die Teams
 
 ### Szenario: Kopfzeile führt zur PI-Übersicht
-- **Gegeben sei** eine beliebige Seite von PIkel
+- **Gegeben sei** eine beliebige Seite von PIckel
 - **Wenn** ich in der Kopfzeile "Program Increments" wähle
 - **Dann** sehe ich die Liste der PIs
 

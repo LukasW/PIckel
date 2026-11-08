@@ -59,7 +59,7 @@ done
 # --- Prüfungen ------------------------------------------------------------------------------------------------------
 step() {
   local name="$1"; shift
-  local log="$logdir/pikel-ci-local-$name.log"
+  local log="$logdir/pickel-ci-local-$name.log"
   printf '%-12s ' "$name"
   if "$@" >"$log" 2>&1; then
     echo "ok"

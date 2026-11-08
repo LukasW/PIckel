@@ -1,7 +1,7 @@
 # US-17: Abhängigkeiten als Linie auf dem Board
 
 **ID:** US-17
-**Issue:** [#17](https://github.com/LukasW/PIkel/issues/17)
+**Issue:** [#17](https://github.com/LukasW/PIckel/issues/17)
 **Status:** Umgesetzt
 **Priorität:** Mittel
 **Schätzung:** —

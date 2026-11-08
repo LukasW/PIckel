@@ -1,6 +1,6 @@
 # Präsentation: Harness Engineering und Spec Driven Development
 
-Einführung für AI Champions am Beispiel von PIkel, im Erscheinungsbild der CSS Versicherung. Eine einzige
+Einführung für AI Champions am Beispiel von PIckel, im Erscheinungsbild der CSS Versicherung. Eine einzige
 HTML-Datei ohne externe Abhängigkeiten: `index.html` im Browser öffnen.
 
 ## Bedienung

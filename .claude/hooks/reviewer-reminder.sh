@@ -32,7 +32,7 @@ while IFS= read -r file_path; do
   esac
   before=${#reminders[@]}
   case "$file_path" in
-    *src/main/java/ch/grudligstrasse/pikel/*.java)
+    *src/main/java/ch/grudligstrasse/pickel/*.java)
       add "hexagonal-reviewer — Java-Backend geändert, prüfe Ports/Adapters." ;;
   esac
   case "$file_path" in
@@ -51,7 +51,7 @@ while IFS= read -r file_path; do
 done < <(flow_tool_files "$payload")
 
 if [[ -n "$session_id" && ${#reminders[@]} -gt 0 ]]; then
-  state="${TMPDIR:-/tmp}/pikel-reviewer-${session_id//[^A-Za-z0-9-]/}"
+  state="${TMPDIR:-/tmp}/pickel-reviewer-${session_id//[^A-Za-z0-9-]/}"
   fresh=()
   for r in "${reminders[@]}"; do
     agent="${r%% *}"

@@ -23,5 +23,5 @@ Spezifikation nicht im MVP.
 - Teams werden nicht pro PI neu erfasst; wer ein Team entfernt, entfernt es für alle PIs (Regel in der Team-Story)
 - Kommt ein zweiter ART, braucht es eine Migration, die eine ART-Entität einführt und die bestehenden Daten einem
   Standard-ART zuordnet; dafür eine neue ADR, die diese ersetzt
-- Anmeldung und Rollen kommen erst in M2 mit dem Bereich «Zusammenarbeit»; bis dahin darf PIkel nicht öffentlich
+- Anmeldung und Rollen kommen erst in M2 mit dem Bereich «Zusammenarbeit»; bis dahin darf PIckel nicht öffentlich
   betrieben werden (`docs/arc42.md` → «Sicherheit»)

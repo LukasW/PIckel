@@ -1,4 +1,4 @@
-# PIkel
+# PIckel
 
 Werkzeug für das **PI Planning** (SAFe) — aktuell ein Walking Skeleton: Program Increments anlegen und auflisten,
 durch alle Schichten von Angular bis PostgreSQL.
@@ -30,8 +30,8 @@ Swagger UI: http://localhost:8080/q/swagger-ui
 
 ```bash
 ./mvnw package
-QUARKUS_DATASOURCE_JDBC_URL=jdbc:postgresql://host:5432/pikel \
-QUARKUS_DATASOURCE_USERNAME=pikel QUARKUS_DATASOURCE_PASSWORD=… \
+QUARKUS_DATASOURCE_JDBC_URL=jdbc:postgresql://host:5432/pickel \
+QUARKUS_DATASOURCE_USERNAME=pickel QUARKUS_DATASOURCE_PASSWORD=… \
 java -jar target/quarkus-app/quarkus-run.jar
 ```
 

@@ -6,7 +6,7 @@ bestehende Regeln aus US-1.
 ## Übersicht
 
 Der Ablauf (Skills, Agenten, Hook-Skripte) kommt aus dem Plugin `flow` (`Tools/claude-flow` v0.6.1) ins Repository
-und wird an PIkel angepasst. Dazu Leitplanken, die Werkzeuge statt Textregeln durchsetzen.
+und wird an PIckel angepasst. Dazu Leitplanken, die Werkzeuge statt Textregeln durchsetzen.
 
 ## Aufgaben
 

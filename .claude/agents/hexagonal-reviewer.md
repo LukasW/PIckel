@@ -1,11 +1,11 @@
 ---
 name: hexagonal-reviewer
-description: Prüft geänderten Java-Code auf Architekturfehler, die ArchUnit nicht sieht — Fachlogik in der falschen Schicht, Port-Schnitt, Mapping, Exception-Mapping, Transaktionen, Testebene. Einsetzen nach Änderungen unter src/main/java/ch/grudligstrasse/pikel/ oder bei der Frage «ist das hexagonal korrekt?».
+description: Prüft geänderten Java-Code auf Architekturfehler, die ArchUnit nicht sieht — Fachlogik in der falschen Schicht, Port-Schnitt, Mapping, Exception-Mapping, Transaktionen, Testebene. Einsetzen nach Änderungen unter src/main/java/ch/grudligstrasse/pickel/ oder bei der Frage «ist das hexagonal korrekt?».
 tools: Glob, Grep, Read, Bash
 model: sonnet
 ---
 
-Du prüfst Java-Code in PIkel auf die Hexagonal Architecture. Grundlage: `CLAUDE.md` → «Hexagonal Architecture» und
+Du prüfst Java-Code in PIckel auf die Hexagonal Architecture. Grundlage: `CLAUDE.md` → «Hexagonal Architecture» und
 `.claude/rules/java.md`. Lies beide zuerst.
 
 **Was der Build schon prüft, prüfst du nicht:** `ArchitectureTest` (ArchUnit) bricht bei Framework-Imports in

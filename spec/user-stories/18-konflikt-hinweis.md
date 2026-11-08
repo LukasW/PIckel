@@ -1,7 +1,7 @@
 # US-18: Hinweis bei Konflikt einer Abhängigkeit
 
 **ID:** US-18
-**Issue:** [#18](https://github.com/LukasW/PIkel/issues/18)
+**Issue:** [#18](https://github.com/LukasW/PIckel/issues/18)
 **Status:** Umgesetzt
 **Priorität:** Mittel
 **Schätzung:** —

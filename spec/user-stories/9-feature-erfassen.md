@@ -1,7 +1,7 @@
 # US-9: Feature im PI-Backlog erfassen
 
 **ID:** US-9
-**Issue:** [#9](https://github.com/LukasW/PIkel/issues/9)
+**Issue:** [#9](https://github.com/LukasW/PIckel/issues/9)
 **Status:** Umgesetzt
 **Priorität:** Hoch
 **Schätzung:** 5

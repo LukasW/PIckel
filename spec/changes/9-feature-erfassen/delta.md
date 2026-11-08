@@ -10,7 +10,7 @@ Features sind das, was auf dem Program Board eingeplant wird. Ohne erfasste Feat
 
 - **Feature gehört zu einem PI** (ADR 0005); kein PI-übergreifendes Backlog in M1
 - **WSJF-Rang** ist eine ganze Zahl ab 1 (1 = zuerst), optional und nicht eindeutig: Er stammt meist aus dem
-  Issue-Tracker und wird nicht von PIkel berechnet
+  Issue-Tracker und wird nicht von PIckel berechnet
 - **Owner** ist Freitext (Name), weil es noch keine Benutzer gibt
 - **Schätzung** in Story Points, ganzzahlig ab 0, optional (ADR 0006)
 - **Unbekanntes PI → 404** mit `{ "message": … }`: erste 404 der API; erweitert den Fehlervertrag aus ADR 0003 um

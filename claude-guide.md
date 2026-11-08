@@ -1,6 +1,6 @@
-# Claude Code Guide — PIkel
+# Claude Code Guide — PIckel
 
-Wie arbeite ich mit Claude Code in PIkel. Ergänzt `CLAUDE.md` (Architektur, Konventionen). Der Ablauf liegt
+Wie arbeite ich mit Claude Code in PIckel. Ergänzt `CLAUDE.md` (Architektur, Konventionen). Der Ablauf liegt
 vollständig im Repository unter `.claude/` (übernommen aus `Tools/claude-flow` v0.6.1, hier weitergepflegt); die
 Projektangaben dazu stehen in `.claude/flow.md`.
 
@@ -77,7 +77,7 @@ Einmal pro Klon `git config core.hooksPath .githooks` und `brew install gitleaks
 
 | Frage | Datei |
 |-------|-------|
-| Was soll PIkel fachlich können? | `spec/fachliche-spezifikation.md`, `spec/user-stories/` |
+| Was soll PIckel fachlich können? | `spec/fachliche-spezifikation.md`, `spec/user-stories/` |
 | Wie ist es gebaut? | `docs/arc42.md`; Entscheide über den Index `docs/adr/README.md` |
 | Welche Regeln gelten im Code? | `CLAUDE.md`, `.claude/rules/` |
 | Was ändert ein Issue, und wie wird es umgesetzt? | `spec/changes/<nr>-<slug>/` — Delta, Entscheide, Plan, Notizen (versioniert) |
@@ -150,7 +150,7 @@ Mechanische Prüfungen (Format, Architektur, Mutation, Drift) machen Skripte, ke
 
 | Pfad | Reviewer | Prüft |
 |------|----------|-------|
-| `src/main/java/ch/grudligstrasse/pikel/**` | `hexagonal-reviewer` | Ports/Adapters, Abhängigkeitsrichtung, JPA-Platzierung |
+| `src/main/java/ch/grudligstrasse/pickel/**` | `hexagonal-reviewer` | Ports/Adapters, Abhängigkeitsrichtung, JPA-Platzierung |
 | `src/main/webapp/src/app/**` | `angular-signals-reviewer` | Signals, OnPush, `@if`/`@for`, Tokens, Ports im Frontend |
 | `*.feature` | `bdd-cucumber-author` | Tag-Routing, Gherkin |
 | `src/test/**`, `*.spec.ts` | `test-reviewer` | Absicht aus der Spezifikation, Fehlerfinder, Abschwächungen |

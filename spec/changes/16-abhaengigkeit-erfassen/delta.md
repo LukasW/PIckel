@@ -13,7 +13,7 @@ werden, nicht im Kopf einzelner Personen.
   Einplanung beider Features, kein eigenes Datum
 - **Gleiches PI:** Beide Features gehören zum selben PI
 - **Abgelehnt** werden ein Feature, das sich selbst braucht, eine doppelte Abhängigkeit und die direkte Umkehr
-  (A braucht B und B braucht A). Längere Zyklen erkennt PIkel in M1 nicht; der Bedarf ist ohne Praxis spekulativ
+  (A braucht B und B braucht A). Längere Zyklen erkennt PIckel in M1 nicht; der Bedarf ist ohne Praxis spekulativ
 - **Löschen eines Features** löscht seine Abhängigkeiten mit (betrifft #10, dort gab es den Fall noch nicht)
 - **Anzeige** in M1 als Liste beim Feature und auf der Detailseite; die Linie auf dem Board folgt mit #17
 

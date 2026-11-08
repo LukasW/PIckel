@@ -1,7 +1,7 @@
 ---
 name: flow-grill-me
 description: Fragt ein Issue Frage für Frage durch, bis alle Entscheidungen geklärt sind, und schreibt sie nach entscheide.md im Change-Ordner. Einsetzen, wenn ein Issue unscharf ist oder vor dem Plan offene Fragen hat.
-compatibility: Claude Code oder Copilot CLI (in einem vertrauten Ordner, ADR 0007) im Repository PIkel. Braucht git, gh (GitHub) und den Maven Wrapper; Projektangaben in .claude/flow.md.
+compatibility: Claude Code oder Copilot CLI (in einem vertrauten Ordner, ADR 0007) im Repository PIckel. Braucht git, gh (GitHub) und den Maven Wrapper; Projektangaben in .claude/flow.md.
 argument-hint: <issue-nummer>
 disable-model-invocation: true
 model: opus

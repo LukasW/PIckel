@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>ch.grudligstrasse</groupId>
-    <artifactId>pikel</artifactId>
+    <artifactId>pickel</artifactId>
     <version>0.1.0-SNAPSHOT</version>
 
     <properties>
@@ -253,12 +253,12 @@
                         </dependencies>
                         <configuration>
                             <targetClasses>
-                                <param>ch.grudligstrasse.pikel.domain.*</param>
-                                <param>ch.grudligstrasse.pikel.application.*</param>
+                                <param>ch.grudligstrasse.pickel.domain.*</param>
+                                <param>ch.grudligstrasse.pickel.application.*</param>
                             </targetClasses>
                             <targetTests>
-                                <param>ch.grudligstrasse.pikel.domain.*Test</param>
-                                <param>ch.grudligstrasse.pikel.application.*Test</param>
+                                <param>ch.grudligstrasse.pickel.domain.*Test</param>
+                                <param>ch.grudligstrasse.pickel.application.*Test</param>
                             </targetTests>
                             <!-- STRONGER: zusätzlich Bedingungen entfernen und Rückgabewerte tauschen; die Standardgruppe
                                  übersah im Chore flow-im-repo drei Lücken, die erst der test-reviewer fand.

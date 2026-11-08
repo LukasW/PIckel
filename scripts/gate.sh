@@ -6,7 +6,7 @@
 #                            ArchUnit, Vitest, Mutation, CucumberIT, SmokeIT, Container-Image (Podman oder Docker)
 #   scripts/gate.sh --fast   ohne Integration (keine Container nötig), wie der Unit-Job in CI
 #
-# Ausgabe je Schritt in ${TMPDIR:-/tmp}/pikel-gate-<schritt>.log; angezeigt werden nur Fehlerzeilen.
+# Ausgabe je Schritt in ${TMPDIR:-/tmp}/pickel-gate-<schritt>.log; angezeigt werden nur Fehlerzeilen.
 set -uo pipefail
 
 root="$(cd "$(dirname "$0")/.." && pwd)"
@@ -17,7 +17,7 @@ logdir="${TMPDIR:-/tmp}"
 
 step() {
   local name="$1"; shift
-  local log="$logdir/pikel-gate-$name.log"
+  local log="$logdir/pickel-gate-$name.log"
   printf '%-12s ' "$name"
   if "$@" >"$log" 2>&1; then
     echo "ok"
@@ -40,6 +40,6 @@ if ! $fast; then
   step integration ./mvnw -B verify -DskipFrontendTests=true
   # Wie der Job «Integration + Smoke»: ein kaputtes Dockerfile fällt vor dem ersten Deployment auf
   engine=$(command -v podman || command -v docker) || { echo "image        ROT  (weder podman noch docker)"; exit 1; }
-  step image "$engine" build -f src/main/docker/Dockerfile.jvm -t pikel-jvm:gate .
+  step image "$engine" build -f src/main/docker/Dockerfile.jvm -t pickel-jvm:gate .
 fi
 echo "Gate grün."

@@ -7,7 +7,7 @@
 
 Die Skills des Ablaufs (`/flow-*`) lagen unter `.claude/skills/` und waren nur für Claude Code geschrieben.
 [Agent Skills](https://agentskills.io/specification) ist ein offenes Format für Skills, das mehrere Agenten lesen;
-als gemeinsamer Ort hat sich `.agents/skills/` durchgesetzt. PIkel soll den Standard so weit wie möglich nutzen, der
+als gemeinsamer Ort hat sich `.agents/skills/` durchgesetzt. PIckel soll den Standard so weit wie möglich nutzen, der
 Ablauf muss aber in Claude Code unverändert funktionieren.
 
 Claude Code liest Projekt-Skills nur aus `.claude/skills/`, folgt dort aber Symlinks auf Skill-Ordner. Unbekannte
@@ -36,6 +36,6 @@ der Spezifikation ab.
   Subagenten und -Hooks voraus (steht in `compatibility`)
 - Ein Upload in die Skills API oder nach claude.ai scheitert an den Claude-Code-Feldern; ist kein Ziel
 - Ein neuer Skill braucht Ordner und Symlink, sonst wird das Gate rot
-- Unter Windows können Symlinks in einem Klon als Textdatei landen (`core.symlinks`); PIkel wird auf macOS und Linux
+- Unter Windows können Symlinks in einem Klon als Textdatei landen (`core.symlinks`); PIckel wird auf macOS und Linux
   entwickelt
 - `.agents/` ist wie `.claude/` ein Risiko-Pfad in CI (`needs-human-review`)

@@ -5,7 +5,7 @@ tools: Glob, Grep, Read, Bash
 model: sonnet
 ---
 
-Du prüfst Angular-Code in PIkel. Grundlage sind `.claude/rules/angular.md` (Konventionen mit Begründung) und
+Du prüfst Angular-Code in PIckel. Grundlage sind `.claude/rules/angular.md` (Konventionen mit Begründung) und
 `CLAUDE.md` → «Frontend (Angular)» (Ordner und Ports). Lies beide zuerst; die Regeln stehen nur dort.
 
 Prettier prüft `npm run format:check`, nicht du.
