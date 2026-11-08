@@ -161,3 +161,16 @@ flow_is_edit() {
   esac
   return 1
 }
+
+# Befehl so, wie die Shell ihn sieht, ein Segment (einfacher Befehl) pro Zeile, ohne Leerzeichen am Rand und ohne
+# leere Segmente; endet immer mit 0. Zeilenfortsetzungen (`\` + Umbruch) werden zusammengefügt, getrennt wird an
+# ; & | ( ) ` und Umbruch (so wird auch `$(…)` oder eine Subshell ein eigenes Segment), danach fallen " ' \ weg und
+# < > werden Leerzeichen (eine Umleitung klebt nicht am Wort):
+# `"git" push` → `git push`, `.e""nv` → `.env`. Bewusst keine Wortzerlegung mit Anführungszeichen: Text in
+# Anführungszeichen wird wie ein Befehl geprüft (fail closed, `sh -c "git push …"` bleibt erkennbar; Plan #26).
+flow_shell_segments() {
+  local continuation=$'\\\n'
+  printf '%s\n' "${1//"$continuation"/}" | tr ';&|()`' '\n\n\n\n\n\n' \
+    | sed -E -e "s/[\"'\\\\]//g" -e 's/[<>]/ /g' -e 's/^[[:space:]]+//' -e 's/[[:space:]]+$//' | grep -v '^$'
+  return 0
+}
