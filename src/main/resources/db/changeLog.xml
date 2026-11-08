@@ -41,4 +41,9 @@
         <sqlFile path="db/migration/V9__add_feature_scheduling.sql"/>
     </changeSet>
 
+    <!-- Beispieldaten nur im Dev-Modus; keine Schema-Migration. Neue Migrationen kommen vor dieses changeSet. -->
+    <changeSet id="dev-data" author="pickel" context="dev" runOnChange="true">
+        <sqlFile path="db/dev/dev-data.sql"/>
+    </changeSet>
+
 </databaseChangeLog>

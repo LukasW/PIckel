@@ -201,7 +201,7 @@ flowchart LR
 
 | Umgebung | Datenbank | Start |
 |----------|-----------|-------|
-| Entwicklung | Dev Services (`postgres:17` per Podman/Docker) | `./mvnw quarkus:dev`, Angular-Dev-Server auf :4200 hinter Quarkus |
+| Entwicklung | Dev Services (`postgres:17` per Podman/Docker), gefüllt mit Beispieldaten aus `db/dev/` (Liquibase-Kontext `dev`) | `./mvnw quarkus:dev`, Angular-Dev-Server auf :4200 hinter Quarkus |
 | Test / CI | Dev Services | `./mvnw verify` bzw. GitHub Actions (`ci-pr.yml`, `ci-main.yml`) |
 | Produktion | externe PostgreSQL über `QUARKUS_DATASOURCE_*` | `java -jar` oder Container aus `src/main/docker/Dockerfile.jvm` |
 
