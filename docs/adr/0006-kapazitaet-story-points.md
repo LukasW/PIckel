@@ -14,7 +14,7 @@ nannte für Features nur Titel, Beschreibung, WSJF-Rang und Owner.
 - **Einheit fest Story Points** (normalisiert nach SAFe), ganzzahlig und nicht negativ, für Kapazität und Schätzung
 - **Ein Feature hat eine optionale Schätzung in SP** und liegt auf dem Board in höchstens einer Zelle. Die Last einer
   Zelle ist die Summe der Schätzungen ihrer Features; ein Feature ohne Schätzung zählt 0
-- **Iterationen entstehen aus einer festen Länge in Wochen:** PIkel teilt den Zeitraum des PI auf, die letzte
+- **Iterationen entstehen aus einer festen Länge in Wochen:** PIckel teilt den Zeitraum des PI auf, die letzte
   Iteration ist die IP-Iteration. In der IP-Iteration wird kein Feature eingeplant
 
 ## Konsequenzen

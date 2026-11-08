@@ -1,6 +1,6 @@
 # Task — Umgehungen von guard-push und guard-env schliessen (Issue #26)
 
-Delta: keines — Harness-Fix unter `.claude/flow/scripts/`, kein fachliches Verhalten einer Story von PIkel.
+Delta: keines — Harness-Fix unter `.claude/flow/scripts/`, kein fachliches Verhalten einer Story von PIckel.
 
 ## Übersicht
 

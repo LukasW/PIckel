@@ -1,7 +1,7 @@
 # US-5: Iterationen eines PI mit IP-Iteration festlegen
 
 **ID:** US-5
-**Issue:** [#5](https://github.com/LukasW/PIkel/issues/5)
+**Issue:** [#5](https://github.com/LukasW/PIckel/issues/5)
 **Status:** Umgesetzt
 **Priorität:** Hoch
 **Schätzung:** 5

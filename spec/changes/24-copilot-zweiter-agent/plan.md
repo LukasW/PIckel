@@ -1,6 +1,6 @@
 # Task — Copilot als zweiter Agent neben Claude Code (Issue #24)
 
-Delta: keines — Ablauf und Werkzeuge der Entwicklung, kein fachliches Verhalten von PIkel.
+Delta: keines — Ablauf und Werkzeuge der Entwicklung, kein fachliches Verhalten von PIckel.
 
 ## Übersicht
 

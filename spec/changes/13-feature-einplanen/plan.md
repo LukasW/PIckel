@@ -10,13 +10,13 @@ Entfernt jemand ein Team, gehen seine Features in allen PIs ins Backlog zurück,
 
 ## Zu erstellende Dateien
 
-- [ ] `src/main/java/ch/grudligstrasse/pikel/domain/model/Scheduling.java` — Wert «Team × Iterationsnummer»
-- [ ] `src/main/java/ch/grudligstrasse/pikel/adapter/in/rest/SchedulingRequest.java` — Body `{ teamId, iterationNumber }`
+- [ ] `src/main/java/ch/grudligstrasse/pickel/domain/model/Scheduling.java` — Wert «Team × Iterationsnummer»
+- [ ] `src/main/java/ch/grudligstrasse/pickel/adapter/in/rest/SchedulingRequest.java` — Body `{ teamId, iterationNumber }`
 - [ ] `src/main/resources/db/migration/V9__add_feature_scheduling.sql` — Spalten `team_id`, `iteration_number`
 - [ ] `src/main/webapp/src/app/features/program-board/board-card.component.{ts,html,spec.ts}` — Karte mit Aktion
   «Einplanen …» und Inline-Formular
 - [ ] `src/test/resources/features/program-increments/13-feature-einplanen.feature` — Szenarien aus dem Delta
-- [ ] `src/test/java/ch/grudligstrasse/pikel/cucumber/steps/SchedulingSteps.java` — Steps zum Einplanen
+- [ ] `src/test/java/ch/grudligstrasse/pickel/cucumber/steps/SchedulingSteps.java` — Steps zum Einplanen
   (oder in `BoardSteps`, falls dort kürzer)
 - [ ] `spec/user-stories/13-feature-einplanen.md` — Story (beim Einpflegen)
 

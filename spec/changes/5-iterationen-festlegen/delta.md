@@ -9,7 +9,7 @@ Zeitraum aus einer festen Länge aufgeteilt, entstehen weder Lücken noch Überl
 
 ## Entscheide
 
-- **Iterationen aus fester Länge:** Der RTE wählt beim Anlegen die Iterationslänge in Wochen, PIkel teilt den
+- **Iterationen aus fester Länge:** Der RTE wählt beim Anlegen die Iterationslänge in Wochen, PIckel teilt den
   Zeitraum ab dem Startdatum auf, die letzte Iteration ist die IP-Iteration (ADR 0006)
 - **Standard 2 Wochen**, erlaubt 1 bis 4 Wochen. Fehlt die Länge im Request, gilt der Standard; so bleibt der
   bestehende Vertrag von US-1 gültig

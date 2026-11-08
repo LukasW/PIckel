@@ -31,9 +31,9 @@ keine
 ## Zu ändernde Dateien
 
 - [x] `src/main/resources/application.properties` — `quarkus.rest.path=/api` mit Kommentar, warum (SPA-Routing)
-- [x] `src/main/java/ch/grudligstrasse/pikel/adapter/in/rest/*Resource.java` (7 Dateien) — `@Path("/api/v1/…")` →
+- [x] `src/main/java/ch/grudligstrasse/pickel/adapter/in/rest/*Resource.java` (7 Dateien) — `@Path("/api/v1/…")` →
   `@Path("/v1/…")`
-- [x] `src/test/java/ch/grudligstrasse/pikel/SmokeIT.java` — Direktaufruf einer Unterseite liefert die SPA aus
+- [x] `src/test/java/ch/grudligstrasse/pickel/SmokeIT.java` — Direktaufruf einer Unterseite liefert die SPA aus
 
 ## Delta
 

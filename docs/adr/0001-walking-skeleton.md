@@ -5,7 +5,7 @@
 
 ## Kontext
 
-PIkel soll ein PI-Planning-Werkzeug werden. Bevor Fachlichkeit entsteht, soll ein lauffähiger Durchstich durch alle
+PIckel soll ein PI-Planning-Werkzeug werden. Bevor Fachlichkeit entsteht, soll ein lauffähiger Durchstich durch alle
 Schichten stehen — inklusive Build, Tests, CI und Claude-Code-Setup —, damit jede weitere Story nur noch Fachlogik
 hinzufügt.
 
@@ -20,4 +20,4 @@ hinzufügt.
 ## Konsequenzen
 
 - Erster Durchstich: «Program Increment anlegen und auflisten» (US-1)
-- Der REST-Endpunkt ist bis zur Auth-Story ungeschützt — PIkel darf bis dahin nicht öffentlich betrieben werden
+- Der REST-Endpunkt ist bis zur Auth-Story ungeschützt — PIckel darf bis dahin nicht öffentlich betrieben werden

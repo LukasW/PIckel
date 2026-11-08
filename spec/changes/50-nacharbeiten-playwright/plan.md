@@ -86,7 +86,7 @@ Abschnitte hinzu und pflegt sie ein. Der Entwurf hier enthält alle Abschnitte f
 - **Bearbeiten in der Zeile:** eigenes `FormGroup` für die Zeile in `feature-backlog`, Validatoren mit dem
   Erfassungsformular geteilt (eine Funktion, die das Formular baut). Keine neue Komponente, solange das Template
   lesbar bleibt; wird es zu lang, eine Zeilen-Komponente unter `features/feature-backlog/`
-- **Beispieldatei:** Link mit `download="pikel-backlog-beispiel.csv"` und `data:text/csv;charset=utf-8,…`-URL aus
+- **Beispieldatei:** Link mit `download="pickel-backlog-beispiel.csv"` und `data:text/csv;charset=utf-8,…`-URL aus
   einer Konstante. Keine statische Datei, weil das Frontend keinen Asset-Ordner hat und `angular.json` dafür
   geändert werden müsste (Risiko-Pfad). Angular lässt `data:`-URLs in `href` durch (nur `javascript:` wird ersetzt);
   ein Vitest-Test belegt, dass der Link nicht als `unsafe:` endet

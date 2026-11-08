@@ -1,7 +1,7 @@
 # US-15: Milestones auf dem Board
 
 **ID:** US-15
-**Issue:** [#15](https://github.com/LukasW/PIkel/issues/15)
+**Issue:** [#15](https://github.com/LukasW/PIckel/issues/15)
 **Status:** Umgesetzt
 **Priorität:** Mittel
 **Schätzung:** 3

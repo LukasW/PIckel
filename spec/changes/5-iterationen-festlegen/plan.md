@@ -15,11 +15,11 @@ Rechenregel (Domain): `n = 7 · Wochen`, `tage = Ende − Start + 1` (inklusiv),
 
 - [x] `spec/user-stories/5-iterationen-festlegen.md` — Story US-5 aus dem Delta
 - [x] `src/test/resources/features/program-increments/5-iterationen-festlegen.feature` — Szenarien aus dem Delta
-- [x] `src/main/java/ch/grudligstrasse/pikel/domain/model/Iteration.java` — Record `number`, `name`, `startDate`,
+- [x] `src/main/java/ch/grudligstrasse/pickel/domain/model/Iteration.java` — Record `number`, `name`, `startDate`,
   `endDate`, `innovationAndPlanning`
-- [x] `src/main/java/ch/grudligstrasse/pikel/domain/model/ProgramIncrementNotFoundException.java` — unbekannte ID
-- [x] `src/main/java/ch/grudligstrasse/pikel/adapter/in/rest/IterationDto.java` — Antwort-Darstellung
-- [x] `src/main/java/ch/grudligstrasse/pikel/adapter/in/rest/ProgramIncrementNotFoundExceptionMapper.java` — 404
+- [x] `src/main/java/ch/grudligstrasse/pickel/domain/model/ProgramIncrementNotFoundException.java` — unbekannte ID
+- [x] `src/main/java/ch/grudligstrasse/pickel/adapter/in/rest/IterationDto.java` — Antwort-Darstellung
+- [x] `src/main/java/ch/grudligstrasse/pickel/adapter/in/rest/ProgramIncrementNotFoundExceptionMapper.java` — 404
 - [x] `src/main/resources/db/migration/V2__add_iteration_length.sql` — Spalte `iteration_length_weeks`
 - [x] `src/main/webapp/src/app/features/program-increment-detail/program-increment-detail.component.{ts,html,spec.ts}`
   — Detailseite
