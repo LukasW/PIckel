@@ -3,6 +3,8 @@
 /*
  * Design-Tokens: Komponenten verwenden nur diese Tokens (bg-surface, text-foreground, …),
  * nie Tailwind-Paletten wie bg-blue-600. Dunkelmodus über prefers-color-scheme.
+ * color-scheme sagt dem Browser, dass beide Schemata unterstützt sind; sonst zeichnet er native Bedienelemente
+ * (Kalender-Symbol, Select-Pfeile, Scrollbars) im Dunkelmodus hell auf dunklem Grund.
  */
 @theme {
   --color-background: #fafafa;
@@ -13,6 +15,10 @@
   --color-accent: #2f5bd3;
   --color-accent-foreground: #ffffff;
   --color-danger: #c62828;
+}
+
+:root {
+  color-scheme: light dark;
 }
 
 @media (prefers-color-scheme: dark) {
