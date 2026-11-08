@@ -11,6 +11,35 @@
 }
 
 @if (service.board(); as board) {
+  <!-- Oberhalb des Rasters, damit die Liste ohne Scrollen sichtbar ist (US-18). -->
+  <section
+    data-testid="dependency-issues"
+    aria-labelledby="dependency-issues-heading"
+    class="mb-4 rounded-lg border border-border bg-surface p-3"
+  >
+    <h2 id="dependency-issues-heading" class="mb-2 font-semibold">Konflikte</h2>
+    @if (service.dependencyIssues().length > 0) {
+      <ul class="grid gap-1 text-sm text-danger">
+        @for (
+          issue of service.dependencyIssues();
+          track issue.neededFeatureId + '->' + issue.needingFeatureId
+        ) {
+          <li>
+            @if (issue.kind === 'conflict') {
+              {{ issue.neededTitle }} wird in {{ issue.neededIterationName }} geliefert,
+              {{ issue.needingTitle }} braucht es in {{ issue.needingIterationName }}.
+            } @else {
+              {{ issue.neededTitle }} ist nicht eingeplant, {{ issue.needingTitle }} braucht es in
+              {{ issue.needingIterationName }}.
+            }
+          </li>
+        }
+      </ul>
+    } @else {
+      <p class="text-sm text-muted">Keine Konflikte</p>
+    }
+  </section>
+
   <div cdkDropListGroup class="flex items-start gap-4">
     <section
       data-testid="board-backlog"
@@ -143,6 +172,7 @@
                                 [teams]="board.teams"
                                 [iterations]="board.iterations"
                                 [unlinkedDependencies]="service.unlinkedDependencyCount(feature.id)"
+                                [lacksDelivery]="service.lacksDelivery(feature.id)"
                                 (schedule)="
                                   service.schedule(feature, $event.teamId, $event.iterationNumber)
                                 "
@@ -175,18 +205,37 @@
               >
                 <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor" />
               </marker>
+              <!-- Ein Marker erbt die Farbe nicht vom Pfad; der Konflikt braucht einen eigenen roten. -->
+              <marker
+                id="dependency-arrow-conflict"
+                viewBox="0 0 10 10"
+                refX="10"
+                refY="5"
+                markerWidth="8"
+                markerHeight="8"
+                orient="auto"
+                class="text-danger"
+              >
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor" />
+              </marker>
             </defs>
             @for (line of lines(); track line.from + '->' + line.to) {
+              <!-- Ein Konflikt bleibt rot und gestrichelt, auch hervorgehoben (US-18). -->
               <path
                 [attr.d]="line.path"
                 [attr.data-from]="line.from"
                 [attr.data-to]="line.to"
                 [attr.data-emphasis]="line.emphasis"
-                marker-end="url(#dependency-arrow)"
+                [attr.data-conflict]="line.conflict ? '' : null"
+                [attr.stroke-dasharray]="line.conflict ? '6 4' : null"
+                [attr.marker-end]="
+                  line.conflict ? 'url(#dependency-arrow-conflict)' : 'url(#dependency-arrow)'
+                "
                 fill="none"
                 stroke="currentColor"
                 stroke-width="2"
-                [class.text-accent]="line.emphasis === 'highlighted'"
+                [class.text-danger]="line.conflict"
+                [class.text-accent]="line.emphasis === 'highlighted' && !line.conflict"
                 [class.opacity-20]="line.emphasis === 'dimmed'"
               />
             }

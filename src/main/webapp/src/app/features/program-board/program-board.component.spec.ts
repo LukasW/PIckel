@@ -1088,4 +1088,297 @@ describe('ProgramBoardComponent', () => {
       field!.dispatchEvent(new Event('change'));
     }
   });
+
+  // --- US-18: Konflikt einer Abhängigkeit ---
+
+  /**
+   * Vertrag mit der Vorlage (US-18): Ein Abschnitt `[data-testid="dependency-issues"]` mit der Überschrift
+   * «Konflikte» steht oberhalb des Rasters; er nennt jeden Befund als eigenes `<li>` im Klartext, ohne Befund steht
+   * darin «Keine Konflikte». Die Linie eines Konflikts (`svg path[data-from]` wie in US-17) trägt das Attribut
+   * `data-conflict`, `stroke-dasharray` und die Klasse `text-danger`; eine Linie ohne Konflikt trägt keines davon.
+   * Die Karte des Bedarfs zeigt bei fehlender Lieferung «Lieferung nicht eingeplant».
+   */
+  describe('Konflikte (US-18)', () => {
+    let fixture: ComponentFixture<ProgramBoardComponent>;
+    let schedule: ReturnType<typeof vi.fn>;
+
+    const NO_CONFLICTS = 'Keine Konflikte';
+    const DELIVERY_MISSING = 'Lieferung nicht eingeplant';
+    const LOGIN_LATE = 'Login wird in Iteration 4 geliefert, Portal braucht es in Iteration 2.';
+    const LOGIN_MISSING = 'Login ist nicht eingeplant, Portal braucht es in Iteration 2.';
+
+    const portalIn = (iterationNumber: number): Feature => ({
+      ...PORTAL,
+      scheduled: true,
+      teamId: 'a',
+      iterationNumber,
+    });
+    const loginIn = (iterationNumber: number): Feature => ({
+      ...LOGIN,
+      scheduled: true,
+      teamId: 'z',
+      iterationNumber,
+    });
+    const PORTAL_NEEDS_LOGIN = { needingFeatureId: 'f1', neededFeatureId: 'f2' };
+
+    function withDependencies(
+      backlog: Feature[],
+      scheduled: Feature[],
+      dependencies: Board['dependencies'] = [PORTAL_NEEDS_LOGIN],
+    ): Board {
+      return {
+        teams: [ADLER, ZEBRA],
+        iterations: ITERATIONS,
+        backlog,
+        scheduled,
+        milestones: [],
+        capacities: [],
+        dependencies,
+      };
+    }
+
+    async function settle(): Promise<void> {
+      // Die Messung der Karten läuft nach dem Rendern und löst ein zweites Rendern aus (US-17).
+      await fixture.whenStable();
+      await fixture.whenStable();
+    }
+
+    async function show(answer: Board): Promise<HTMLElement> {
+      repository = { get: vi.fn().mockResolvedValue(answer) };
+      schedule = vi.fn();
+      TestBed.configureTestingModule({
+        imports: [ProgramBoardComponent],
+        providers: [
+          provideRouter([]),
+          { provide: BoardRepository, useValue: repository },
+          { provide: FeaturesRepository, useValue: { schedule, unschedule: vi.fn() } },
+        ],
+      });
+      fixture = TestBed.createComponent(ProgramBoardComponent);
+      fixture.componentRef.setInput('id', 'pi-7');
+      await settle();
+      return fixture.nativeElement as HTMLElement;
+    }
+
+    function text(scope: Element): string {
+      return (scope.textContent ?? '').replace(/\s+/g, ' ').trim();
+    }
+
+    function issueList(el: HTMLElement): HTMLElement {
+      const found = el.querySelector<HTMLElement>('[data-testid="dependency-issues"]');
+      expect(found, 'Abschnitt «Konflikte»').not.toBeNull();
+      return found!;
+    }
+
+    function entries(el: HTMLElement): string[] {
+      return Array.from(issueList(el).querySelectorAll('li')).map(text);
+    }
+
+    function line(el: HTMLElement, from: string, to: string): SVGPathElement {
+      const found = Array.from(el.querySelectorAll<SVGPathElement>('svg path[data-from]')).find(
+        (p) => p.getAttribute('data-from') === from && p.getAttribute('data-to') === to,
+      );
+      expect(found, `Linie ${from} → ${to}`).toBeDefined();
+      return found!;
+    }
+
+    function cardText(el: HTMLElement, title: string): string {
+      const found = Array.from(el.querySelectorAll<HTMLElement>('app-board-card')).find((c) =>
+        (c.querySelector('[data-testid="feature-card"]')?.textContent ?? '').includes(title),
+      );
+      expect(found, `Karte «${title}»`).toBeDefined();
+      return text(found!);
+    }
+
+    function buttonOf(scope: Element, label: string): HTMLButtonElement {
+      const found = Array.from(scope.querySelectorAll('button')).find((b) => text(b) === label);
+      expect(found, `Button «${label}»`).toBeDefined();
+      return found!;
+    }
+
+    function chooseIn(scope: Element, label: string, option: string): void {
+      const field = Array.from(scope.querySelectorAll('select')).find((s) =>
+        [
+          ...Array.from(s.labels ?? []).map((l) => l.textContent ?? ''),
+          s.getAttribute('aria-label') ?? '',
+        ].some((t) => t.includes(label)),
+      );
+      expect(field, `Auswahl «${label}»`).toBeDefined();
+      const found = Array.from(field!.options).find((o) => (o.textContent ?? '').trim() === option);
+      expect(found, `Option «${option}»`).toBeDefined();
+      field!.value = found!.value;
+      field!.dispatchEvent(new Event('change'));
+      field!.dispatchEvent(new Event('input'));
+    }
+
+    /** Plant Login über die Aktion «Einplanen …» an der Karte bei Zebra in Iteration 1 ein. */
+    async function moveLoginToIterationOne(el: HTMLElement): Promise<void> {
+      const login = el.querySelector<HTMLElement>('[data-feature-id="f2"]');
+      expect(login, 'Karte «Login»').not.toBeNull();
+      buttonOf(login!, 'Einplanen …').click();
+      await settle();
+      chooseIn(login!, 'Team', 'Zebra');
+      chooseIn(login!, 'Iteration', 'Iteration 1');
+      buttonOf(login!, 'Einplanen').click();
+      await settle();
+    }
+
+    // Szenario «Lieferung nach dem Bedarf ist ein Konflikt»
+    it('nennt in der Liste «Konflikte», dass Login in Iteration 4 zu spät für Portal in Iteration 2 kommt (US-18)', async () => {
+      const el = await show(withDependencies([], [portalIn(2), loginIn(4)]));
+
+      expect(entries(el)).toEqual([LOGIN_LATE]);
+      expect(text(issueList(el))).not.toContain(NO_CONFLICTS);
+    });
+
+    it('markiert die Linie von Login zu Portal als Konflikt: rot und gestrichelt (US-18)', async () => {
+      const el = await show(withDependencies([], [portalIn(2), loginIn(4)]));
+
+      const conflict = line(el, 'f2', 'f1');
+      expect(conflict.hasAttribute('data-conflict'), 'data-conflict').toBe(true);
+      expect(conflict.getAttribute('stroke-dasharray'), 'gestrichelt').toBeTruthy();
+      expect(conflict.classList.contains('text-danger'), 'text-danger').toBe(true);
+    });
+
+    it('zeichnet den Pfeil einer Konfliktlinie mit eigenem Marker, eine normale Linie nicht (US-18)', async () => {
+      const el = await show(
+        withDependencies(
+          [],
+          [
+            portalIn(2),
+            loginIn(4),
+            { ...feature('f3', 'Suche', 3, 5), scheduled: true, teamId: 'a', iterationNumber: 4 },
+          ],
+          [PORTAL_NEEDS_LOGIN, { needingFeatureId: 'f3', neededFeatureId: 'f2' }],
+        ),
+      );
+
+      const conflictMarker = line(el, 'f2', 'f1').getAttribute('marker-end');
+      const normalMarker = line(el, 'f2', 'f3').getAttribute('marker-end');
+      expect(conflictMarker).toBeTruthy();
+      expect(normalMarker).toBeTruthy();
+      expect(conflictMarker).not.toBe(normalMarker);
+      const id = /#([^)]+)/.exec(conflictMarker!)?.[1];
+      expect(el.querySelector(`marker#${id}`)?.classList.contains('text-danger')).toBe(true);
+    });
+
+    it('bleibt rot und gestrichelt, wenn die Karte der Konfliktlinie hervorgehoben ist (US-18)', async () => {
+      const el = await show(withDependencies([], [portalIn(2), loginIn(4)]));
+
+      el.querySelector<HTMLElement>('[data-feature-id="f1"]')!.dispatchEvent(
+        new MouseEvent('mouseenter'),
+      );
+      await settle();
+
+      const conflict = line(el, 'f2', 'f1');
+      expect(conflict.getAttribute('data-emphasis')).toBe('highlighted');
+      expect(conflict.classList.contains('text-danger'), 'text-danger').toBe(true);
+      expect(conflict.classList.contains('text-accent'), 'text-accent').toBe(false);
+      expect(conflict.getAttribute('stroke-dasharray'), 'gestrichelt').toBeTruthy();
+    });
+
+    // Szenario «Lieferung in derselben Iteration ist kein Konflikt»
+    it('zeigt «Keine Konflikte», wenn Login in derselben Iteration geliefert wird, wie Portal es braucht (US-18)', async () => {
+      const el = await show(withDependencies([], [portalIn(2), loginIn(2)]));
+
+      expect(text(issueList(el))).toContain(NO_CONFLICTS);
+      expect(entries(el).join(' ')).not.toContain('Login');
+    });
+
+    it('markiert die Linie von Login zu Portal nicht, wenn Login in derselben Iteration kommt (US-18)', async () => {
+      const el = await show(withDependencies([], [portalIn(2), loginIn(2)]));
+
+      const normal = line(el, 'f2', 'f1');
+      expect(normal.hasAttribute('data-conflict'), 'data-conflict').toBe(false);
+      expect(normal.hasAttribute('stroke-dasharray'), 'stroke-dasharray').toBe(false);
+      expect(normal.classList.contains('text-danger'), 'text-danger').toBe(false);
+    });
+
+    // Szenario «Nicht eingeplante Lieferung wird gemeldet»
+    it('nennt in der Liste, dass Login nicht eingeplant ist, und Portal trägt «Lieferung nicht eingeplant» (US-18)', async () => {
+      const el = await show(withDependencies([LOGIN], [portalIn(2)]));
+
+      expect(entries(el)).toEqual([LOGIN_MISSING]);
+      expect(cardText(el, 'Portal')).toContain(DELIVERY_MISSING);
+      expect(cardText(el, 'Login')).not.toContain(DELIVERY_MISSING);
+    });
+
+    it('zeigt an Portal keinen Hinweis «Lieferung nicht eingeplant», wenn Login eingeplant ist, auch zu spät (US-18)', async () => {
+      const el = await show(withDependencies([], [portalIn(2), loginIn(4)]));
+
+      expect(cardText(el, 'Portal')).not.toContain(DELIVERY_MISSING);
+    });
+
+    // AK 4: jeden Befund nennen, in der Reihenfolge des Plans (Iteration des Bedarfs zuerst).
+    it('nennt jeden Konflikt und jede nicht eingeplante Lieferung als eigenen Eintrag (US-18)', async () => {
+      const suche = feature('f3', 'Suche', 3, 5);
+      const kasse: Feature = {
+        ...feature('f4', 'Kasse', 4, 3),
+        scheduled: true,
+        teamId: 'z',
+        iterationNumber: 1,
+      };
+      const el = await show(
+        withDependencies(
+          [suche],
+          [portalIn(2), loginIn(4), kasse],
+          [PORTAL_NEEDS_LOGIN, { needingFeatureId: 'f4', neededFeatureId: 'f3' }],
+        ),
+      );
+
+      expect(entries(el)).toEqual([
+        'Suche ist nicht eingeplant, Kasse braucht es in Iteration 1.',
+        LOGIN_LATE,
+      ]);
+      expect(text(issueList(el))).not.toContain(NO_CONFLICTS);
+    });
+
+    it('zeigt «Keine Konflikte» bei einem Board ohne Abhängigkeiten (US-18)', async () => {
+      const el = await show(withDependencies([LOGIN], [portalIn(2)], []));
+
+      expect(text(issueList(el))).toContain(NO_CONFLICTS);
+      expect(entries(el).join(' ')).not.toContain('nicht eingeplant');
+    });
+
+    // Plan, Offene Fragen (entschieden mit «OK»): Abschnitt «Konflikte» oberhalb des Rasters.
+    it('zeigt den Abschnitt «Konflikte» mit Überschrift oberhalb des Rasters (US-18)', async () => {
+      const el = await show(withDependencies([], [portalIn(2), loginIn(4)]));
+
+      const section = issueList(el);
+      const heading = Array.from(section.querySelectorAll('h1, h2, h3, h4')).map(text);
+      expect(heading).toContain('Konflikte');
+      expect(grid(el), 'Raster').not.toBeNull();
+      expect(
+        section.compareDocumentPosition(grid(el)!) & Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+    });
+
+    // Szenario «Verschieben löst den Konflikt» (AK 5)
+    it('zeigt «Keine Konflikte», nachdem Login per Aktion in Iteration 1 eingeplant ist, ohne Neuladen (US-18)', async () => {
+      const el = await show(withDependencies([], [portalIn(2), loginIn(4)]));
+      schedule.mockResolvedValue(loginIn(1));
+
+      await moveLoginToIterationOne(el);
+
+      expect(schedule).toHaveBeenCalledWith('pi-7', 'f2', 'z', 1);
+      expect(text(issueList(el))).toContain(NO_CONFLICTS);
+      expect(entries(el).join(' ')).not.toContain(LOGIN_LATE);
+      expect(line(el, 'f2', 'f1').hasAttribute('data-conflict'), 'data-conflict').toBe(false);
+      expect(repository.get).toHaveBeenCalledTimes(1);
+    });
+
+    // Szenario «Gescheitertes Speichern stellt den Konflikt wieder her» (AK 5)
+    it('nennt wieder den Konflikt, wenn das Speichern beim Einplanen von Login scheitert (US-18)', async () => {
+      const el = await show(withDependencies([], [portalIn(2), loginIn(4)]));
+      schedule.mockRejectedValue(new Error('offline'));
+
+      await moveLoginToIterationOne(el);
+
+      expect(schedule).toHaveBeenCalledWith('pi-7', 'f2', 'z', 1);
+      expect(entries(el)).toEqual([LOGIN_LATE]);
+      expect(text(issueList(el))).not.toContain(NO_CONFLICTS);
+      expect(line(el, 'f2', 'f1').hasAttribute('data-conflict'), 'data-conflict').toBe(true);
+      expect(repository.get).toHaveBeenCalledTimes(1);
+    });
+  });
 });

@@ -30,6 +30,8 @@ interface DrawnLine {
   readonly to: string;
   readonly path: string;
   readonly emphasis: Emphasis;
+  /** Die Lieferung kommt später als der Bedarf (US-18): Die Linie ist rot und gestrichelt. */
+  readonly conflict: boolean;
 }
 
 /**
@@ -69,6 +71,7 @@ export class ProgramBoardComponent {
               to: link.needingFeatureId,
               path: `M ${line.from.x} ${line.from.y} L ${line.to.x} ${line.to.y}`,
               emphasis: emphasisOf(link, focused),
+              conflict: link.conflict,
             },
           ]
         : [];

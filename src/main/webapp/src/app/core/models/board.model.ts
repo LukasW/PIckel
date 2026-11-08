@@ -24,6 +24,23 @@ export interface Board {
 export interface DependencyLink {
   readonly neededFeatureId: string;
   readonly needingFeatureId: string;
+  /** Die Lieferung ist in einer späteren Iteration eingeplant als der Bedarf (US-18). */
+  readonly conflict: boolean;
+}
+
+/**
+ * Ein Befund zu einer Abhängigkeit (US-18): `conflict`, wenn die Lieferung später kommt als der Bedarf,
+ * `unscheduledDelivery`, wenn der Bedarf eingeplant ist, die Lieferung aber nicht.
+ */
+export interface DependencyIssue {
+  readonly kind: 'conflict' | 'unscheduledDelivery';
+  readonly needingFeatureId: string;
+  readonly neededFeatureId: string;
+  readonly needingTitle: string;
+  readonly neededTitle: string;
+  readonly needingIterationName: string;
+  /** Nur bei `conflict`: die Iteration, in der die Lieferung eingeplant ist. */
+  readonly neededIterationName?: string;
 }
 
 /** Last einer Zelle Team × Iteration in Story Points; `overloaded`, wenn geplant grösser als verfügbar ist. */
