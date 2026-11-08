@@ -29,4 +29,8 @@
         <sqlFile path="db/migration/V6__create_capacity.sql"/>
     </changeSet>
 
+    <changeSet id="7" author="pikel">
+        <sqlFile path="db/migration/V7__create_feature_dependency.sql"/>
+    </changeSet>
+
 </databaseChangeLog>

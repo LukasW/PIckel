@@ -22,10 +22,35 @@ public class ScenarioContext {
     // Name → ID; die Namen der PIs sind nicht eindeutig, darum gilt das zuletzt im Szenario angelegte PI.
     private final Map<String, String> programIncrementIds = new HashMap<>();
 
+    // Titel → ID bzw. PI-ID der Features, die das Szenario als gegeben angelegt hat; Abhängigkeiten (US-16) nennen
+    // Features nur beim Titel.
+    private final Map<String, String> featureIds = new HashMap<>();
+    private final Map<String, String> featureProgramIncrementIds = new HashMap<>();
+
     @Before
     public void reset() {
         response = null;
         programIncrementIds.clear();
+        featureIds.clear();
+        featureProgramIncrementIds.clear();
+    }
+
+    void featureCreated(String title, String id, String programIncrementId) {
+        featureIds.put(title, id);
+        featureProgramIncrementIds.put(title, programIncrementId);
+    }
+
+    String featureId(String title) {
+        String id = featureIds.get(title);
+        if (id == null) {
+            throw new IllegalStateException("Das Szenario hat kein Feature \"" + title + "\" angelegt.");
+        }
+        return id;
+    }
+
+    String featureProgramIncrementId(String title) {
+        featureId(title);
+        return featureProgramIncrementIds.get(title);
     }
 
     void response(Response response) {
