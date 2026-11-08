@@ -25,11 +25,20 @@
         class="grid min-h-12 gap-2"
       >
         @for (feature of board.backlog; track feature.id) {
-          <li cdkDrag [cdkDragData]="feature">
+          <li
+            cdkDrag
+            [cdkDragData]="feature"
+            [attr.data-feature-id]="feature.id"
+            (mouseenter)="focus(feature.id)"
+            (mouseleave)="blur()"
+            (focusin)="focus(feature.id)"
+            (focusout)="blur($event)"
+          >
             <app-board-card
               [feature]="feature"
               [teams]="board.teams"
               [iterations]="board.iterations"
+              [unlinkedDependencies]="service.unlinkedDependencyCount(feature.id)"
               (schedule)="service.schedule(feature, $event.teamId, $event.iterationNumber)"
               (unschedule)="service.unschedule(feature)"
             />
@@ -41,85 +50,130 @@
     @if (board.teams.length > 0) {
       <!-- Das Raster scrollt waagrecht in seinem eigenen Container; die Seite bleibt stehen. -->
       <div class="min-w-0 flex-1 overflow-x-auto">
-        <table
-          data-testid="board-grid"
-          class="w-full min-w-max rounded-lg border border-border bg-surface text-left"
-        >
-          <thead class="text-sm">
-            <tr>
-              <th scope="col" class="px-3 py-2 font-medium text-muted">
-                <span class="sr-only">Team</span>
-              </th>
-              @for (iteration of board.iterations; track iteration.number) {
-                <th
-                  scope="col"
-                  class="min-w-40 border-l border-border px-3 py-2 font-medium"
-                  [class.bg-background]="iteration.innovationAndPlanning"
-                >
-                  @for (milestone of milestonesIn(board, iteration.number); track milestone.id) {
-                    <span
-                      data-testid="milestone-marker"
-                      class="mb-1 block rounded border border-accent px-1.5 py-0.5 text-xs"
-                      ><span aria-hidden="true">◆</span> {{ milestone.name }}
-                      <span class="text-muted">{{ milestone.date | date: 'dd.MM.' }}</span></span
-                    >
-                  }
-                  <span class="block">{{ iteration.name }}</span>
-                  <span class="block text-xs text-muted"
-                    >{{ iteration.startDate | date: 'dd.MM.' }} –
-                    {{ iteration.endDate | date: 'dd.MM.' }}</span
-                  >
-                  @if (iteration.innovationAndPlanning) {
-                    <span
-                      class="mt-1 inline-block rounded bg-accent px-1.5 py-0.5 text-xs text-accent-foreground"
-                      >IP-Iteration</span
-                    >
-                  }
-                </th>
-              }
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-border">
-            @for (team of board.teams; track team.id) {
+        <!-- Die Linien liegen im selben Container wie die Tabelle und scrollen deshalb mit ihr (US-17). -->
+        <div #grid class="relative w-full min-w-max">
+          <table
+            data-testid="board-grid"
+            class="w-full rounded-lg border border-border bg-surface text-left"
+          >
+            <thead class="text-sm">
               <tr>
-                <th scope="row" class="px-3 py-2 font-medium">{{ team.name }}</th>
+                <th scope="col" class="px-3 py-2 font-medium text-muted">
+                  <span class="sr-only">Team</span>
+                </th>
                 @for (iteration of board.iterations; track iteration.number) {
-                  <td
-                    class="h-16 border-l border-border px-3 py-2 align-top"
+                  <th
+                    scope="col"
+                    class="min-w-40 border-l border-border px-3 py-2 font-medium"
                     [class.bg-background]="iteration.innovationAndPlanning"
                   >
-                    <!-- In der IP-Iteration gibt es keine Drop-Zone: Dort wird keine Feature-Arbeit geplant. -->
-                    @if (!iteration.innovationAndPlanning) {
-                      <ul
-                        cdkDropList
-                        [cdkDropListData]="cell(team.id, iteration.number)"
-                        (cdkDropListDropped)="drop($event)"
-                        class="grid min-h-12 gap-2"
+                    @for (milestone of milestonesIn(board, iteration.number); track milestone.id) {
+                      <span
+                        data-testid="milestone-marker"
+                        class="mb-1 block rounded border border-accent px-1.5 py-0.5 text-xs"
+                        ><span aria-hidden="true">◆</span> {{ milestone.name }}
+                        <span class="text-muted">{{ milestone.date | date: 'dd.MM.' }}</span></span
                       >
-                        @for (
-                          feature of cardsIn(board, team.id, iteration.number);
-                          track feature.id
-                        ) {
-                          <li cdkDrag [cdkDragData]="feature">
-                            <app-board-card
-                              [feature]="feature"
-                              [teams]="board.teams"
-                              [iterations]="board.iterations"
-                              (schedule)="
-                                service.schedule(feature, $event.teamId, $event.iterationNumber)
-                              "
-                              (unschedule)="service.unschedule(feature)"
-                            />
-                          </li>
-                        }
-                      </ul>
                     }
-                  </td>
+                    <span class="block">{{ iteration.name }}</span>
+                    <span class="block text-xs text-muted"
+                      >{{ iteration.startDate | date: 'dd.MM.' }} –
+                      {{ iteration.endDate | date: 'dd.MM.' }}</span
+                    >
+                    @if (iteration.innovationAndPlanning) {
+                      <span
+                        class="mt-1 inline-block rounded bg-accent px-1.5 py-0.5 text-xs text-accent-foreground"
+                        >IP-Iteration</span
+                      >
+                    }
+                  </th>
                 }
               </tr>
+            </thead>
+            <tbody class="divide-y divide-border">
+              @for (team of board.teams; track team.id) {
+                <tr>
+                  <th scope="row" class="px-3 py-2 font-medium">{{ team.name }}</th>
+                  @for (iteration of board.iterations; track iteration.number) {
+                    <td
+                      class="h-16 border-l border-border px-3 py-2 align-top"
+                      [class.bg-background]="iteration.innovationAndPlanning"
+                    >
+                      <!-- In der IP-Iteration gibt es keine Drop-Zone: Dort wird keine Feature-Arbeit geplant. -->
+                      @if (!iteration.innovationAndPlanning) {
+                        <ul
+                          cdkDropList
+                          [cdkDropListData]="cell(team.id, iteration.number)"
+                          (cdkDropListDropped)="drop($event)"
+                          class="grid min-h-12 gap-2"
+                        >
+                          @for (
+                            feature of cardsIn(board, team.id, iteration.number);
+                            track feature.id
+                          ) {
+                            <li
+                              cdkDrag
+                              [cdkDragData]="feature"
+                              [attr.data-feature-id]="feature.id"
+                              (mouseenter)="focus(feature.id)"
+                              (mouseleave)="blur()"
+                              (focusin)="focus(feature.id)"
+                              (focusout)="blur($event)"
+                            >
+                              <app-board-card
+                                [feature]="feature"
+                                [teams]="board.teams"
+                                [iterations]="board.iterations"
+                                [unlinkedDependencies]="service.unlinkedDependencyCount(feature.id)"
+                                (schedule)="
+                                  service.schedule(feature, $event.teamId, $event.iterationNumber)
+                                "
+                                (unschedule)="service.unschedule(feature)"
+                              />
+                            </li>
+                          }
+                        </ul>
+                      }
+                    </td>
+                  }
+                </tr>
+              }
+            </tbody>
+          </table>
+          <!-- Dekorativ: Die Abhängigkeiten selbst stehen im Backlog (US-16). -->
+          <svg
+            aria-hidden="true"
+            class="pointer-events-none absolute inset-0 h-full w-full overflow-visible text-muted"
+          >
+            <defs>
+              <marker
+                id="dependency-arrow"
+                viewBox="0 0 10 10"
+                refX="10"
+                refY="5"
+                markerWidth="8"
+                markerHeight="8"
+                orient="auto"
+              >
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor" />
+              </marker>
+            </defs>
+            @for (line of lines(); track line.from + '->' + line.to) {
+              <path
+                [attr.d]="line.path"
+                [attr.data-from]="line.from"
+                [attr.data-to]="line.to"
+                [attr.data-emphasis]="line.emphasis"
+                marker-end="url(#dependency-arrow)"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                [class.text-accent]="line.emphasis === 'highlighted'"
+                [class.opacity-20]="line.emphasis === 'dimmed'"
+              />
             }
-          </tbody>
-        </table>
+          </svg>
+        </div>
       </div>
     } @else {
       <p class="flex-1 rounded-lg border border-border bg-surface p-4 text-muted">

@@ -4,6 +4,7 @@ import ch.grudligstrasse.pikel.domain.model.Feature;
 import ch.grudligstrasse.pikel.domain.model.ProgramBoard;
 import ch.grudligstrasse.pikel.domain.model.ProgramIncrement;
 import ch.grudligstrasse.pikel.domain.port.in.BoardUseCase;
+import ch.grudligstrasse.pikel.domain.port.in.FeatureDependencyUseCase;
 import ch.grudligstrasse.pikel.domain.port.in.FeatureUseCase;
 import ch.grudligstrasse.pikel.domain.port.in.MilestoneUseCase;
 import ch.grudligstrasse.pikel.domain.port.in.ProgramIncrementUseCase;
@@ -19,16 +20,19 @@ public class BoardService implements BoardUseCase {
     private final TeamUseCase teams;
     private final FeatureUseCase features;
     private final MilestoneUseCase milestones;
+    private final FeatureDependencyUseCase dependencies;
 
     public BoardService(
             ProgramIncrementUseCase programIncrements,
             TeamUseCase teams,
             FeatureUseCase features,
-            MilestoneUseCase milestones) {
+            MilestoneUseCase milestones,
+            FeatureDependencyUseCase dependencies) {
         this.programIncrements = programIncrements;
         this.teams = teams;
         this.features = features;
         this.milestones = milestones;
+        this.dependencies = dependencies;
     }
 
     @Override
@@ -45,6 +49,7 @@ public class BoardService implements BoardUseCase {
                 programIncrement.iterations(),
                 backlog,
                 scheduled,
-                milestones.list(programIncrementId));
+                milestones.list(programIncrementId),
+                dependencies.list(programIncrementId));
     }
 }

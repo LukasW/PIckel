@@ -8,12 +8,14 @@ import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 import ch.grudligstrasse.pikel.domain.model.Feature;
+import ch.grudligstrasse.pikel.domain.model.FeatureDependency;
 import ch.grudligstrasse.pikel.domain.model.Iteration;
 import ch.grudligstrasse.pikel.domain.model.Milestone;
 import ch.grudligstrasse.pikel.domain.model.ProgramBoard;
 import ch.grudligstrasse.pikel.domain.model.ProgramIncrement;
 import ch.grudligstrasse.pikel.domain.model.ProgramIncrementNotFoundException;
 import ch.grudligstrasse.pikel.domain.model.Team;
+import ch.grudligstrasse.pikel.domain.port.in.FeatureDependencyUseCase;
 import ch.grudligstrasse.pikel.domain.port.in.FeatureUseCase;
 import ch.grudligstrasse.pikel.domain.port.in.MilestoneUseCase;
 import ch.grudligstrasse.pikel.domain.port.in.ProgramIncrementUseCase;
@@ -55,6 +57,10 @@ class BoardServiceTest {
     // US-15; ohne Stub liefert der Mock eine leere Liste, die bisherigen Fälle bleiben ohne Milestones.
     @Mock
     MilestoneUseCase milestones;
+
+    // US-17; ohne Stub liefert der Mock eine leere Liste, die bisherigen Fälle bleiben ohne Abhängigkeiten.
+    @Mock
+    FeatureDependencyUseCase dependencies;
 
     @InjectMocks
     BoardService service;
@@ -239,6 +245,26 @@ class BoardServiceTest {
                 board.iterations().get(board.iterationNumberOf(release) - 1).name());
     }
 
+    // --- US-17 AK 1: Das Board liefert die Abhängigkeiten des PI mit ---
+
+    // Drei verschiedene Abhängigkeiten, eingeplante wie Backlog-Features: Das Board trägt alle in der Reihenfolge des
+    // Use Case, ohne eigene Auswahl (welche eine Linie bekommt, entscheidet die Oberfläche).
+    @Test
+    void boardCarriesDependenciesOfProgramIncrement() {
+        piExists();
+        teamsAre(ADLER);
+        Feature scheduledPortal = scheduled("Portal", 1);
+        backlogIs(scheduledPortal, LOGIN, SUCHE);
+        FeatureDependency portalNeedsLogin = new FeatureDependency(scheduledPortal.id(), LOGIN.id());
+        FeatureDependency sucheNeedsLogin = new FeatureDependency(SUCHE.id(), LOGIN.id());
+        FeatureDependency sucheNeedsPortal = new FeatureDependency(SUCHE.id(), scheduledPortal.id());
+        when(dependencies.list(PI.id())).thenReturn(List.of(portalNeedsLogin, sucheNeedsLogin, sucheNeedsPortal));
+
+        assertEquals(
+                List.of(portalNeedsLogin, sucheNeedsLogin, sucheNeedsPortal),
+                service.get(PI.id()).dependencies());
+    }
+
     // --- Unbekanntes PI → 404 ---
 
     @Test
@@ -248,6 +274,7 @@ class BoardServiceTest {
         teamsAre(ADLER);
         lenient().when(features.listBacklog(unknown)).thenThrow(new ProgramIncrementNotFoundException());
         lenient().when(milestones.list(unknown)).thenThrow(new ProgramIncrementNotFoundException());
+        lenient().when(dependencies.list(unknown)).thenThrow(new ProgramIncrementNotFoundException());
 
         assertThrows(ProgramIncrementNotFoundException.class, () -> service.get(unknown));
     }

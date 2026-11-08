@@ -10,6 +10,12 @@
       <span class="ml-2">{{ feature().estimate }} SP</span>
     }
   </p>
+  @if (unlinkedDependencies() > 0) {
+    <p data-testid="unlinked-dependencies" class="text-xs text-muted">
+      {{ unlinkedDependencies() }}
+      {{ unlinkedDependencies() === 1 ? 'Abhängigkeit' : 'Abhängigkeiten' }}
+    </p>
+  }
 </div>
 
 @if (open()) {

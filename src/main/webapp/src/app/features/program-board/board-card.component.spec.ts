@@ -223,4 +223,33 @@ describe('BoardCardComponent', () => {
     expect(card, 'Karte').not.toBeNull();
     expect((card!.textContent ?? '').replace(/\s+/g, ' ').trim()).toBe('Portal WSJF 2 8 SP');
   });
+
+  // --- US-17: Anzahl Abhängigkeiten ohne Linie ---
+
+  async function renderWithUnlinked(count: number): Promise<string> {
+    await render(PORTAL);
+    fixture.componentRef.setInput('unlinkedDependencies', count);
+    await fixture.whenStable();
+    return ((fixture.nativeElement as HTMLElement).textContent ?? '').replace(/\s+/g, ' ').trim();
+  }
+
+  it('zeigt «1 Abhängigkeit» bei einer Abhängigkeit ohne Linie (US-17)', async () => {
+    const text = await renderWithUnlinked(1);
+
+    expect(text).toContain('1 Abhängigkeit');
+    expect(text).not.toContain('Abhängigkeiten');
+  });
+
+  it('zeigt «2 Abhängigkeiten» bei zwei Abhängigkeiten ohne Linie (US-17)', async () => {
+    const text = await renderWithUnlinked(2);
+
+    expect(text).toContain('2 Abhängigkeiten');
+  });
+
+  it('zeigt keine Anzahl, wenn alle Abhängigkeiten eine Linie haben (US-17)', async () => {
+    const text = await renderWithUnlinked(0);
+
+    expect(text).not.toContain('Abhängigkeit');
+    expect(text).toContain('Portal');
+  });
 });

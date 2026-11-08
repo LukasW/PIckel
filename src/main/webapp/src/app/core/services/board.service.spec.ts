@@ -44,6 +44,7 @@ const BOARD: Board = {
   ],
   scheduled: [],
   milestones: [],
+  dependencies: [],
 };
 
 describe('BoardService', () => {
@@ -189,6 +190,7 @@ describe('BoardService', () => {
       backlog: [PORTAL, LOGIN],
       scheduled: [SUCHE],
       milestones: [],
+      dependencies: [],
     };
 
     async function loaded(): Promise<Board> {
@@ -404,6 +406,189 @@ describe('BoardService', () => {
 
       expect(service.board()).toEqual(before);
       expect(service.actionError()).toBe(GENERIC_ERROR);
+    });
+  });
+
+  // --- US-17: Abhängigkeiten als Linie ---
+
+  describe('Abhängigkeiten (US-17)', () => {
+    const PI = 'pi-27-1';
+
+    function card(id: string, title: string, wsjfRank: number, cell?: [string, number]): Feature {
+      return {
+        id,
+        programIncrementId: PI,
+        title,
+        description: '',
+        owner: '',
+        wsjfRank,
+        scheduled: cell !== undefined,
+        ...(cell ? { teamId: cell[0], iterationNumber: cell[1] } : {}),
+      };
+    }
+
+    // Wie in den Szenarien: Adler (a), Zebra (z); Portal bei Adler in Iteration 3, Login bei Zebra in Iteration 2,
+    // Suche bei Zebra in Iteration 1.
+    const PORTAL = card('f1', 'Portal', 1, ['a', 3]);
+    const LOGIN_PLANNED = card('f2', 'Login', 2, ['z', 2]);
+    const LOGIN_BACKLOG = card('f2', 'Login', 2);
+    const SUCHE = card('f3', 'Suche', 3, ['z', 1]);
+    const KASSE = card('f4', 'Kasse', 4, ['a', 1]);
+    const PORTAL_NEEDS_LOGIN = { needingFeatureId: 'f1', neededFeatureId: 'f2' };
+    const SUCHE_NEEDS_LOGIN = { needingFeatureId: 'f3', neededFeatureId: 'f2' };
+    const KASSE_NEEDS_PORTAL = { needingFeatureId: 'f4', neededFeatureId: 'f1' };
+    const LOGIN_TO_PORTAL = { neededFeatureId: 'f2', needingFeatureId: 'f1' };
+
+    function boardWith(
+      backlog: Feature[],
+      scheduled: Feature[],
+      dependencies: Board['dependencies'],
+    ): Board {
+      return { ...BOARD, backlog, scheduled, dependencies };
+    }
+
+    async function loaded(board: Board): Promise<void> {
+      repository.get.mockResolvedValue(board);
+      await service.load(PI);
+    }
+
+    function counts(...ids: string[]): Record<string, number> {
+      return Object.fromEntries(ids.map((id) => [id, service.unlinkedDependencyCount(id)]));
+    }
+
+    // Szenario «Linie zwischen zwei eingeplanten Features»
+    it('zieht eine Linie von Login zu Portal, wenn beide eingeplant sind (US-17)', async () => {
+      await loaded(boardWith([], [LOGIN_PLANNED, PORTAL], [PORTAL_NEEDS_LOGIN]));
+
+      expect(service.dependencyLinks()).toEqual([LOGIN_TO_PORTAL]);
+    });
+
+    // Szenario «Keine Linie, wenn ein Feature im Backlog liegt»: nur das liefernde Feature weicht ab.
+    it('zieht keine Linie, wenn das liefernde Feature im Backlog liegt (US-17)', async () => {
+      await loaded(boardWith([LOGIN_BACKLOG], [PORTAL], [PORTAL_NEEDS_LOGIN]));
+
+      expect(service.dependencyLinks()).toEqual([]);
+    });
+
+    it('zieht keine Linie, wenn das brauchende Feature im Backlog liegt (US-17)', async () => {
+      const portalInBacklog = card('f1', 'Portal', 1);
+      await loaded(boardWith([portalInBacklog], [LOGIN_PLANNED], [PORTAL_NEEDS_LOGIN]));
+
+      expect(service.dependencyLinks()).toEqual([]);
+    });
+
+    it('zieht nur Linien für Abhängigkeiten, deren beide Features eingeplant sind (US-17)', async () => {
+      await loaded(
+        boardWith(
+          [LOGIN_BACKLOG],
+          [PORTAL, SUCHE, KASSE],
+          [PORTAL_NEEDS_LOGIN, KASSE_NEEDS_PORTAL],
+        ),
+      );
+
+      expect(service.dependencyLinks()).toEqual([
+        { neededFeatureId: 'f1', needingFeatureId: 'f4' },
+      ]);
+    });
+
+    it('zählt an beiden Karten die Abhängigkeit ohne Linie, wenn ein Feature im Backlog liegt (US-17)', async () => {
+      await loaded(boardWith([LOGIN_BACKLOG], [PORTAL], [PORTAL_NEEDS_LOGIN]));
+
+      expect(counts('f1', 'f2')).toEqual({ f1: 1, f2: 1 });
+    });
+
+    it('zählt Abhängigkeiten ohne Linie in beide Richtungen, eingeplante Paare nicht (US-17)', async () => {
+      await loaded(
+        boardWith(
+          [LOGIN_BACKLOG],
+          [PORTAL, SUCHE, KASSE],
+          [PORTAL_NEEDS_LOGIN, SUCHE_NEEDS_LOGIN, KASSE_NEEDS_PORTAL],
+        ),
+      );
+
+      expect(counts('f1', 'f2', 'f3', 'f4')).toEqual({ f1: 1, f2: 2, f3: 1, f4: 0 });
+    });
+
+    it('zählt nichts, wenn beide Features eingeplant sind (US-17)', async () => {
+      await loaded(boardWith([], [LOGIN_PLANNED, PORTAL], [PORTAL_NEEDS_LOGIN]));
+
+      expect(counts('f1', 'f2')).toEqual({ f1: 0, f2: 0 });
+    });
+
+    // Folgerung aus AK 3: Liegen beide im Backlog, hat die Abhängigkeit ebenfalls keine Linie.
+    it('zählt die Abhängigkeit an beiden Karten, wenn beide im Backlog liegen (US-17)', async () => {
+      const portalInBacklog = card('f1', 'Portal', 1);
+      await loaded(boardWith([portalInBacklog, LOGIN_BACKLOG], [], [PORTAL_NEEDS_LOGIN]));
+
+      expect(service.dependencyLinks()).toEqual([]);
+      expect(counts('f1', 'f2')).toEqual({ f1: 1, f2: 1 });
+    });
+
+    // Szenario «Linie folgt dem Einplanen ohne Neuladen»
+    it('zieht nach dem Einplanen die Linie und zählt nichts mehr, ohne das Board neu zu laden (US-17)', async () => {
+      await loaded(boardWith([LOGIN_BACKLOG], [PORTAL], [PORTAL_NEEDS_LOGIN]));
+      features.schedule.mockResolvedValue(LOGIN_PLANNED);
+
+      await service.schedule(LOGIN_BACKLOG, 'z', 2);
+
+      expect(service.dependencyLinks()).toEqual([LOGIN_TO_PORTAL]);
+      expect(counts('f1', 'f2')).toEqual({ f1: 0, f2: 0 });
+      expect(repository.get).toHaveBeenCalledTimes(1);
+    });
+
+    it('zieht die Linie schon, bevor der Server das Einplanen bestätigt (US-17)', async () => {
+      await loaded(boardWith([LOGIN_BACKLOG], [PORTAL], [PORTAL_NEEDS_LOGIN]));
+      let answer: (f: Feature) => void = () => undefined;
+      features.schedule.mockReturnValue(new Promise<Feature>((resolve) => (answer = resolve)));
+
+      const scheduling = service.schedule(LOGIN_BACKLOG, 'z', 2);
+      // Verhindert eine unbehandelte Ablehnung, falls die Prüfung davor scheitert; `await scheduling` meldet sie trotzdem.
+      scheduling.catch(() => undefined);
+
+      expect(service.dependencyLinks()).toEqual([LOGIN_TO_PORTAL]);
+      answer(LOGIN_PLANNED);
+      await scheduling;
+    });
+
+    it('behält die Linie, wenn ein Feature in eine andere Zelle verschoben wird (US-17)', async () => {
+      await loaded(boardWith([], [LOGIN_PLANNED, PORTAL], [PORTAL_NEEDS_LOGIN]));
+      features.schedule.mockResolvedValue({ ...PORTAL, teamId: 'z', iterationNumber: 4 });
+
+      await service.schedule(PORTAL, 'z', 4);
+
+      expect(service.dependencyLinks()).toEqual([LOGIN_TO_PORTAL]);
+      expect(counts('f1', 'f2')).toEqual({ f1: 0, f2: 0 });
+    });
+
+    it('nimmt die Linie weg und zählt wieder, wenn ein Feature zurück ins Backlog geht (US-17)', async () => {
+      await loaded(boardWith([], [LOGIN_PLANNED, PORTAL], [PORTAL_NEEDS_LOGIN]));
+      features.unschedule.mockResolvedValue(LOGIN_BACKLOG);
+
+      await service.unschedule(LOGIN_PLANNED);
+
+      expect(service.dependencyLinks()).toEqual([]);
+      expect(counts('f1', 'f2')).toEqual({ f1: 1, f2: 1 });
+      expect(repository.get).toHaveBeenCalledTimes(1);
+    });
+
+    it('lässt Linie und Zähler wie vorher, wenn das Einplanen scheitert (US-17)', async () => {
+      await loaded(boardWith([LOGIN_BACKLOG], [PORTAL], [PORTAL_NEEDS_LOGIN]));
+      features.schedule.mockRejectedValue(new Error('offline'));
+
+      await service.schedule(LOGIN_BACKLOG, 'z', 2);
+
+      expect(service.dependencyLinks()).toEqual([]);
+      expect(counts('f1', 'f2')).toEqual({ f1: 1, f2: 1 });
+    });
+
+    it('lässt die Linie stehen, wenn das Zurücknehmen scheitert (US-17)', async () => {
+      await loaded(boardWith([], [LOGIN_PLANNED, PORTAL], [PORTAL_NEEDS_LOGIN]));
+      features.unschedule.mockRejectedValue(new Error('offline'));
+
+      await service.unschedule(LOGIN_PLANNED);
+
+      expect(service.dependencyLinks()).toEqual([LOGIN_TO_PORTAL]);
+      expect(counts('f1', 'f2')).toEqual({ f1: 0, f2: 0 });
     });
   });
 });

@@ -12,6 +12,7 @@ import java.util.Objects;
  * @param backlog nicht eingeplante Features in Backlog-Reihenfolge
  * @param scheduled eingeplante Features in Backlog-Reihenfolge; die Zelle steht am Feature
  * @param milestones aufsteigend nach Datum; je ein Marker über der Iteration, in die das Datum fällt
+ * @param dependencies alle Abhängigkeiten des PI; die Oberfläche zeichnet daraus die Linien (US-17)
  */
 public record ProgramBoard(
         ProgramIncrement programIncrement,
@@ -19,7 +20,8 @@ public record ProgramBoard(
         List<Iteration> iterations,
         List<Feature> backlog,
         List<Feature> scheduled,
-        List<Milestone> milestones) {
+        List<Milestone> milestones,
+        List<FeatureDependency> dependencies) {
 
     public ProgramBoard {
         Objects.requireNonNull(programIncrement, "programIncrement");
@@ -28,6 +30,7 @@ public record ProgramBoard(
         backlog = List.copyOf(backlog);
         scheduled = List.copyOf(scheduled);
         milestones = List.copyOf(milestones);
+        dependencies = List.copyOf(dependencies);
     }
 
     /**

@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { inject, Injectable, signal } from '@angular/core';
-import { Board } from '../models/board.model';
+import { computed, inject, Injectable, signal } from '@angular/core';
+import { Board, DependencyLink } from '../models/board.model';
 import { Feature } from '../models/feature.model';
 import { BoardRepository } from '../ports/board.repository';
 import { FeaturesRepository } from '../ports/features.repository';
@@ -16,6 +16,36 @@ export class BoardService {
   // Reihenfolgen (Teams alphabetisch, Backlog nach WSJF) kommen vom Server; hier wird nicht umsortiert.
   private readonly current = signal<Board | undefined>(undefined);
   readonly board = this.current.asReadonly();
+  /** Abhängigkeiten, bei denen beide Features eingeplant sind: Sie bekommen eine Linie (US-17). */
+  readonly dependencyLinks = computed<readonly DependencyLink[]>(() => {
+    const board = this.current();
+    if (!board) {
+      return [];
+    }
+    const scheduled = new Set(board.scheduled.map((f) => f.id));
+    return board.dependencies
+      .filter((d) => scheduled.has(d.neededFeatureId) && scheduled.has(d.needingFeatureId))
+      .map(({ neededFeatureId, needingFeatureId }) => ({ neededFeatureId, needingFeatureId }));
+  });
+
+  /** Je Feature die Anzahl Abhängigkeiten ohne Linie, in beide Richtungen; abgeleitet wie die Linien. */
+  private readonly unlinkedCounts = computed(() => {
+    const counts = new Map<string, number>();
+    const board = this.current();
+    if (!board) {
+      return counts;
+    }
+    const scheduled = new Set(board.scheduled.map((f) => f.id));
+    for (const d of board.dependencies) {
+      if (scheduled.has(d.neededFeatureId) && scheduled.has(d.needingFeatureId)) {
+        continue;
+      }
+      for (const id of [d.neededFeatureId, d.needingFeatureId]) {
+        counts.set(id, (counts.get(id) ?? 0) + 1);
+      }
+    }
+    return counts;
+  });
   readonly loading = signal(false);
   readonly error = signal<string | undefined>(undefined);
   /** Meldung, wenn das Einplanen oder Zurücknehmen scheitert (US-13); das Board steht dann wie vorher. */
@@ -23,6 +53,11 @@ export class BoardService {
 
   /** Zählt die Ladeaufträge; nur die Antwort auf den letzten zählt. */
   private latestRequest = 0;
+
+  /** Anzahl Abhängigkeiten des Features (beide Richtungen), für die keine Linie gezeichnet ist (US-17). */
+  unlinkedDependencyCount(featureId: string): number {
+    return this.unlinkedCounts().get(featureId) ?? 0;
+  }
 
   /** Plant ein Feature in die Zelle ein: Das Board ändert sich sofort, bei einem Fehler kehrt es zurück (US-13). */
   async schedule(feature: Feature, teamId: string, iterationNumber: number): Promise<void> {

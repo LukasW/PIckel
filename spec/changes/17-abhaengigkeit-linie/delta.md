@@ -1,6 +1,6 @@
 # Delta US-17 — Abhängigkeiten als Linie auf dem Board (Issue #17)
 
-Story: `spec/user-stories/17-abhaengigkeit-linie.md` (neu) · Status: bestätigt
+Story: `spec/user-stories/17-abhaengigkeit-linie.md` (neu) · Status: eingepflegt
 
 ## Warum
 

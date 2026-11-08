@@ -10,40 +10,40 @@ der Karte zurück. Die Komponente misst die Karten im Raster und zeichnet die Li
 Geometrie ist eine reine Funktion. Fokus oder Hover auf einer Karte hebt deren Linien hervor. Keine Migration.
 
 ## Zu erstellende Dateien
-- [ ] `src/main/webapp/src/app/features/program-board/dependency-lines.ts` — reine Funktionen: Geometrie einer Linie
+- [x] `src/main/webapp/src/app/features/program-board/dependency-lines.ts` — reine Funktionen: Geometrie einer Linie
   aus zwei Karten-Rechtecken, Hervorhebung einer Linie bei fokussierter Karte (UI, ohne Angular)
-- [ ] `src/main/webapp/src/app/features/program-board/dependency-lines.spec.ts` — Vitest dazu
-- [ ] `spec/user-stories/17-abhaengigkeit-linie.md` — Story (aus dem Delta eingepflegt)
-- [ ] `src/test/resources/features/program-increments/17-abhaengigkeit-linie.feature` — ein CucumberIT-Szenario,
+- [x] `src/main/webapp/src/app/features/program-board/dependency-lines.spec.ts` — Vitest dazu
+- [x] `spec/user-stories/17-abhaengigkeit-linie.md` — Story (aus dem Delta eingepflegt)
+- [x] `src/test/resources/features/program-increments/17-abhaengigkeit-linie.feature` — ein CucumberIT-Szenario,
   vier `@Unit` mit `# Vitest:`-Verweisen
 
 ## Zu ändernde Dateien
-- [ ] `src/main/java/ch/grudligstrasse/pikel/domain/model/ProgramBoard.java` — Komponente
+- [x] `src/main/java/ch/grudligstrasse/pikel/domain/model/ProgramBoard.java` — Komponente
   `List<FeatureDependency> dependencies` (Kopie im Compact Constructor)
-- [ ] `src/main/java/ch/grudligstrasse/pikel/application/service/BoardService.java` — `FeatureDependencyUseCase`
+- [x] `src/main/java/ch/grudligstrasse/pikel/application/service/BoardService.java` — `FeatureDependencyUseCase`
   injizieren, `list(piId)` ins Board
-- [ ] `src/main/java/ch/grudligstrasse/pikel/adapter/in/rest/BoardDto.java` — Feld `dependencies`
+- [x] `src/main/java/ch/grudligstrasse/pikel/adapter/in/rest/BoardDto.java` — Feld `dependencies`
   (`List<FeatureDependencyDto>`, bestehender DTO)
-- [ ] `src/test/java/ch/grudligstrasse/pikel/application/service/BoardServiceTest.java` — `@Mock
+- [x] `src/test/java/ch/grudligstrasse/pikel/application/service/BoardServiceTest.java` — `@Mock
   FeatureDependencyUseCase`, neuer Test
-- [ ] `src/test/java/ch/grudligstrasse/pikel/domain/model/ProgramBoardTest.java` — Konstruktoraufruf ergänzen
-- [ ] `src/test/java/ch/grudligstrasse/pikel/cucumber/steps/BoardSteps.java` — Dann-Step «liefert das Board die
+- [x] `src/test/java/ch/grudligstrasse/pikel/domain/model/ProgramBoardTest.java` — Konstruktoraufruf ergänzen
+- [x] `src/test/java/ch/grudligstrasse/pikel/cucumber/steps/BoardSteps.java` — Dann-Step «liefert das Board die
   Abhängigkeit {string} braucht {string}»
-- [ ] `src/main/webapp/src/app/core/models/board.model.ts` — `dependencies: readonly FeatureDependency[]`, Typ
+- [x] `src/main/webapp/src/app/core/models/board.model.ts` — `dependencies: readonly FeatureDependency[]`, Typ
   `DependencyLink` (`neededFeatureId`, `needingFeatureId`)
-- [ ] `src/main/webapp/src/app/core/services/board.service.ts` — `computed` `dependencyLinks` (beide eingeplant) und
+- [x] `src/main/webapp/src/app/core/services/board.service.ts` — `computed` `dependencyLinks` (beide eingeplant) und
   Map der Abhängigkeiten ohne Linie pro Feature, Methode `unlinkedDependencyCount(featureId)`
-- [ ] `src/main/webapp/src/app/core/services/board.service.spec.ts` — Tests dazu; Fixtures `dependencies: []`
-- [ ] `src/main/webapp/src/app/features/program-board/program-board.component.ts` / `.html` — Raster in einen
+- [x] `src/main/webapp/src/app/core/services/board.service.spec.ts` — Tests dazu; Fixtures `dependencies: []`
+- [x] `src/main/webapp/src/app/features/program-board/program-board.component.ts` / `.html` — Raster in einen
   `relative`-Container, SVG-Overlay (`pointer-events-none`, `aria-hidden`), Messung der Karten über
   `data-feature-id`, Signal `focusedFeatureId` aus `mouseenter`/`mouseleave`/`focusin`/`focusout` am `li`
-- [ ] `src/main/webapp/src/app/features/program-board/program-board.component.spec.ts` — Tests; Fixture
+- [x] `src/main/webapp/src/app/features/program-board/program-board.component.spec.ts` — Tests; Fixture
   `dependencies: []`
-- [ ] `src/main/webapp/src/app/features/program-board/board-card.component.ts` / `.html` — Input
+- [x] `src/main/webapp/src/app/features/program-board/board-card.component.ts` / `.html` — Input
   `unlinkedDependencies` (Zahl), Anzeige «1 Abhängigkeit» / «n Abhängigkeiten», bei 0 nichts
-- [ ] `src/main/webapp/src/app/features/program-board/board-card.component.spec.ts` — Tests dazu
-- [ ] `src/main/webapp/src/app/app.spec.ts` — Fixture `EMPTY_BOARD` um `dependencies: []` ergänzen, sonst nichts
-- [ ] `spec/user-stories/16-abhaengigkeit-erfassen.md` — Satz «Die Linie auf dem Board folgt mit #17» durch Verweis
+- [x] `src/main/webapp/src/app/features/program-board/board-card.component.spec.ts` — Tests dazu
+- [x] `src/main/webapp/src/app/app.spec.ts` — Fixture `EMPTY_BOARD` um `dependencies: []` ergänzen, sonst nichts
+- [x] `spec/user-stories/16-abhaengigkeit-erfassen.md` — Satz «Die Linie auf dem Board folgt mit #17» durch Verweis
   auf US-17 ersetzen (Text der Beschreibung, kein Kriterium)
 
 ## Delta
@@ -75,48 +75,48 @@ dem Einplanen ohne Neuladen» ergänzt. Geändert: keine. Entfernt: keine.
 - Keine neue ADR, kein Abschnitt in `docs/arc42.md` nachzuziehen (siehe aber die Anmerkung in `18-…/plan.md`)
 
 ## Aufgaben
-- [ ] 1. `ProgramBoard.dependencies`, `BoardService` holt sie über `FeatureDependencyUseCase` — erledigt, wenn
+- [x] 1. `ProgramBoard.dependencies`, `BoardService` holt sie über `FeatureDependencyUseCase` — erledigt, wenn
   `BoardServiceTest` («Board trägt die Abhängigkeiten des PI») und `ProgramBoardTest` grün sind
-- [ ] 2. `BoardDto.dependencies`, Dann-Step, Feature-Datei mit dem Szenario «Board liefert die Abhängigkeiten» —
+- [x] 2. `BoardDto.dependencies`, Dann-Step, Feature-Datei mit dem Szenario «Board liefert die Abhängigkeiten» —
   erledigt, wenn das Szenario in `CucumberIT` grün ist
-- [ ] 3. Frontend-Modell `Board.dependencies`, Fixtures um `dependencies: []` ergänzen — erledigt, wenn `npm test`
+- [x] 3. Frontend-Modell `Board.dependencies`, Fixtures um `dependencies: []` ergänzen — erledigt, wenn `npm test`
   grün ist
-- [ ] 4. `BoardService.dependencyLinks` und `unlinkedDependencyCount` als `computed` — erledigt, wenn die Tests in
+- [x] 4. `BoardService.dependencyLinks` und `unlinkedDependencyCount` als `computed` — erledigt, wenn die Tests in
   `board.service.spec.ts` grün sind
-- [ ] 5. `dependency-lines.ts` (Geometrie, Hervorhebung) — erledigt, wenn `dependency-lines.spec.ts` grün ist
-- [ ] 6. Zähler auf der Karte — erledigt, wenn die Tests in `board-card.component.spec.ts` grün sind
-- [ ] 7. SVG-Overlay, Messung und Hover/Fokus im Board — erledigt, wenn die Tests in
+- [x] 5. `dependency-lines.ts` (Geometrie, Hervorhebung) — erledigt, wenn `dependency-lines.spec.ts` grün ist
+- [x] 6. Zähler auf der Karte — erledigt, wenn die Tests in `board-card.component.spec.ts` grün sind
+- [x] 7. SVG-Overlay, Messung und Hover/Fokus im Board — erledigt, wenn die Tests in
   `program-board.component.spec.ts` grün sind
-- [ ] 8. `@Unit`-Szenarien mit `# Vitest:`-Verweisen; Story anlegen, Delta einpflegen, Satz in US-16 nachführen —
+- [x] 8. `@Unit`-Szenarien mit `# Vitest:`-Verweisen; Story anlegen, Delta einpflegen, Satz in US-16 nachführen —
   erledigt, wenn `check-story-drift.sh` nichts meldet; `scripts/gate.sh` grün; Screenshot für den PR
 
 ## Test-Strategie
-- [ ] Unit (JUnit, `BoardService`): Das Board trägt genau die Liste aus `FeatureDependencyUseCase.list` des PI;
+- [x] Unit (JUnit, `BoardService`): Das Board trägt genau die Liste aus `FeatureDependencyUseCase.list` des PI;
   unbekanntes PI bleibt 404 (bestehender Test)
-- [ ] Integration (CucumberIT, «Board liefert die Abhängigkeiten»): Das Board-JSON enthält die Abhängigkeit mit
+- [x] Integration (CucumberIT, «Board liefert die Abhängigkeiten»): Das Board-JSON enthält die Abhängigkeit mit
   `needingFeatureId` von "Portal" und `neededFeatureId` von "Login"
-- [ ] Unit (Vitest, `BoardService`):
+- [x] Unit (Vitest, `BoardService`):
   - beide eingeplant → genau ein Link Login → Portal; einer im Backlog → kein Link
   - Zähler ohne Linie zählt beide Richtungen: "Login" (Backlog) gebraucht von "Portal" und "Suche" (beide
     eingeplant) → "Login" 2, "Portal" 1, "Suche" 1; eingeplante Paare zählen nicht
   - nach `schedule` von "Login" entsteht der Link und die Zähler fallen auf 0, ohne zweiten `get`-Aufruf am
     Repository; nach `unschedule` verschwindet er wieder
   - scheitert das Speichern, gelten Link und Zähler wie vorher
-- [ ] Unit (Vitest, `dependency-lines.ts`), mit Werten:
+- [x] Unit (Vitest, `dependency-lines.ts`), mit Werten:
   - Lieferung {x 0, y 0, b 100, h 40}, Bedarf {x 300, y 100, b 100, h 40} → Strecke von (100, 20) nach (300, 120)
   - Lieferung rechts vom Bedarf → von der linken Kante der Lieferung zur rechten Kante des Bedarfs
   - gleiche Spalte → von der unteren zur oberen Kante (bzw. umgekehrt)
   - fehlt ein Rechteck (Karte nicht gemessen), gibt es keine Linie
   - Hervorhebung: ohne Fokus alle «normal»; Fokus auf "Suche" → Linie Login → Suche «hervorgehoben», Login → Portal
     «abgeblendet»; Fokus auf "Login" → beide hervorgehoben
-- [ ] Unit (Vitest, Karte): 1 → «1 Abhängigkeit», 2 → «2 Abhängigkeiten», 0 → kein Text
-- [ ] Unit (Vitest, Board): pro Link ein SVG-Pfad mit `data-from`/`data-to`; `mouseenter` und `focusin` auf
+- [x] Unit (Vitest, Karte): 1 → «1 Abhängigkeit», 2 → «2 Abhängigkeiten», 0 → kein Text
+- [x] Unit (Vitest, Board): pro Link ein SVG-Pfad mit `data-from`/`data-to`; `mouseenter` und `focusin` auf
   "Suche" setzen `data-emphasis` der Linien wie im Szenario, `mouseleave`/`focusout` setzen zurück; Backlog-Karte
   "Login" zeigt «1 Abhängigkeit»; nach Einplanen per Aktion entsteht die Linie ohne neuen `get`-Aufruf. (jsdom misst
   0 × 0; geprüft wird, welche Linien da sind und wie sie markiert sind, nicht wo)
-- [ ] Bestehende Tests: `BoardServiceTest`, `ProgramBoardTest` und die Vitest-Fixtures ändern sich nur durch das
+- [x] Bestehende Tests: `BoardServiceTest`, `ProgramBoardTest` und die Vitest-Fixtures ändern sich nur durch das
   neue Pflichtfeld; keine Erwartung wird abgeschwächt. Grund: Delta → AK 1
-- [ ] Von Hand: Screenshot im PR mit Linien zwischen Zellen, Hover-Zustand und waagrecht gescrolltem Raster (jsdom
+- [ ] Von Hand (offen, im Nachtlauf kein Browser): Screenshot im PR mit Linien zwischen Zellen, Hover-Zustand und waagrecht gescrolltem Raster (jsdom
   misst kein Layout)
 
 ## Offene Fragen

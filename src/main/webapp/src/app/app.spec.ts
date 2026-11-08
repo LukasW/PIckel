@@ -32,6 +32,7 @@ const EMPTY_BOARD: Board = {
   backlog: [],
   scheduled: [],
   milestones: [],
+  dependencies: [],
 };
 
 /**

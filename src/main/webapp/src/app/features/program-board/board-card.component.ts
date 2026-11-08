@@ -22,6 +22,8 @@ export class BoardCardComponent {
   readonly feature = input.required<Feature>();
   readonly teams = input.required<readonly Team[]>();
   readonly iterations = input.required<readonly Iteration[]>();
+  /** Abhängigkeiten dieser Karte ohne Linie (US-17); bei 0 zeigt die Karte nichts. */
+  readonly unlinkedDependencies = input(0);
 
   readonly schedule = output<SchedulingChoice>();
   readonly unschedule = output<void>();
