@@ -338,8 +338,31 @@ run_one() {
   result "$nr" ok ""
 }
 
+# Kosten aller Phasen und Versuche dieses Laufs als Kommentar ans Issue. Exakt aus total_cost_usd von claude -p,
+# darum hier und nicht in /flow-ship (dort fehlte die Ship-Phase selbst). Ein Fehler hier hält den Lauf nicht auf.
+post_cost() {
+  local nr=$1 f body rows="" total=0 cost phase attempt
+  for f in "$RUN/$nr".*.jsonl; do
+    [ -f "$f" ] || continue
+    cost=$(grep '"type":"result"' "$f" | tail -1 | jq -r '.total_cost_usd // empty' 2>/dev/null)
+    [ -n "$cost" ] || cost=0
+    phase=$(basename "$f" .jsonl)
+    attempt=${phase##*.}
+    phase=${phase#"$nr".}
+    phase=${phase%.*}
+    rows="$rows$(printf '| %s | %s | %.2f |' "$phase" "$attempt" "$cost")"$'\n'
+    total=$(awk -v a="$total" -v b="$cost" 'BEGIN { printf "%.4f", a + b }')
+  done
+  [ -n "$rows" ] || return 0
+  body=$(printf '### Kosten der Umsetzung (Nachtlauf)\n\n| Phase | Versuch | Kosten (USD) |\n|---|---:|---:|\n%s| **Total** | | **%.2f** |\n\nAus `total_cost_usd` von `claude -p`, Lauf vom %s. Ein Versuch ohne Ergebnis (abgebrochen, gestoppt) zählt 0.\n' \
+    "$rows" "$total" "$RUN_STARTED")
+  (cd "$B_REPO" && gh issue comment "$nr" --body "$body") >/dev/null 2>&1 \
+    || mlog "  WARN: Kosten von #$nr nicht ans Issue geschrieben"
+}
+
 record() {
   local nr=$1 state="" detail="" branch
+  post_cost "$nr"
   refresh_main
   if [ -f "$RUN/result.$nr" ]; then
     state=$(sed -n 1p "$RUN/result.$nr")

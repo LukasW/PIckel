@@ -118,6 +118,7 @@ jobs:
           bash .claude/flow/scripts/test-guard-push.sh
           bash .claude/flow/scripts/test-guard-env.sh
           bash .claude/flow/scripts/test-hook-input.sh
+          bash .claude/flow/scripts/test-issue-cost.sh
 
       - name: Bekannte Schwachstellen in npm-Abhängigkeiten (Laufzeit, ab high)
         working-directory: src/main/webapp

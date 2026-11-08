@@ -57,6 +57,9 @@ Hauptzweig: `base-branch` aus dem Kopf von `flow.md`, sonst `main`.
 - Nicht automatisch durch `Closes #N` geschlossen: Issue auf `closed` setzen
 - Story: `**Status:**` in der Story-Datei steht auf «Umgesetzt» (`flow.md` → «User Stories»; gehört in den PR;
   fehlt es, vor dem Merge nachholen)
+- **Kosten** (nicht im Nachtlauf): `.claude/flow/scripts/issue-cost.sh <nr> > <tmp>.md` und
+  `gh issue comment <nr> --body-file <tmp>.md`. Das Skript schätzt aus den lokalen Transkripten aller Sessions
+  auf dem Branch; Exit 1 (keine Transkripte) nur melden, nicht abbrechen
 
 ## 6. Lokal aufräumen
 
