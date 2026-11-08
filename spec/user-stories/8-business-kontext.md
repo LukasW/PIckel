@@ -1,7 +1,7 @@
 # US-8: Business-Kontext und ART-Ziele am PI
 
 **ID:** US-8
-**Issue:** [#8](https://github.com/LukasW/PIckel/issues/8)
+**Issue:** [#8](https://github.com/LukasW/PIkel/issues/8)
 **Status:** Umgesetzt
 **Priorität:** Tief
 **Schätzung:** 3

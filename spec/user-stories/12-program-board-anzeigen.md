@@ -1,7 +1,7 @@
 # US-12: Program Board eines PI anzeigen
 
 **ID:** US-12
-**Issue:** [#12](https://github.com/LukasW/PIckel/issues/12)
+**Issue:** [#12](https://github.com/LukasW/PIkel/issues/12)
 **Status:** Umgesetzt
 **Priorität:** Hoch
 **Schätzung:** 5

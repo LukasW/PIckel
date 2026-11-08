@@ -1,7 +1,7 @@
 # US-10: Backlog nach WSJF-Rang bearbeiten
 
 **ID:** US-10
-**Issue:** [#10](https://github.com/LukasW/PIckel/issues/10)
+**Issue:** [#10](https://github.com/LukasW/PIkel/issues/10)
 **Status:** Umgesetzt
 **Priorität:** Hoch
 **Schätzung:** 5

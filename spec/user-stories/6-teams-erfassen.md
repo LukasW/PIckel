@@ -1,7 +1,7 @@
 # US-6: Teams des ART erfassen
 
 **ID:** US-6
-**Issue:** [#6](https://github.com/LukasW/PIckel/issues/6)
+**Issue:** [#6](https://github.com/LukasW/PIkel/issues/6)
 **Status:** Umgesetzt
 **Priorität:** Hoch
 **Schätzung:** 5
