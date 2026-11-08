@@ -29,4 +29,10 @@ public class FeatureEntity {
     public Integer wsjfRank;
 
     public Integer estimate;
+
+    @Column(name = "team_id")
+    public UUID teamId;
+
+    @Column(name = "iteration_number")
+    public Integer iterationNumber;
 }

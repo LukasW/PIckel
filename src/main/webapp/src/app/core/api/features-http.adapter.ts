@@ -23,6 +23,24 @@ export class FeaturesHttpAdapter extends FeaturesRepository {
     return firstValueFrom(this.http.put<Feature>(`${url(programIncrementId)}/${id}`, feature));
   }
 
+  schedule(
+    programIncrementId: string,
+    id: string,
+    teamId: string,
+    iterationNumber: number,
+  ): Promise<Feature> {
+    return firstValueFrom(
+      this.http.put<Feature>(`${url(programIncrementId)}/${id}/scheduling`, {
+        teamId,
+        iterationNumber,
+      }),
+    );
+  }
+
+  unschedule(programIncrementId: string, id: string): Promise<Feature> {
+    return firstValueFrom(this.http.delete<Feature>(`${url(programIncrementId)}/${id}/scheduling`));
+  }
+
   async importCsv(programIncrementId: string, csv: string): Promise<number> {
     const result = await firstValueFrom(
       this.http.post<{ imported: number }>(`${url(programIncrementId)}/import`, csv, {

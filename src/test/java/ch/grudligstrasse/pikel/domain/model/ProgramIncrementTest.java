@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -457,6 +458,46 @@ class ProgramIncrementTest {
         LocalDate outside = LocalDate.parse(date);
 
         assertThrows(IllegalArgumentException.class, () -> pi.iterationOf(outside));
+    }
+
+    // US-13: Die Einplanung nennt die Iteration über ihre Nummer im PI (1 bis Anzahl).
+
+    @Test
+    void iterationByNumberFindsFirstIteration() {
+        ProgramIncrement pi = ProgramIncrement.plan("PI 27.1", START, END, TWO_WEEKS);
+
+        assertEquals(Optional.of(iteration(1, "Iteration 1", "2027-01-04", "2027-01-17", false)), pi.iteration(1));
+    }
+
+    @Test
+    void iterationByNumberFindsMiddleIteration() {
+        ProgramIncrement pi = ProgramIncrement.plan("PI 27.1", START, END, TWO_WEEKS);
+
+        assertEquals(Optional.of(iteration(3, "Iteration 3", "2027-02-01", "2027-02-14", false)), pi.iteration(3));
+    }
+
+    @Test
+    void iterationByNumberFindsIpIterationAsLast() {
+        ProgramIncrement pi = ProgramIncrement.plan("PI 27.1", START, END, TWO_WEEKS);
+
+        assertEquals(Optional.of(iteration(6, "IP", "2027-03-15", "2027-03-26", true)), pi.iteration(6));
+    }
+
+    // Die Anzahl hängt von der Länge ab: zu 4 Wochen ist 3 die IP-Iteration und 4 gibt es nicht.
+    @Test
+    void iterationByNumberDependsOnIterationLength() {
+        ProgramIncrement pi = ProgramIncrement.plan("PI 27.1", START, END, 4);
+
+        assertEquals(Optional.of(iteration(3, "IP", "2027-03-01", "2027-03-26", true)), pi.iteration(3));
+        assertEquals(Optional.empty(), pi.iteration(4));
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {0, 7, -1, Integer.MIN_VALUE, Integer.MAX_VALUE})
+    void iterationByNumberIsEmptyOutsideProgramIncrement(int number) {
+        ProgramIncrement pi = ProgramIncrement.plan("PI 27.1", START, END, TWO_WEEKS);
+
+        assertEquals(Optional.empty(), pi.iteration(number));
     }
 
     private static Iteration iteration(int number, String name, String start, String end, boolean ip) {

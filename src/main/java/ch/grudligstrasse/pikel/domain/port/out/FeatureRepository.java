@@ -14,6 +14,9 @@ public interface FeatureRepository {
 
     void save(Feature feature);
 
+    /** Nimmt alle Features dieses Teams in allen PIs zurück ins Backlog. */
+    void unscheduleTeam(UUID teamId);
+
     /** Löscht das Feature; {@code false}, wenn es die ID nicht gibt. */
     boolean remove(UUID id);
 }

@@ -17,7 +17,8 @@ bereitstehen.
 2. Zwei Teams können nicht gleich heissen, auch nicht in anderer Gross- und Kleinschreibung
 3. Die Teamliste ist alphabetisch nach Name sortiert
 4. Ein Team lässt sich umbenennen, mit denselben Regeln wie beim Anlegen
-5. Ein Team lässt sich nach Bestätigung entfernen und erscheint danach in keinem PI mehr
+5. Ein Team lässt sich nach Bestätigung entfernen und erscheint danach in keinem PI mehr; die Bestätigung weist
+   darauf hin, dass seine eingeplanten Features in allen PIs zurück ins Backlog gehen
 6. Ohne Teams zeigt die Seite einen Leerzustand mit dem Hinweis, das erste Team zu erfassen
 
 ## BDD-Szenarien
@@ -27,3 +28,4 @@ Siehe [`src/test/resources/features/teams/6-teams-erfassen.feature`](../../src/t
 ## Änderungen
 
 - #6: Teams des ART erfassen — `spec/changes/6-teams-erfassen/delta.md`
+- #13: Feature einplanen — Hinweis in der Bestätigung beim Entfernen; `spec/changes/13-feature-einplanen/delta.md`

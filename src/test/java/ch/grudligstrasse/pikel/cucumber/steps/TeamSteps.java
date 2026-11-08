@@ -7,11 +7,10 @@ import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 
-import ch.grudligstrasse.pikel.adapter.out.persistence.TeamRepositoryAdapter;
+import ch.grudligstrasse.pikel.domain.port.in.TeamUseCase;
 import io.cucumber.java.de.Dann;
 import io.cucumber.java.de.Gegebensei;
 import io.cucumber.java.de.Wenn;
-import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import jakarta.inject.Inject;
@@ -23,7 +22,7 @@ public class TeamSteps {
     private static final String PATH = "/api/v1/teams";
 
     @Inject
-    TeamRepositoryAdapter repository;
+    TeamUseCase teams;
 
     // Die Ablehnungs-Steps teilen sich Teams, Features (US-9) und Kapazität (US-7); die Antwort liegt darum dort.
     @Inject
@@ -35,9 +34,11 @@ public class TeamSteps {
     private final Map<String, String> ids = new HashMap<>();
 
     // Szenarien teilen sich die Datenbank; ohne Leeren hängen Sortierung und Duplikate von der Reihenfolge ab.
+    // Über den Use Case wie beim Entfernen in der Anwendung: Eingeplante Features (US-13) gehen vorher zurück ins
+    // Backlog, sonst scheitert das Löschen am Fremdschlüssel aus feature.team_id (Plan, ohne ON DELETE).
     @Gegebensei("eine leere Teamliste")
     public void eineLeereTeamliste() {
-        QuarkusTransaction.requiringNew().run(repository::deleteAll);
+        teams.listAll().forEach(team -> teams.remove(team.id()));
     }
 
     @Gegebensei("das Team {string}")

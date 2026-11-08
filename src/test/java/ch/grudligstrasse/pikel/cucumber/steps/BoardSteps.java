@@ -5,6 +5,7 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 
 import io.cucumber.java.de.Dann;
 import io.cucumber.java.de.Wenn;
@@ -48,9 +49,16 @@ public class BoardSteps {
                 .body("iterations[-1].innovationAndPlanning", is(true));
     }
 
+    // Liest das Board des PI, zu dem das Feature gehört, frisch: Nach einer Änderung (US-13: zurück ins Backlog, Team
+    // entfernt) hat das Szenario das Board nicht eigens abgerufen. Im Backlog heisst auch: nicht eingeplant.
     @Dann("liegt {string} im Backlog des Boards")
     public void liegtImBacklogDesBoards(String title) {
-        ok().then().body("backlog.title", hasItem(title));
+        Response current = given().get(PI_PATH + "/" + context.featureProgramIncrementId(title) + "/board");
+        current.then()
+                .statusCode(200)
+                .contentType(ContentType.JSON)
+                .body("backlog.title", hasItem(title))
+                .body("scheduled.title", not(hasItem(title)));
     }
 
     private void get(String piId) {

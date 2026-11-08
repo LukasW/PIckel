@@ -3,11 +3,13 @@ import { BoardMilestone } from './milestone.model';
 import { Iteration } from './program-increment.model';
 import { Team } from './team.model';
 
-/** Das Program Board eines PI: Teams als Zeilen, Iterationen als Spalten, dazu das nicht eingeplante Backlog. */
+/** Das Program Board eines PI: Teams als Zeilen, Iterationen als Spalten, dazu das nicht eingeplante Backlog und die Eingeplanten. */
 export interface Board {
   readonly teams: readonly Team[];
   readonly iterations: readonly Iteration[];
   readonly backlog: readonly Feature[];
+  /** Eingeplante Features in Backlog-Reihenfolge; die Zelle steht am Feature (`teamId`, `iterationNumber`). */
+  readonly scheduled: readonly Feature[];
   /** Aufsteigend nach Datum; je ein Marker über der Iteration mit `iterationNumber`. */
   readonly milestones: readonly BoardMilestone[];
 }

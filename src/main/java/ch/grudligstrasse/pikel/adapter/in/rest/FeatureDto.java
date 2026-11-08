@@ -1,9 +1,11 @@
 package ch.grudligstrasse.pikel.adapter.in.rest;
 
 import ch.grudligstrasse.pikel.domain.model.Feature;
+import ch.grudligstrasse.pikel.domain.model.Scheduling;
 import java.util.UUID;
 
-/** Ein Feature für die Oberfläche; fehlender Rang und fehlende Schätzung sind {@code null}. */
+/** Ein Feature für die Oberfläche; fehlender Rang und fehlende Schätzung sowie die Zelle im Backlog
+ * (Team, Iterationsnummer) sind {@code null}. */
 public record FeatureDto(
         UUID id,
         UUID programIncrementId,
@@ -12,7 +14,9 @@ public record FeatureDto(
         String owner,
         Integer wsjfRank,
         Integer estimate,
-        boolean scheduled) {
+        boolean scheduled,
+        UUID teamId,
+        Integer iterationNumber) {
 
     public static FeatureDto from(Feature feature) {
         return new FeatureDto(
@@ -23,6 +27,8 @@ public record FeatureDto(
                 feature.owner(),
                 feature.wsjfRank().isPresent() ? feature.wsjfRank().getAsInt() : null,
                 feature.estimate().isPresent() ? feature.estimate().getAsInt() : null,
-                feature.scheduled());
+                feature.scheduled(),
+                feature.scheduling().map(Scheduling::teamId).orElse(null),
+                feature.scheduling().map(Scheduling::iterationNumber).orElse(null));
     }
 }

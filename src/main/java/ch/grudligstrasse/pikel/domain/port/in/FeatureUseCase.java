@@ -53,6 +53,25 @@ public interface FeatureUseCase {
     void remove(UUID programIncrementId, UUID featureId);
 
     /**
+     * Plant ein Feature des PI in die Zelle Team × Iteration ein; eine bestehende Einplanung wird ersetzt.
+     *
+     * @throws ch.grudligstrasse.pikel.domain.model.ProgramIncrementNotFoundException wenn es das PI nicht gibt
+     * @throws ch.grudligstrasse.pikel.domain.model.FeatureNotFoundException wenn es das Feature im PI nicht gibt
+     * @throws ch.grudligstrasse.pikel.domain.model.TeamNotFoundException wenn es das Team nicht gibt
+     * @throws ch.grudligstrasse.pikel.domain.model.InvalidFeatureException bei fehlendem Team oder fehlender Nummer, bei
+     *     der IP-Iteration oder einer Nummer, die es im PI nicht gibt
+     */
+    Feature schedule(UUID programIncrementId, UUID featureId, UUID teamId, Integer iterationNumber);
+
+    /**
+     * Nimmt ein Feature des PI zurück ins Backlog; ein Feature ohne Einplanung bleibt unverändert.
+     *
+     * @throws ch.grudligstrasse.pikel.domain.model.ProgramIncrementNotFoundException wenn es das PI nicht gibt
+     * @throws ch.grudligstrasse.pikel.domain.model.FeatureNotFoundException wenn es das Feature im PI nicht gibt
+     */
+    Feature unschedule(UUID programIncrementId, UUID featureId);
+
+    /**
      * Importiert die Features einer CSV-Datei ans Ende des Backlogs (kein Abgleich mit bestehenden); alles oder nichts.
      *
      * @return die importierten Features in Dateireihenfolge

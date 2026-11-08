@@ -37,4 +37,8 @@
         <sqlFile path="db/migration/V8__create_milestones.sql"/>
     </changeSet>
 
+    <changeSet id="9" author="pikel">
+        <sqlFile path="db/migration/V9__add_feature_scheduling.sql"/>
+    </changeSet>
+
 </databaseChangeLog>

@@ -10,6 +10,7 @@ import java.util.Objects;
  * @param teams alphabetisch nach Name
  * @param iterations zeitlich, die IP-Iteration zuletzt
  * @param backlog nicht eingeplante Features in Backlog-Reihenfolge
+ * @param scheduled eingeplante Features in Backlog-Reihenfolge; die Zelle steht am Feature
  * @param milestones aufsteigend nach Datum; je ein Marker über der Iteration, in die das Datum fällt
  */
 public record ProgramBoard(
@@ -17,6 +18,7 @@ public record ProgramBoard(
         List<Team> teams,
         List<Iteration> iterations,
         List<Feature> backlog,
+        List<Feature> scheduled,
         List<Milestone> milestones) {
 
     public ProgramBoard {
@@ -24,6 +26,7 @@ public record ProgramBoard(
         teams = List.copyOf(teams);
         iterations = List.copyOf(iterations);
         backlog = List.copyOf(backlog);
+        scheduled = List.copyOf(scheduled);
         milestones = List.copyOf(milestones);
     }
 

@@ -4,6 +4,7 @@ import ch.grudligstrasse.pikel.domain.model.DuplicateTeamNameException;
 import ch.grudligstrasse.pikel.domain.model.Team;
 import ch.grudligstrasse.pikel.domain.model.TeamNotFoundException;
 import ch.grudligstrasse.pikel.domain.port.in.TeamUseCase;
+import ch.grudligstrasse.pikel.domain.port.out.FeatureRepository;
 import ch.grudligstrasse.pikel.domain.port.out.TeamRepository;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
@@ -20,9 +21,11 @@ public class TeamService implements TeamUseCase {
     private static final Locale SORT_LOCALE = Locale.forLanguageTag("de-CH");
 
     private final TeamRepository repository;
+    private final FeatureRepository features;
 
-    public TeamService(TeamRepository repository) {
+    public TeamService(TeamRepository repository, FeatureRepository features) {
         this.repository = repository;
+        this.features = features;
     }
 
     @Override
@@ -56,6 +59,8 @@ public class TeamService implements TeamUseCase {
     @Override
     @Transactional
     public void remove(UUID id) {
+        // Zuerst zurückgeben: Der Fremdschlüssel am Feature lässt das Entfernen sonst scheitern.
+        features.unscheduleTeam(id);
         if (!repository.remove(id)) {
             throw new TeamNotFoundException();
         }

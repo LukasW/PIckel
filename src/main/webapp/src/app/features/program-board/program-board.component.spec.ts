@@ -1,4 +1,6 @@
+import { CdkDrag, CdkDragDrop, CdkDropList } from '@angular/cdk/drag-drop';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { appConfig } from '../../app.config';
@@ -7,6 +9,8 @@ import { Feature } from '../../core/models/feature.model';
 import { BoardMilestone } from '../../core/models/milestone.model';
 import { Team } from '../../core/models/team.model';
 import { BoardRepository } from '../../core/ports/board.repository';
+import { FeaturesRepository } from '../../core/ports/features.repository';
+import { BoardService } from '../../core/services/board.service';
 import { ProgramBoardComponent } from './program-board.component';
 
 /** PI 27.1 (04.01.–26.03.2027) mit Iterationen zu 2 Wochen: fünf Entwicklungs-Iterationen und die IP (US-5). */
@@ -52,7 +56,7 @@ function board(
   backlog: Feature[] = [PORTAL, LOGIN],
   milestones: BoardMilestone[] = [],
 ): Board {
-  return { teams, iterations: ITERATIONS, backlog, milestones };
+  return { teams, iterations: ITERATIONS, backlog, scheduled: [], milestones };
 }
 
 // Milestones in PI 27.1 (US-15); `iterationNumber` liefert der Server.
@@ -83,7 +87,11 @@ describe('ProgramBoardComponent', () => {
     repository = { get: vi.fn().mockResolvedValue(answer) };
     TestBed.configureTestingModule({
       imports: [ProgramBoardComponent],
-      providers: [provideRouter([]), { provide: BoardRepository, useValue: repository }],
+      providers: [
+        provideRouter([]),
+        { provide: BoardRepository, useValue: repository },
+        { provide: FeaturesRepository, useValue: {} },
+      ],
     });
     const fixture: ComponentFixture<ProgramBoardComponent> =
       TestBed.createComponent(ProgramBoardComponent);
@@ -326,5 +334,289 @@ describe('ProgramBoardComponent', () => {
 
     expect(el.textContent).not.toContain('Noch keine Teams');
     expect(rows(el)).toEqual([expect.stringContaining('Adler')]);
+  });
+
+  // --- US-13: Einplanen ---
+
+  /**
+   * Vertrag mit der Vorlage (US-13): Die Zellen `tbody tr td` stehen in der Reihenfolge der Iterationen. Jede Karte
+   * ist ein `app-board-card` mit `cdkDrag` und `[cdkDragData]="feature"`. Das Backlog und jede Zelle einer
+   * Entwicklungs-Iteration sind (oder enthalten) eine `cdkDropList`, die IP-Zellen nicht; das Ablegen läuft über
+   * `(cdkDropListDropped)`. Eine gescheiterte Aktion (`actionError`) steht als `[role="alert"]` über dem Board.
+   */
+  describe('Einplanen (US-13)', () => {
+    let fixture: ComponentFixture<ProgramBoardComponent>;
+    let service: BoardService;
+    let schedule: ReturnType<typeof vi.fn>;
+    let unschedule: ReturnType<typeof vi.fn>;
+
+    const SUCHE: Feature = {
+      ...feature('f3', 'Suche', 3, 5),
+      scheduled: true,
+      teamId: 'a',
+      iterationNumber: 2,
+    };
+    const KASSE: Feature = {
+      ...feature('f4', 'Kasse', 4, 3),
+      scheduled: true,
+      teamId: 'a',
+      iterationNumber: 2,
+    };
+    const ARCHIV: Feature = {
+      ...feature('f5', 'Archiv', 6, 2),
+      scheduled: true,
+      teamId: 'z',
+      iterationNumber: 4,
+    };
+
+    function planned(scheduled: Feature[], backlog: Feature[] = [PORTAL, LOGIN]): Board {
+      return { teams: [ADLER, ZEBRA], iterations: ITERATIONS, backlog, scheduled, milestones: [] };
+    }
+
+    async function show(answer: Board): Promise<HTMLElement> {
+      repository = { get: vi.fn().mockResolvedValue(answer) };
+      TestBed.configureTestingModule({
+        imports: [ProgramBoardComponent],
+        providers: [
+          provideRouter([]),
+          { provide: BoardRepository, useValue: repository },
+          { provide: FeaturesRepository, useValue: { schedule: vi.fn(), unschedule: vi.fn() } },
+        ],
+      });
+      service = TestBed.inject(BoardService);
+      schedule = vi.spyOn(service, 'schedule').mockResolvedValue(undefined) as never;
+      unschedule = vi.spyOn(service, 'unschedule').mockResolvedValue(undefined) as never;
+      fixture = TestBed.createComponent(ProgramBoardComponent);
+      fixture.componentRef.setInput('id', 'pi-7');
+      await fixture.whenStable();
+      return fixture.nativeElement as HTMLElement;
+    }
+
+    function teamRow(el: HTMLElement, team: string): HTMLElement {
+      const found = Array.from(grid(el)?.querySelectorAll<HTMLElement>('tbody tr') ?? []).find(
+        (tr) => (tr.querySelector('th')?.textContent ?? '').trim() === team,
+      );
+      expect(found, `Zeile ${team}`).toBeDefined();
+      return found!;
+    }
+
+    /** Die Zelle Team × Iteration (Nummer 1…6). */
+    function cell(el: HTMLElement, team: string, iterationNumber: number): HTMLElement {
+      const cells = Array.from(teamRow(el, team).querySelectorAll<HTMLElement>('td'));
+      expect(cells, `Zellen von ${team}`).toHaveLength(ITERATIONS.length);
+      return cells[iterationNumber - 1];
+    }
+
+    function titlesIn(scope: Element): string[] {
+      return Array.from(scope.querySelectorAll('[data-testid="feature-card"]')).map((card) =>
+        (card.textContent ?? '').replace(/\s+/g, ' ').trim(),
+      );
+    }
+
+    function isDropZone(scope: HTMLElement): boolean {
+      return (
+        fixture.debugElement
+          .queryAll(By.directive(CdkDropList))
+          .filter((d) => scope === d.nativeElement || scope.contains(d.nativeElement)).length > 0
+      );
+    }
+
+    function dropList(scope: HTMLElement): CdkDropList {
+      const found = fixture.debugElement
+        .queryAll(By.directive(CdkDropList))
+        .find((d) => scope === d.nativeElement || scope.contains(d.nativeElement));
+      expect(found, 'Drop-Zone').toBeDefined();
+      return found!.injector.get(CdkDropList);
+    }
+
+    function dragOf(title: string): CdkDrag {
+      const found = fixture.debugElement
+        .queryAll(By.directive(CdkDrag))
+        .find((d) => ((d.nativeElement as HTMLElement).textContent ?? '').includes(title));
+      expect(found, `Ziehbare Karte «${title}»`).toBeDefined();
+      return found!.injector.get(CdkDrag);
+    }
+
+    /** Löst das Ablegen aus, wie es CDK nach dem Ziehen tut; jsdom kann nicht wirklich ziehen. */
+    async function drop(title: string, from: HTMLElement, to: HTMLElement): Promise<void> {
+      const source = dropList(from);
+      const target = dropList(to);
+      const event: CdkDragDrop<unknown, unknown, unknown> = {
+        previousIndex: 0,
+        currentIndex: 0,
+        item: dragOf(title),
+        container: target,
+        previousContainer: source,
+        isPointerOverContainer: true,
+        distance: { x: 10, y: 10 },
+        dropPoint: { x: 10, y: 10 },
+        event: new MouseEvent('mouseup'),
+      };
+      target.dropped.emit(event);
+      await fixture.whenStable();
+    }
+
+    function backlog(el: HTMLElement): HTMLElement {
+      return el.querySelector<HTMLElement>('[data-testid="board-backlog"]')!;
+    }
+
+    it('zeigt eine eingeplante Karte in ihrer Zelle und nicht im Backlog (US-13)', async () => {
+      const el = await show(planned([SUCHE]));
+
+      expect(titlesIn(cell(el, 'Adler', 2))).toEqual([expect.stringContaining('Suche')]);
+      expect(cards(el)).toEqual([
+        expect.stringContaining('Portal'),
+        expect.stringContaining('Login'),
+      ]);
+    });
+
+    it('zeigt eine eingeplante Karte in keiner anderen Zelle (US-13)', async () => {
+      const el = await show(planned([SUCHE]));
+
+      for (const team of ['Adler', 'Zebra']) {
+        for (const iteration of ITERATIONS) {
+          if (team === 'Adler' && iteration.number === 2) continue;
+          expect(titlesIn(cell(el, team, iteration.number)), `${team} × ${iteration.name}`).toEqual(
+            [],
+          );
+        }
+      }
+    });
+
+    it('zeigt die Karten einer Zelle in der Reihenfolge des Servers (US-13)', async () => {
+      const el = await show(planned([KASSE, SUCHE, ARCHIV]));
+
+      expect(titlesIn(cell(el, 'Adler', 2))).toEqual([
+        expect.stringContaining('Kasse'),
+        expect.stringContaining('Suche'),
+      ]);
+      expect(titlesIn(cell(el, 'Zebra', 4))).toEqual([expect.stringContaining('Archiv')]);
+    });
+
+    it('macht das Backlog und die Zellen der Entwicklungs-Iterationen zu Ablagen, die IP nicht (US-13)', async () => {
+      const el = await show(planned([]));
+
+      expect(isDropZone(backlog(el)), 'Backlog').toBe(true);
+      for (const team of ['Adler', 'Zebra']) {
+        for (const iteration of ITERATIONS) {
+          expect(isDropZone(cell(el, team, iteration.number)), `${team} × ${iteration.name}`).toBe(
+            !iteration.innovationAndPlanning,
+          );
+        }
+      }
+    });
+
+    it('plant eine Karte ein, die aus dem Backlog in eine Zelle gezogen wird (US-13)', async () => {
+      const el = await show(planned([]));
+
+      await drop('Portal', backlog(el), cell(el, 'Zebra', 3));
+
+      expect(schedule).toHaveBeenCalledWith(PORTAL, 'z', 3);
+      expect(unschedule).not.toHaveBeenCalled();
+    });
+
+    it('verschiebt eine eingeplante Karte, die in eine andere Zelle gezogen wird (US-13)', async () => {
+      const el = await show(planned([SUCHE]));
+
+      await drop('Suche', cell(el, 'Adler', 2), cell(el, 'Zebra', 5));
+
+      expect(schedule).toHaveBeenCalledWith(SUCHE, 'z', 5);
+      expect(unschedule).not.toHaveBeenCalled();
+    });
+
+    it('nimmt eine eingeplante Karte zurück, die ins Backlog gezogen wird (US-13)', async () => {
+      const el = await show(planned([SUCHE]));
+
+      await drop('Suche', cell(el, 'Adler', 2), backlog(el));
+
+      expect(unschedule).toHaveBeenCalledWith(SUCHE);
+      expect(schedule).not.toHaveBeenCalled();
+    });
+
+    it('ruft nichts auf, wenn eine Karte in dieselbe Zelle oder ins Backlog zurückgelegt wird (US-13)', async () => {
+      const el = await show(planned([SUCHE]));
+
+      await drop('Suche', cell(el, 'Adler', 2), cell(el, 'Adler', 2));
+      await drop('Portal', backlog(el), backlog(el));
+
+      expect(schedule).not.toHaveBeenCalled();
+      expect(unschedule).not.toHaveBeenCalled();
+    });
+
+    it('plant über die Aktion «Einplanen …» an der Karte ohne Maus ein (US-13)', async () => {
+      const el = await show(planned([]));
+      const card = Array.from(backlog(el).querySelectorAll<HTMLElement>('app-board-card')).find(
+        (c) => (c.textContent ?? '').includes('Portal'),
+      );
+      expect(card, 'Karte «Portal» im Backlog').toBeDefined();
+      buttonIn(card!, 'Einplanen …').click();
+      await fixture.whenStable();
+
+      pick(card!, 'Team', 'Zebra');
+      pick(card!, 'Iteration', 'Iteration 3');
+      buttonIn(card!, 'Einplanen').click();
+      await fixture.whenStable();
+
+      expect(schedule).toHaveBeenCalledWith(PORTAL, 'z', 3);
+    });
+
+    it('nimmt über die Aktion «Einplanen …» eine eingeplante Karte ohne Maus zurück (US-13)', async () => {
+      const el = await show(planned([SUCHE]));
+      const card = cell(el, 'Adler', 2).querySelector<HTMLElement>('app-board-card');
+      expect(card, 'Karte «Suche» in der Zelle').not.toBeNull();
+      buttonIn(card!, 'Einplanen …').click();
+      await fixture.whenStable();
+
+      buttonIn(card!, 'Zurück ins Backlog').click();
+      await fixture.whenStable();
+
+      expect(unschedule).toHaveBeenCalledWith(SUCHE);
+    });
+
+    it('zeigt die Meldung einer gescheiterten Aktion als Alarm über dem Board (US-13)', async () => {
+      const el = await show(planned([SUCHE]));
+
+      service.actionError.set('In der IP-Iteration wird keine Feature-Arbeit geplant.');
+      await fixture.whenStable();
+
+      const alert = el.querySelector('[role="alert"]');
+      expect(alert?.textContent).toContain(
+        'In der IP-Iteration wird keine Feature-Arbeit geplant.',
+      );
+      expect(
+        alert!.compareDocumentPosition(grid(el)!) & Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+      expect(titlesIn(cell(el, 'Adler', 2))).toEqual([expect.stringContaining('Suche')]);
+    });
+
+    it('zeigt ohne gescheiterte Aktion keinen Alarm (US-13)', async () => {
+      const el = await show(planned([SUCHE]));
+
+      expect(el.querySelector('[role="alert"]')).toBeNull();
+      expect(grid(el), 'Raster').not.toBeNull();
+    });
+
+    function buttonIn(scope: Element, label: string): HTMLButtonElement {
+      const found = Array.from(scope.querySelectorAll('button')).find(
+        (b) => (b.textContent ?? '').replace(/\s+/g, ' ').trim() === label,
+      );
+      expect(found, `Button «${label}»`).toBeDefined();
+      return found!;
+    }
+
+    function pick(scope: Element, label: string, option: string): void {
+      const field = Array.from(scope.querySelectorAll('select')).find((s) =>
+        [
+          ...Array.from(s.labels ?? []).map((l) => l.textContent ?? ''),
+          s.getAttribute('aria-label') ?? '',
+        ].some((text) => text.includes(label)),
+      );
+      expect(field, `Auswahl «${label}»`).toBeDefined();
+      const found = Array.from(field!.options).find((o) => (o.textContent ?? '').trim() === option);
+      expect(found, `Option «${option}»`).toBeDefined();
+      field!.value = found!.value;
+      field!.dispatchEvent(new Event('change'));
+      field!.dispatchEvent(new Event('input'));
+    }
   });
 });

@@ -5,11 +5,15 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.time.LocalDate;
+import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 class FeatureTest {
@@ -399,5 +403,189 @@ class FeatureTest {
         assertEquals(
                 INVALID_ESTIMATE,
                 revisionRejected("Portal", null, null, null, -1).getMessage());
+    }
+
+    // --- US-13: Einplanen in die Zelle Team × Iteration ---
+
+    private static final String IP_NOT_SCHEDULABLE = "In der IP-Iteration wird keine Feature-Arbeit geplant.";
+    private static final String NOT_IN_PROGRAM_INCREMENT = "Die Iteration gehört nicht zu diesem PI.";
+
+    // US-5: 2027-01-04 bis 2027-03-26 zu 2 Wochen hat 6 Iterationen, die 6. ist die IP-Iteration.
+    private static final ProgramIncrement PI_TWO_WEEKS =
+            new ProgramIncrement(PI, "PI 27.1", LocalDate.of(2027, 1, 4), LocalDate.of(2027, 3, 26), 2);
+    // Gleicher Zeitraum zu 4 Wochen: 3 Iterationen, die 3. ist die IP-Iteration.
+    private static final ProgramIncrement PI_FOUR_WEEKS =
+            new ProgramIncrement(PI, "PI 27.1", LocalDate.of(2027, 1, 4), LocalDate.of(2027, 3, 26), 4);
+
+    private static final UUID ADLER = UUID.randomUUID();
+    private static final UUID ZEBRA = UUID.randomUUID();
+
+    private static InvalidFeatureException schedulingRejected(ProgramIncrement pi, int iterationNumber) {
+        return assertThrows(InvalidFeatureException.class, () -> PORTAL.schedule(pi, ADLER, iterationNumber));
+    }
+
+    // AK 1: danach liegt das Feature in genau dieser Zelle.
+    @Test
+    void scheduleIntoDevelopmentIterationSetsTeamAndIteration() {
+        Feature scheduled = PORTAL.schedule(PI_TWO_WEEKS, ADLER, 2);
+
+        assertEquals(Optional.of(new Scheduling(ADLER, 2)), scheduled.scheduling());
+        assertTrue(scheduled.scheduled());
+    }
+
+    // Einplanen ändert nur die Zelle: Es entsteht kein neues Feature, die Angaben bleiben.
+    @Test
+    void scheduleKeepsIdProgramIncrementAndAllValues() {
+        Feature scheduled = PORTAL.schedule(PI_TWO_WEEKS, ADLER, 2);
+
+        assertEquals(PORTAL.id(), scheduled.id());
+        assertEquals(PI, scheduled.programIncrementId());
+        assertEquals("Portal", scheduled.title());
+        assertEquals("Alt", scheduled.description());
+        assertEquals("Anna", scheduled.owner());
+        assertEquals(OptionalInt.of(5), scheduled.wsjfRank());
+        assertEquals(OptionalInt.of(13), scheduled.estimate());
+    }
+
+    // Grenzen: die erste und die letzte Entwicklungs-Iteration (die vorletzte des PI) gehen.
+    @ParameterizedTest
+    @ValueSource(ints = {1, 5})
+    void scheduleAcceptsFirstAndLastDevelopmentIteration(int number) {
+        assertEquals(
+                Optional.of(new Scheduling(ADLER, number)),
+                PORTAL.schedule(PI_TWO_WEEKS, ADLER, number).scheduling());
+    }
+
+    // AK 3, Szenario «Einplanen in die IP-Iteration wird abgelehnt»
+    @Test
+    void scheduleIntoIpIterationIsRejected() {
+        assertEquals(IP_NOT_SCHEDULABLE, schedulingRejected(PI_TWO_WEEKS, 6).getMessage());
+    }
+
+    // Die IP-Iteration ist die letzte des PI, nicht eine feste Nummer: Nur die Iterationslänge weicht ab.
+    @Test
+    void ipIterationDependsOnIterationLength() {
+        assertEquals(IP_NOT_SCHEDULABLE, schedulingRejected(PI_FOUR_WEEKS, 3).getMessage());
+        assertEquals(
+                Optional.of(new Scheduling(ADLER, 3)),
+                PORTAL.schedule(PI_TWO_WEEKS, ADLER, 3).scheduling());
+    }
+
+    // Szenario «Einplanen in eine Iteration, die es im PI nicht gibt, wird abgelehnt»; 7 = letzte + 1.
+    @ParameterizedTest
+    @ValueSource(ints = {0, 7, -1, 100})
+    void scheduleIntoIterationOutsideProgramIncrementIsRejected(int number) {
+        assertEquals(
+                NOT_IN_PROGRAM_INCREMENT,
+                schedulingRejected(PI_TWO_WEEKS, number).getMessage());
+    }
+
+    // Nummer 4 gibt es zu 2 Wochen, zu 4 Wochen nicht mehr (dort ist schon 3 die IP-Iteration).
+    @Test
+    void iterationAfterIpOfShorterPlanIsRejected() {
+        assertEquals(
+                NOT_IN_PROGRAM_INCREMENT, schedulingRejected(PI_FOUR_WEEKS, 4).getMessage());
+    }
+
+    // Plan: Die Einplanung gilt nur im eigenen PI. Gleicher Zeitraum, nur die ID weicht ab. Die Meldung legt die
+    // Spezifikation nicht fest.
+    @Test
+    void scheduleWithOtherProgramIncrementIsRejected() {
+        ProgramIncrement other = new ProgramIncrement(
+                UUID.randomUUID(), "PI 27.1", LocalDate.of(2027, 1, 4), LocalDate.of(2027, 3, 26), 2);
+
+        assertThrows(InvalidFeatureException.class, () -> PORTAL.schedule(other, ADLER, 2));
+    }
+
+    // AK 2: Verschieben in eine andere Zelle; ein Feature liegt in höchstens einer Zelle. Je Fall weicht nur das Team
+    // oder nur die Iteration ab.
+    @ParameterizedTest
+    @CsvSource({"true, 2", "false, 3"})
+    void rescheduleReplacesTheCell(boolean otherTeam, int number) {
+        UUID team = otherTeam ? ZEBRA : ADLER;
+        Feature moved = PORTAL.schedule(PI_TWO_WEEKS, ADLER, 2).schedule(PI_TWO_WEEKS, team, number);
+
+        assertEquals(Optional.of(new Scheduling(team, number)), moved.scheduling());
+    }
+
+    @Test
+    void rescheduleToOtherTeamAndIterationReplacesBoth() {
+        Feature moved = PORTAL.schedule(PI_TWO_WEEKS, ADLER, 2).schedule(PI_TWO_WEEKS, ZEBRA, 3);
+
+        assertEquals(Optional.of(new Scheduling(ZEBRA, 3)), moved.scheduling());
+    }
+
+    // Ein abgelehntes Verschieben ändert die bisherige Einplanung nicht (Records sind unveränderlich).
+    @Test
+    void rejectedRescheduleKeepsFormerCell() {
+        Feature scheduled = PORTAL.schedule(PI_TWO_WEEKS, ADLER, 2);
+
+        assertThrows(InvalidFeatureException.class, () -> scheduled.schedule(PI_TWO_WEEKS, ZEBRA, 6));
+        assertEquals(Optional.of(new Scheduling(ADLER, 2)), scheduled.scheduling());
+    }
+
+    // AK 2: zurück ins Backlog.
+    @Test
+    void unscheduleReturnsFeatureToBacklog() {
+        Feature unscheduled = PORTAL.schedule(PI_TWO_WEEKS, ADLER, 2).unschedule();
+
+        assertEquals(Optional.empty(), unscheduled.scheduling());
+        assertFalse(unscheduled.scheduled());
+    }
+
+    // Zurücknehmen ergibt dasselbe Feature wie vor dem Einplanen: ID und alle Angaben bleiben.
+    @Test
+    void unscheduleOfScheduledFeatureEqualsFeatureBeforeScheduling() {
+        assertEquals(PORTAL, PORTAL.schedule(PI_TWO_WEEKS, ADLER, 2).unschedule());
+    }
+
+    // Plan: idempotent; ein Feature im Backlog bleibt unverändert.
+    @Test
+    void unscheduleOfBacklogFeatureLeavesItUnchanged() {
+        assertEquals(PORTAL, PORTAL.unschedule());
+    }
+
+    // Szenario «Bearbeiten eines eingeplanten Features lässt die Einplanung stehen»
+    @Test
+    void reviseKeepsScheduling() {
+        Feature scheduled = PORTAL.schedule(PI_TWO_WEEKS, ADLER, 2);
+
+        Feature revised = scheduled.revise("Portal neu", "Alt", 5, "Anna", 13);
+
+        assertEquals("Portal neu", revised.title());
+        assertEquals(Optional.of(new Scheduling(ADLER, 2)), revised.scheduling());
+        assertTrue(revised.scheduled());
+    }
+
+    @Test
+    void reviseOfBacklogFeatureKeepsItInBacklog() {
+        Feature revised = PORTAL.revise("Portal neu", "Alt", 5, "Anna", 13);
+
+        assertEquals(Optional.empty(), revised.scheduling());
+        assertFalse(revised.scheduled());
+    }
+
+    // «eingeplant» folgt der Einplanung, auch beim kanonischen Konstruktor (so lädt die Persistenz).
+    @Test
+    void featureWithSchedulingIsScheduled() {
+        Feature feature = new Feature(
+                UUID.randomUUID(),
+                PI,
+                "Portal",
+                "",
+                "",
+                OptionalInt.empty(),
+                OptionalInt.empty(),
+                Optional.of(new Scheduling(ADLER, 2)));
+
+        assertTrue(feature.scheduled());
+    }
+
+    @Test
+    void featureWithoutSchedulingIsNotScheduled() {
+        Feature feature = new Feature(
+                UUID.randomUUID(), PI, "Portal", "", "", OptionalInt.empty(), OptionalInt.empty(), Optional.empty());
+
+        assertFalse(feature.scheduled());
     }
 }
