@@ -15,13 +15,14 @@ import { ProgramIncrementsService } from '../../core/services/program-increments
 import { notBlank } from '../../shared/validators/text.validators';
 import { FeatureBacklogComponent } from '../feature-backlog/feature-backlog.component';
 import { CapacityTableComponent } from './capacity-table.component';
+import { MilestonesComponent } from './milestones.component';
 
 /** Wie `ProgramIncrement.MAX_TEXT_LENGTH` im Backend; das Formular meldet es nur früher. */
 const MAX_TEXT_LENGTH = 10_000;
 
 /**
- * Detailseite eines PI mit Iterationen (US-5) und Business-Kontext samt Links (US-8); die ID kommt aus der
- * Route.
+ * Detailseite eines PI mit Iterationen (US-5), Milestones (US-15) und Business-Kontext samt Links (US-8); die
+ * ID kommt aus der Route.
  */
 @Component({
   selector: 'app-program-increment-detail',
@@ -31,6 +32,7 @@ const MAX_TEXT_LENGTH = 10_000;
     ReactiveFormsModule,
     FeatureBacklogComponent,
     CapacityTableComponent,
+    MilestonesComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './program-increment-detail.component.html',

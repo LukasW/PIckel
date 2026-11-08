@@ -11,11 +11,13 @@ import static org.mockito.Mockito.when;
 
 import ch.grudligstrasse.pikel.domain.model.Feature;
 import ch.grudligstrasse.pikel.domain.model.Iteration;
+import ch.grudligstrasse.pikel.domain.model.Milestone;
 import ch.grudligstrasse.pikel.domain.model.ProgramBoard;
 import ch.grudligstrasse.pikel.domain.model.ProgramIncrement;
 import ch.grudligstrasse.pikel.domain.model.ProgramIncrementNotFoundException;
 import ch.grudligstrasse.pikel.domain.model.Team;
 import ch.grudligstrasse.pikel.domain.port.in.FeatureUseCase;
+import ch.grudligstrasse.pikel.domain.port.in.MilestoneUseCase;
 import ch.grudligstrasse.pikel.domain.port.in.ProgramIncrementUseCase;
 import ch.grudligstrasse.pikel.domain.port.in.TeamUseCase;
 import java.time.LocalDate;
@@ -51,6 +53,10 @@ class BoardServiceTest {
 
     @Mock
     FeatureUseCase features;
+
+    // US-15; ohne Stub liefert der Mock eine leere Liste, die bisherigen Fälle bleiben ohne Milestones.
+    @Mock
+    MilestoneUseCase milestones;
 
     @InjectMocks
     BoardService service;
@@ -162,6 +168,41 @@ class BoardServiceTest {
         assertEquals(List.of(), service.get(PI.id()).backlog());
     }
 
+    // --- US-15 AK 4: Milestones auf dem Board ---
+
+    private static Milestone milestone(String name, String date) {
+        return new Milestone(UUID.randomUUID(), PI.id(), name, LocalDate.parse(date));
+    }
+
+    @Test
+    void boardShowsMilestonesOfProgramIncrementInOrderOfUseCase() {
+        piExists();
+        teamsAre(ADLER);
+        backlogIs();
+        Milestone kickOff = milestone("Kick-off", "2027-01-04");
+        Milestone release = milestone("Release 4.0", "2027-02-10");
+        Milestone audit = milestone("Audit", "2027-03-15");
+        when(milestones.list(PI.id())).thenReturn(List.of(kickOff, release, audit));
+
+        assertEquals(List.of(kickOff, release, audit), service.get(PI.id()).milestones());
+    }
+
+    @Test
+    void milestoneOnBoardStandsOverIterationOfItsDate() {
+        piExists();
+        teamsAre(ADLER);
+        backlogIs();
+        Milestone release = milestone("Release 4.0", "2027-02-10");
+        when(milestones.list(PI.id())).thenReturn(List.of(release));
+
+        ProgramBoard board = service.get(PI.id());
+
+        assertEquals(3, board.iterationNumberOf(release));
+        assertEquals(
+                "Iteration 3",
+                board.iterations().get(board.iterationNumberOf(release) - 1).name());
+    }
+
     // --- Unbekanntes PI → 404 ---
 
     @Test
@@ -170,6 +211,7 @@ class BoardServiceTest {
         when(programIncrements.get(unknown)).thenThrow(new ProgramIncrementNotFoundException());
         teamsAre(ADLER);
         lenient().when(features.listBacklog(unknown)).thenThrow(new ProgramIncrementNotFoundException());
+        lenient().when(milestones.list(unknown)).thenThrow(new ProgramIncrementNotFoundException());
 
         assertThrows(ProgramIncrementNotFoundException.class, () -> service.get(unknown));
     }

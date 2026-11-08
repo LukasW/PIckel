@@ -5,6 +5,7 @@ import { appConfig } from '../../app.config';
 import { ProgramIncrement } from '../../core/models/program-increment.model';
 import { FeaturesRepository } from '../../core/ports/features.repository';
 import { CapacitiesRepository } from '../../core/ports/capacities.repository';
+import { MilestonesRepository } from '../../core/ports/milestones.repository';
 import { ProgramIncrementsRepository } from '../../core/ports/program-increments.repository';
 import { TeamsRepository } from '../../core/ports/teams.repository';
 
@@ -45,6 +46,7 @@ describe('ProgramIncrementDetailComponent', () => {
   let removeLink: ReturnType<typeof vi.fn>;
   let harness: RouterTestingHarness;
   let listFeatures: ReturnType<typeof vi.fn>;
+  let listMilestones: ReturnType<typeof vi.fn>;
 
   /** Öffnet die Detailseite über die echte Route, damit die ID aus der URL kommt wie in der App. */
   async function open(url: string): Promise<HTMLElement> {
@@ -77,6 +79,11 @@ describe('ProgramIncrementDetailComponent', () => {
         {
           provide: CapacitiesRepository,
           useValue: { list: vi.fn().mockResolvedValue([]), set: vi.fn() },
+        },
+        // Der eingebettete Milestone-Abschnitt (US-15) lädt die Milestones; ohne Mock ginge er ans Netz.
+        {
+          provide: MilestonesRepository,
+          useValue: { list: listMilestones, add: vi.fn(), update: vi.fn(), remove: vi.fn() },
         },
       ],
     });
@@ -154,6 +161,26 @@ describe('ProgramIncrementDetailComponent', () => {
     addLink = vi.fn();
     removeLink = vi.fn();
     listFeatures = vi.fn().mockResolvedValue([]);
+    listMilestones = vi.fn().mockResolvedValue([]);
+  });
+
+  it('bindet den Abschnitt «Milestones» des geöffneten PI auf der Detailseite ein (US-15)', async () => {
+    get.mockResolvedValue({ ...PI_27_1, id: '42' });
+    listMilestones.mockResolvedValue([{ id: 'm1', name: 'Release 4.0', date: '2027-02-10' }]);
+
+    const el = await open('/program-increments/42');
+    // Der Abschnitt entsteht erst mit dem geladenen PI und lädt dann selbst; das braucht eine zweite Runde.
+    await settle();
+
+    const section = el.querySelector('app-milestones');
+    expect(section, 'Abschnitt app-milestones').not.toBeNull();
+    const headings = Array.from(section!.querySelectorAll('h2')).map((h) =>
+      (h.textContent ?? '').trim(),
+    );
+    expect(headings).toContain('Milestones');
+    expect(listMilestones).toHaveBeenCalledWith('42');
+    expect(section!.textContent).toContain('Release 4.0');
+    expect(section!.textContent).toContain('10.02.2027');
   });
 
   it('zeigt das Feature-Backlog des geöffneten PI (US-9)', async () => {

@@ -4,6 +4,7 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { appConfig } from '../../app.config';
 import { Board } from '../../core/models/board.model';
 import { Feature } from '../../core/models/feature.model';
+import { BoardMilestone } from '../../core/models/milestone.model';
 import { Team } from '../../core/models/team.model';
 import { BoardRepository } from '../../core/ports/board.repository';
 import { ProgramBoardComponent } from './program-board.component';
@@ -46,9 +47,29 @@ function feature(id: string, title: string, wsjfRank?: number, estimate?: number
 const PORTAL = feature('f1', 'Portal', 2, 8);
 const LOGIN = feature('f2', 'Login', 5, 13);
 
-function board(teams: Team[], backlog: Feature[] = [PORTAL, LOGIN]): Board {
-  return { teams, iterations: ITERATIONS, backlog };
+function board(
+  teams: Team[],
+  backlog: Feature[] = [PORTAL, LOGIN],
+  milestones: BoardMilestone[] = [],
+): Board {
+  return { teams, iterations: ITERATIONS, backlog, milestones };
 }
+
+// Milestones in PI 27.1 (US-15); `iterationNumber` liefert der Server.
+const KICKOFF: BoardMilestone = {
+  id: 'm1',
+  name: 'Kickoff',
+  date: '2027-01-05',
+  iterationNumber: 1,
+};
+const RELEASE: BoardMilestone = {
+  id: 'm2',
+  name: 'Release',
+  date: '2027-02-10',
+  iterationNumber: 3,
+};
+const MESSE: BoardMilestone = { id: 'm3', name: 'Messe', date: '2027-02-12', iterationNumber: 3 };
+const AUDIT: BoardMilestone = { id: 'm4', name: 'Audit', date: '2027-03-20', iterationNumber: 6 };
 
 /**
  * Vertrag mit der Vorlage: Das Raster ist eine Tabelle `[data-testid="board-grid"]` mit den Iterationen als
@@ -207,6 +228,87 @@ describe('ProgramBoardComponent', () => {
     expect(
       backlog!.compareDocumentPosition(raster!) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
+  });
+
+  // --- US-15: Milestones ---
+
+  /** Das Element im Spaltenkopf, dessen Text genau der Name der Iteration ist. */
+  function iterationName(el: HTMLElement, name: string): HTMLElement {
+    const found = Array.from(grid(el)?.querySelectorAll<HTMLElement>('thead th *') ?? []).filter(
+      (node) => (node.textContent ?? '').trim() === name,
+    );
+    expect(found.length, `Name «${name}» im Spaltenkopf`).toBeGreaterThan(0);
+    return found[0];
+  }
+
+  /** Die Marker `[data-testid="milestone-marker"]` im Spaltenkopf der Iteration, als Text. */
+  function markersOver(el: HTMLElement, name: string): string[] {
+    const th = iterationName(el, name).closest('th')!;
+    return Array.from(th.querySelectorAll('[data-testid="milestone-marker"]')).map((m) =>
+      (m.textContent ?? '').replace(/\s+/g, ' ').trim(),
+    );
+  }
+
+  function allMarkers(el: HTMLElement): Element[] {
+    return Array.from(el.querySelectorAll('[data-testid="milestone-marker"]'));
+  }
+
+  it('zeigt einen Milestone als Marker mit Name und Datum TT.MM. im Kopf seiner Iteration (US-15)', async () => {
+    const el = await render(board([ADLER], [], [RELEASE]));
+
+    const shown = markersOver(el, 'Iteration 3');
+    expect(shown).toHaveLength(1);
+    expect(shown[0]).toContain('Release');
+    expect(shown[0]).toContain('10.02.');
+    expect(shown[0]).not.toContain('2027');
+  });
+
+  it('zeigt den Marker über dem Namen der Iteration (US-15)', async () => {
+    const el = await render(board([ADLER], [], [RELEASE]));
+
+    const marker = allMarkers(el)[0];
+    expect(marker, 'Marker').toBeDefined();
+    expect(
+      marker.compareDocumentPosition(iterationName(el, 'Iteration 3')) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it('zeigt über Iterationen ohne Milestone keinen Marker (US-15)', async () => {
+    const el = await render(board([ADLER], [], [RELEASE]));
+
+    expect(allMarkers(el)).toHaveLength(1);
+    for (const name of ITERATION_NAMES.filter((n) => n !== 'Iteration 3')) {
+      expect(markersOver(el, name), `Iteration «${name}»`).toEqual([]);
+    }
+  });
+
+  it('stellt jeden Marker über die Iteration mit seiner Nummer, auch über die IP (US-15)', async () => {
+    const el = await render(board([ADLER], [], [KICKOFF, RELEASE, AUDIT]));
+
+    expect(markersOver(el, 'Iteration 1')).toEqual([expect.stringContaining('Kickoff')]);
+    expect(markersOver(el, 'Iteration 3')).toEqual([expect.stringContaining('Release')]);
+    expect(markersOver(el, 'IP')).toEqual([expect.stringContaining('Audit')]);
+    expect(markersOver(el, 'IP')[0]).toContain('20.03.');
+  });
+
+  it('zeigt mehrere Milestones einer Iteration alle, in der Reihenfolge des Servers (US-15)', async () => {
+    const el = await render(board([ADLER], [], [KICKOFF, RELEASE, MESSE]));
+
+    const shown = markersOver(el, 'Iteration 3');
+    expect(shown).toHaveLength(2);
+    expect(shown[0]).toContain('Release');
+    expect(shown[0]).toContain('10.02.');
+    expect(shown[1]).toContain('Messe');
+    expect(shown[1]).toContain('12.02.');
+    expect(markersOver(el, 'Iteration 1')).toEqual([expect.stringContaining('Kickoff')]);
+  });
+
+  it('zeigt ohne Milestones keinen Marker (US-15)', async () => {
+    const el = await render(board([ADLER]));
+
+    expect(grid(el), 'Raster').not.toBeNull();
+    expect(allMarkers(el)).toHaveLength(0);
   });
 
   // --- AK 4: ohne Teams ---

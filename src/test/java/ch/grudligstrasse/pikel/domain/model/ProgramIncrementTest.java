@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 class ProgramIncrementTest {
@@ -396,6 +397,66 @@ class ProgramIncrementTest {
         PiLinkNotFoundException exception = assertThrows(PiLinkNotFoundException.class, () -> pi.withoutLink(unknown));
 
         assertEquals("Den Link gibt es nicht.", exception.getMessage());
+    }
+
+    // US-15: Position eines Milestones. PI 27.1 zu 2 Wochen: Iteration 1 ab 2027-01-04, Iteration 2 ab 01-18,
+    // Iteration 3 ab 02-01, Iteration 4 ab 02-15, Iteration 5 ab 03-01, IP 2027-03-15 bis 03-26.
+
+    @ParameterizedTest
+    @CsvSource({
+        "2027-01-04, 1, Iteration 1",
+        "2027-01-17, 1, Iteration 1",
+        "2027-01-18, 2, Iteration 2",
+        "2027-02-10, 3, Iteration 3",
+        "2027-02-14, 3, Iteration 3",
+        "2027-03-14, 5, Iteration 5",
+        "2027-03-15, 6, IP",
+        "2027-03-26, 6, IP"
+    })
+    void iterationOfFindsIterationWhosePeriodContainsTheDate(String date, int number, String name) {
+        ProgramIncrement pi = ProgramIncrement.plan("PI 27.1", START, END, TWO_WEEKS);
+
+        Iteration iteration = pi.iterationOf(LocalDate.parse(date));
+
+        assertEquals(number, iteration.number());
+        assertEquals(name, iteration.name());
+    }
+
+    @Test
+    void iterationOfReturnsTheWholeIteration() {
+        ProgramIncrement pi = ProgramIncrement.plan("PI 27.1", START, END, TWO_WEEKS);
+
+        assertEquals(
+                iteration(3, "Iteration 3", "2027-02-01", "2027-02-14", false),
+                pi.iterationOf(LocalDate.parse("2027-02-10")));
+    }
+
+    // Gleiches Datum wie beim Szenario, nur die Länge weicht ab: zu 4 Wochen liegt der 10. Februar in Iteration 2.
+    @Test
+    void iterationOfDependsOnIterationLength() {
+        ProgramIncrement pi = ProgramIncrement.plan("PI 27.1", START, END, 4);
+
+        assertEquals(
+                iteration(2, "Iteration 2", "2027-02-01", "2027-02-28", false),
+                pi.iterationOf(LocalDate.parse("2027-02-10")));
+    }
+
+    // Die kürzere IP-Iteration bei einem Rest bis zum Enddatum.
+    @Test
+    void iterationOfFindsShorterIpIterationUpToEndDate() {
+        ProgramIncrement pi = ProgramIncrement.plan("PI 27.1", START, LocalDate.parse("2027-02-07"), TWO_WEEKS);
+
+        assertEquals(
+                iteration(3, "IP", "2027-02-01", "2027-02-07", true), pi.iterationOf(LocalDate.parse("2027-02-07")));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"2027-01-03", "2027-03-27", "2027-04-01"})
+    void iterationOfRejectsDateOutsideProgramIncrement(String date) {
+        ProgramIncrement pi = ProgramIncrement.plan("PI 27.1", START, END, TWO_WEEKS);
+        LocalDate outside = LocalDate.parse(date);
+
+        assertThrows(IllegalArgumentException.class, () -> pi.iterationOf(outside));
     }
 
     private static Iteration iteration(int number, String name, String start, String end, boolean ip) {

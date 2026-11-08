@@ -40,6 +40,7 @@ const BOARD: Board = {
       scheduled: false,
     },
   ],
+  milestones: [],
 };
 
 describe('BoardService', () => {
