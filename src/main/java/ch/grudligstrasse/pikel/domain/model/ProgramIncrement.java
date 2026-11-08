@@ -5,6 +5,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -148,6 +149,13 @@ public record ProgramIncrement(
                 .filter(iteration -> !date.isBefore(iteration.startDate()) && !date.isAfter(iteration.endDate()))
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("Das Datum liegt ausserhalb des PI."));
+    }
+
+    /** Die Iteration mit dieser Nummer (ab 1); leer, wenn es sie im PI nicht gibt. */
+    public Optional<Iteration> iteration(int number) {
+        return iterations().stream()
+                .filter(iteration -> iteration.number() == number)
+                .findFirst();
     }
 
     /** Anzahl Iterationen: Zeitraum inklusiv geteilt durch die Länge, aufgerundet; ein Rest wird zur kürzeren IP. */

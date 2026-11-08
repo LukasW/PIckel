@@ -16,7 +16,7 @@ class ProgramBoardTest {
     private static final LocalDate END = LocalDate.of(2027, 3, 26);
 
     private static ProgramBoard board(ProgramIncrement pi, Milestone milestone) {
-        return new ProgramBoard(pi, List.of(), pi.iterations(), List.of(), List.of(milestone));
+        return new ProgramBoard(pi, List.of(), pi.iterations(), List.of(), List.of(), List.of(milestone));
     }
 
     // PI 27.1 zu 2 Wochen: Iteration 3 vom 2027-02-01 bis 02-14, IP ab 03-15.

@@ -8,6 +8,9 @@ export interface Feature {
   wsjfRank?: number;
   estimate?: number;
   scheduled: boolean;
+  /** Die Zelle auf dem Program Board; beides fehlt im Backlog. */
+  teamId?: string;
+  iterationNumber?: number;
 }
 
 /** Angaben zum Erfassen; fehlende optionale Angaben fehlen im Objekt. */

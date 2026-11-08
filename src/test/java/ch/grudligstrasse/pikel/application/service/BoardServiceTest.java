@@ -4,9 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 import ch.grudligstrasse.pikel.domain.model.Feature;
@@ -74,11 +72,9 @@ class BoardServiceTest {
         lenient().when(features.listBacklog(PI.id())).thenReturn(List.of(all));
     }
 
-    /** Ein Feature, das auf dem Board eingeplant ist; das Einplanen selbst kommt erst mit #13. */
+    /** Ein Feature, das auf dem Board bei Adler in Iteration 2 eingeplant ist (US-13). */
     private static Feature scheduled(String title, int wsjfRank) {
-        Feature feature = spy(Feature.create(PI.id(), title, "", wsjfRank, "", 5));
-        doReturn(true).when(feature).scheduled();
-        return feature;
+        return Feature.create(PI.id(), title, "", wsjfRank, "", 5).schedule(PI, ADLER.id(), 2);
     }
 
     // --- AK 1: Raster ---
@@ -166,6 +162,46 @@ class BoardServiceTest {
         backlogIs(scheduled("Portal", 1), scheduled("Login", 2));
 
         assertEquals(List.of(), service.get(PI.id()).backlog());
+    }
+
+    // --- US-13: eingeplante Features in ihren Zellen ---
+
+    // Plan: «scheduled» in Backlog-Reihenfolge. Die Titel stehen absichtlich nicht alphabetisch, die Zellen sind
+    // verschieden; eine eigene Sortierung oder ein Verlust der Zelle fiele auf.
+    @Test
+    void scheduledListsScheduledFeaturesInBacklogOrderWithTheirCells() {
+        piExists();
+        teamsAre(ADLER, ZEBRA);
+        Feature zahlung = Feature.create(PI.id(), "Zahlung", "", 2, "", 5).schedule(PI, ZEBRA.id(), 3);
+        Feature abo = Feature.create(PI.id(), "Abo", "", 3, "", 5).schedule(PI, ADLER.id(), 1);
+        backlogIs(PORTAL, zahlung, abo, SUCHE);
+
+        ProgramBoard board = service.get(PI.id());
+
+        assertEquals(List.of(zahlung, abo), board.scheduled());
+        assertEquals(List.of(PORTAL, SUCHE), board.backlog());
+    }
+
+    @Test
+    void scheduledIsEmptyWhenNothingIsScheduled() {
+        piExists();
+        teamsAre(ADLER);
+        backlogIs(PORTAL, LOGIN);
+
+        assertEquals(List.of(), service.get(PI.id()).scheduled());
+    }
+
+    @Test
+    void everyFeatureIsEitherInBacklogOrScheduled() {
+        piExists();
+        teamsAre(ADLER);
+        Feature scheduledLogin = scheduled("Login", 2);
+        backlogIs(PORTAL, scheduledLogin);
+
+        ProgramBoard board = service.get(PI.id());
+
+        assertEquals(List.of(PORTAL), board.backlog());
+        assertEquals(List.of(scheduledLogin), board.scheduled());
     }
 
     // --- US-15 AK 4: Milestones auf dem Board ---

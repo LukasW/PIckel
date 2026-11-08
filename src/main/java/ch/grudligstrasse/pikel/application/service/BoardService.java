@@ -35,14 +35,16 @@ public class BoardService implements BoardUseCase {
     public ProgramBoard get(UUID programIncrementId) {
         ProgramIncrement programIncrement = programIncrements.get(programIncrementId);
         // Reihenfolgen liefern die Ports (Teams alphabetisch, Backlog nach WSJF); hier nicht ein zweites Mal sortieren.
-        List<Feature> backlog = features.listBacklog(programIncrementId).stream()
-                .filter(feature -> !feature.scheduled())
-                .toList();
+        List<Feature> all = features.listBacklog(programIncrementId);
+        List<Feature> backlog =
+                all.stream().filter(feature -> !feature.scheduled()).toList();
+        List<Feature> scheduled = all.stream().filter(Feature::scheduled).toList();
         return new ProgramBoard(
                 programIncrement,
                 teams.listAll(),
                 programIncrement.iterations(),
                 backlog,
+                scheduled,
                 milestones.list(programIncrementId));
     }
 }

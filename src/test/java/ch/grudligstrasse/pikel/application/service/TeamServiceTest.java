@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -13,12 +14,14 @@ import ch.grudligstrasse.pikel.domain.model.DuplicateTeamNameException;
 import ch.grudligstrasse.pikel.domain.model.InvalidTeamException;
 import ch.grudligstrasse.pikel.domain.model.Team;
 import ch.grudligstrasse.pikel.domain.model.TeamNotFoundException;
+import ch.grudligstrasse.pikel.domain.port.out.FeatureRepository;
 import ch.grudligstrasse.pikel.domain.port.out.TeamRepository;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -31,6 +34,10 @@ class TeamServiceTest {
 
     @Mock
     TeamRepository repository;
+
+    // US-13: Entfernen gibt die eingeplanten Features des Teams zurück ins Backlog.
+    @Mock
+    FeatureRepository features;
 
     @InjectMocks
     TeamService service;
@@ -198,6 +205,20 @@ class TeamServiceTest {
         service.remove(id);
 
         verify(repository).remove(id);
+    }
+
+    // US-13 AK 6, Szenario «Entferntes Team gibt seine Features ins Backlog zurück»: in allen PIs, und zwar bevor das
+    // Team gelöscht wird (Plan: der Fremdschlüssel ohne ON DELETE lässt das Löschen sonst scheitern).
+    @Test
+    void removeReturnsScheduledFeaturesOfTeamToBacklogBeforeDeletingTeam() {
+        UUID id = UUID.randomUUID();
+        when(repository.remove(id)).thenReturn(true);
+
+        service.remove(id);
+
+        InOrder removal = inOrder(features, repository);
+        removal.verify(features).unscheduleTeam(id);
+        removal.verify(repository).remove(id);
     }
 
     @Test

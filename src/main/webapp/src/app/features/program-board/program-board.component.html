@@ -6,29 +6,33 @@
 
 <h1 class="mb-4 text-2xl font-semibold">Program Board</h1>
 
+@if (service.actionError(); as actionError) {
+  <p role="alert" class="mb-4 text-danger">{{ actionError }}</p>
+}
+
 @if (service.board(); as board) {
-  <div class="flex items-start gap-4">
+  <div cdkDropListGroup class="flex items-start gap-4">
     <section
       data-testid="board-backlog"
       aria-labelledby="board-backlog-heading"
       class="w-64 shrink-0 rounded-lg border border-border bg-surface p-3"
     >
       <h2 id="board-backlog-heading" class="mb-2 font-semibold">Backlog</h2>
-      <ul class="grid gap-2">
+      <ul
+        cdkDropList
+        [cdkDropListData]="backlogTarget"
+        (cdkDropListDropped)="drop($event)"
+        class="grid min-h-12 gap-2"
+      >
         @for (feature of board.backlog; track feature.id) {
-          <li
-            data-testid="feature-card"
-            class="rounded border border-border bg-background p-2 text-sm"
-          >
-            <p class="font-medium">{{ feature.title }}</p>
-            <p class="text-muted">
-              @if (feature.wsjfRank != null) {
-                <span>WSJF {{ feature.wsjfRank }}</span>
-              }
-              @if (feature.estimate != null) {
-                <span class="ml-2">{{ feature.estimate }} SP</span>
-              }
-            </p>
+          <li cdkDrag [cdkDragData]="feature">
+            <app-board-card
+              [feature]="feature"
+              [teams]="board.teams"
+              [iterations]="board.iterations"
+              (schedule)="service.schedule(feature, $event.teamId, $event.iterationNumber)"
+              (unschedule)="service.unschedule(feature)"
+            />
           </li>
         }
       </ul>
@@ -81,9 +85,36 @@
                 <th scope="row" class="px-3 py-2 font-medium">{{ team.name }}</th>
                 @for (iteration of board.iterations; track iteration.number) {
                   <td
-                    class="h-16 border-l border-border px-3 py-2"
+                    class="h-16 border-l border-border px-3 py-2 align-top"
                     [class.bg-background]="iteration.innovationAndPlanning"
-                  ></td>
+                  >
+                    <!-- In der IP-Iteration gibt es keine Drop-Zone: Dort wird keine Feature-Arbeit geplant. -->
+                    @if (!iteration.innovationAndPlanning) {
+                      <ul
+                        cdkDropList
+                        [cdkDropListData]="cell(team.id, iteration.number)"
+                        (cdkDropListDropped)="drop($event)"
+                        class="grid min-h-12 gap-2"
+                      >
+                        @for (
+                          feature of cardsIn(board, team.id, iteration.number);
+                          track feature.id
+                        ) {
+                          <li cdkDrag [cdkDragData]="feature">
+                            <app-board-card
+                              [feature]="feature"
+                              [teams]="board.teams"
+                              [iterations]="board.iterations"
+                              (schedule)="
+                                service.schedule(feature, $event.teamId, $event.iterationNumber)
+                              "
+                              (unschedule)="service.unschedule(feature)"
+                            />
+                          </li>
+                        }
+                      </ul>
+                    }
+                  </td>
                 }
               </tr>
             }

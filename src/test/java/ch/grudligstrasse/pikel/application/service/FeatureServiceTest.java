@@ -16,8 +16,12 @@ import ch.grudligstrasse.pikel.domain.model.FeatureNotFoundException;
 import ch.grudligstrasse.pikel.domain.model.InvalidFeatureException;
 import ch.grudligstrasse.pikel.domain.model.ProgramIncrement;
 import ch.grudligstrasse.pikel.domain.model.ProgramIncrementNotFoundException;
+import ch.grudligstrasse.pikel.domain.model.Scheduling;
+import ch.grudligstrasse.pikel.domain.model.Team;
+import ch.grudligstrasse.pikel.domain.model.TeamNotFoundException;
 import ch.grudligstrasse.pikel.domain.port.out.FeatureRepository;
 import ch.grudligstrasse.pikel.domain.port.out.ProgramIncrementRepository;
+import ch.grudligstrasse.pikel.domain.port.out.TeamRepository;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -43,6 +47,10 @@ class FeatureServiceTest {
 
     @Mock
     ProgramIncrementRepository programIncrements;
+
+    // US-13: Einplanen prüft das Team.
+    @Mock
+    TeamRepository teams;
 
     @InjectMocks
     FeatureService service;
@@ -467,5 +475,262 @@ class FeatureServiceTest {
 
         assertThrows(ProgramIncrementNotFoundException.class, () -> service.importCsv(unknown, "Name\nPortal"));
         verify(features, never()).save(any());
+    }
+
+    // --- US-13: Einplanen und zurück ins Backlog ---
+
+    private static final String TEAM_NOT_FOUND = "Das Team gibt es nicht.";
+    private static final String IP_NOT_SCHEDULABLE = "In der IP-Iteration wird keine Feature-Arbeit geplant.";
+    private static final String NOT_IN_PROGRAM_INCREMENT = "Die Iteration gehört nicht zu diesem PI.";
+
+    private static final Team ADLER = new Team(UUID.randomUUID(), "Adler");
+    private static final Team ZEBRA = new Team(UUID.randomUUID(), "Zebra");
+
+    // lenient: Ob der Service das Team vor oder nach PI und Feature liest, ist seine Sache.
+    private void teamExists(Team team) {
+        lenient().when(teams.findOne(team.id())).thenReturn(Optional.of(team));
+    }
+
+    private static Feature portal() {
+        return new Feature(
+                UUID.randomUUID(),
+                PI_27_1.id(),
+                "Portal",
+                "Kundenportal",
+                "Anna",
+                OptionalInt.of(1),
+                OptionalInt.of(8));
+    }
+
+    private static Feature scheduledIn(Feature feature, Team team, int iterationNumber) {
+        return new Feature(
+                feature.id(),
+                feature.programIncrementId(),
+                feature.title(),
+                feature.description(),
+                feature.owner(),
+                feature.wsjfRank(),
+                feature.estimate(),
+                Optional.of(new Scheduling(team.id(), iterationNumber)));
+    }
+
+    // Szenario «Feature wird in eine Zelle eingeplant»
+    @Test
+    void scheduleSavesAndReturnsFeatureInCell() {
+        programIncrementExists();
+        teamExists(ADLER);
+        Feature portal = stored(portal());
+
+        Feature scheduled = service.schedule(PI_27_1.id(), portal.id(), ADLER.id(), 2);
+
+        assertEquals(scheduledIn(portal, ADLER, 2), scheduled);
+        verify(features).save(scheduled);
+    }
+
+    // Szenario «Eingeplantes Feature wird verschoben»: Die neue Zelle ersetzt die gespeicherte.
+    @Test
+    void scheduleMovesScheduledFeatureToNewCell() {
+        programIncrementExists();
+        teamExists(ZEBRA);
+        Feature portal = stored(scheduledIn(portal(), ADLER, 2));
+
+        Feature moved = service.schedule(PI_27_1.id(), portal.id(), ZEBRA.id(), 3);
+
+        assertEquals(Optional.of(new Scheduling(ZEBRA.id(), 3)), moved.scheduling());
+        assertEquals(portal.id(), moved.id());
+        verify(features).save(moved);
+    }
+
+    @Test
+    void scheduleRejectsUnknownProgramIncrement() {
+        UUID unknown = unknownProgramIncrement();
+        teamExists(ADLER);
+        Feature orphan = stored(
+                new Feature(UUID.randomUUID(), unknown, "Portal", "", "", OptionalInt.empty(), OptionalInt.empty()));
+
+        ProgramIncrementNotFoundException exception = assertThrows(
+                ProgramIncrementNotFoundException.class, () -> service.schedule(unknown, orphan.id(), ADLER.id(), 2));
+
+        assertEquals(PI_NOT_FOUND, exception.getMessage());
+        verify(features, never()).save(any());
+    }
+
+    @Test
+    void scheduleRejectsUnknownFeature() {
+        programIncrementExists();
+        teamExists(ADLER);
+        UUID unknown = UUID.randomUUID();
+        lenient().when(features.findOne(unknown)).thenReturn(Optional.empty());
+
+        FeatureNotFoundException exception = assertThrows(
+                FeatureNotFoundException.class, () -> service.schedule(PI_27_1.id(), unknown, ADLER.id(), 2));
+
+        assertEquals(FEATURE_NOT_FOUND, exception.getMessage());
+        verify(features, never()).save(any());
+    }
+
+    // Wie beim Bearbeiten: Ein Feature eines anderen PI gibt es in diesem PI nicht.
+    @Test
+    void scheduleRejectsFeatureOfOtherProgramIncrement() {
+        programIncrementExists();
+        teamExists(ADLER);
+        Feature foreign = stored(inOtherProgramIncrement("Portal"));
+
+        FeatureNotFoundException exception = assertThrows(
+                FeatureNotFoundException.class, () -> service.schedule(PI_27_1.id(), foreign.id(), ADLER.id(), 2));
+
+        assertEquals(FEATURE_NOT_FOUND, exception.getMessage());
+        verify(features, never()).save(any());
+    }
+
+    // Szenario «Einplanen bei einem unbekannten Team wird abgelehnt»
+    @Test
+    void scheduleRejectsUnknownTeam() {
+        programIncrementExists();
+        Feature portal = stored(portal());
+        UUID unknownTeam = UUID.randomUUID();
+        lenient().when(teams.findOne(unknownTeam)).thenReturn(Optional.empty());
+
+        TeamNotFoundException exception = assertThrows(
+                TeamNotFoundException.class, () -> service.schedule(PI_27_1.id(), portal.id(), unknownTeam, 2));
+
+        assertEquals(TEAM_NOT_FOUND, exception.getMessage());
+        verify(features, never()).save(any());
+    }
+
+    // Szenario «Einplanen ohne Team und Iteration wird abgelehnt»: Der Body darf Angaben auslassen, das ist ein 400.
+    @Test
+    void scheduleRejectsMissingTeamOrIterationAndSavesNothing() {
+        programIncrementExists();
+        Feature portal = stored(portal());
+
+        InvalidFeatureException withoutTeam =
+                assertThrows(InvalidFeatureException.class, () -> service.schedule(PI_27_1.id(), portal.id(), null, 2));
+        InvalidFeatureException withoutIteration = assertThrows(
+                InvalidFeatureException.class,
+                () -> service.schedule(PI_27_1.id(), portal.id(), UUID.randomUUID(), null));
+
+        assertEquals("Team und Iteration sind Pflicht.", withoutTeam.getMessage());
+        assertEquals("Team und Iteration sind Pflicht.", withoutIteration.getMessage());
+        verify(features, never()).save(any());
+    }
+
+    // Szenario «Einplanen in die IP-Iteration wird abgelehnt»: PI 27.1 hat 6 Iterationen, die 6. ist die IP.
+    @Test
+    void scheduleIntoIpIterationSavesNothing() {
+        programIncrementExists();
+        teamExists(ADLER);
+        Feature portal = stored(portal());
+
+        InvalidFeatureException exception = assertThrows(
+                InvalidFeatureException.class, () -> service.schedule(PI_27_1.id(), portal.id(), ADLER.id(), 6));
+
+        assertEquals(IP_NOT_SCHEDULABLE, exception.getMessage());
+        verify(features, never()).save(any());
+    }
+
+    // Szenario «Einplanen in eine Iteration, die es im PI nicht gibt, wird abgelehnt»
+    @Test
+    void scheduleIntoIterationOutsideProgramIncrementSavesNothing() {
+        programIncrementExists();
+        teamExists(ADLER);
+        Feature portal = stored(portal());
+
+        InvalidFeatureException exception = assertThrows(
+                InvalidFeatureException.class, () -> service.schedule(PI_27_1.id(), portal.id(), ADLER.id(), 7));
+
+        assertEquals(NOT_IN_PROGRAM_INCREMENT, exception.getMessage());
+        verify(features, never()).save(any());
+    }
+
+    // Szenario «Eingeplantes Feature geht zurück ins Backlog»
+    @Test
+    void unscheduleSavesAndReturnsFeatureWithoutCell() {
+        programIncrementExists();
+        Feature portal = portal();
+        stored(scheduledIn(portal, ADLER, 2));
+
+        Feature unscheduled = service.unschedule(PI_27_1.id(), portal.id());
+
+        assertEquals(portal, unscheduled);
+        assertFalse(unscheduled.scheduled());
+        verify(features).save(unscheduled);
+    }
+
+    // Plan: idempotent; ob dabei gespeichert wird, ist offen, das Ergebnis ist das unveränderte Feature.
+    @Test
+    void unscheduleOfBacklogFeatureReturnsItUnchanged() {
+        programIncrementExists();
+        Feature portal = stored(portal());
+
+        assertEquals(portal, service.unschedule(PI_27_1.id(), portal.id()));
+        verify(features, never()).save(any());
+    }
+
+    @Test
+    void unscheduleRejectsUnknownProgramIncrement() {
+        UUID unknown = unknownProgramIncrement();
+        Feature orphan = stored(new Feature(
+                UUID.randomUUID(),
+                unknown,
+                "Portal",
+                "",
+                "",
+                OptionalInt.empty(),
+                OptionalInt.empty(),
+                Optional.of(new Scheduling(ADLER.id(), 2))));
+
+        ProgramIncrementNotFoundException exception =
+                assertThrows(ProgramIncrementNotFoundException.class, () -> service.unschedule(unknown, orphan.id()));
+
+        assertEquals(PI_NOT_FOUND, exception.getMessage());
+        verify(features, never()).save(any());
+    }
+
+    @Test
+    void unscheduleRejectsUnknownFeature() {
+        programIncrementExists();
+        UUID unknown = UUID.randomUUID();
+        lenient().when(features.findOne(unknown)).thenReturn(Optional.empty());
+
+        FeatureNotFoundException exception =
+                assertThrows(FeatureNotFoundException.class, () -> service.unschedule(PI_27_1.id(), unknown));
+
+        assertEquals(FEATURE_NOT_FOUND, exception.getMessage());
+        verify(features, never()).save(any());
+    }
+
+    @Test
+    void unscheduleRejectsFeatureOfOtherProgramIncrement() {
+        programIncrementExists();
+        Feature foreign = inOtherProgramIncrement("Portal");
+        stored(new Feature(
+                foreign.id(),
+                foreign.programIncrementId(),
+                "Portal",
+                "",
+                "",
+                OptionalInt.empty(),
+                OptionalInt.empty(),
+                Optional.of(new Scheduling(ADLER.id(), 2))));
+
+        FeatureNotFoundException exception =
+                assertThrows(FeatureNotFoundException.class, () -> service.unschedule(PI_27_1.id(), foreign.id()));
+
+        assertEquals(FEATURE_NOT_FOUND, exception.getMessage());
+        verify(features, never()).save(any());
+    }
+
+    // Szenario «Bearbeiten eines eingeplanten Features lässt die Einplanung stehen»
+    @Test
+    void updateKeepsSchedulingOfScheduledFeature() {
+        programIncrementExists();
+        Feature portal = stored(scheduledIn(portal(), ADLER, 2));
+
+        Feature updated = service.update(PI_27_1.id(), portal.id(), "Portal neu", "Kundenportal", 1, "Anna", 8);
+
+        assertEquals("Portal neu", updated.title());
+        assertEquals(Optional.of(new Scheduling(ADLER.id(), 2)), updated.scheduling());
+        verify(features).save(updated);
     }
 }

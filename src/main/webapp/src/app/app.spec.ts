@@ -26,7 +26,13 @@ const PI_7: ProgramIncrement = {
   links: [],
 };
 
-const EMPTY_BOARD: Board = { teams: [], iterations: [], backlog: [], milestones: [] };
+const EMPTY_BOARD: Board = {
+  teams: [],
+  iterations: [],
+  backlog: [],
+  scheduled: [],
+  milestones: [],
+};
 
 /**
  * Die Breite steuert `App` über die Routendaten der aktiven Route (Delta US-12). Darum rendert der Test `App`

@@ -1,6 +1,7 @@
 package ch.grudligstrasse.pikel.adapter.out.persistence;
 
 import ch.grudligstrasse.pikel.domain.model.Feature;
+import ch.grudligstrasse.pikel.domain.model.Scheduling;
 import ch.grudligstrasse.pikel.domain.port.out.FeatureRepository;
 import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -25,6 +26,11 @@ public class FeatureRepositoryAdapter implements FeatureRepository, PanacheRepos
     }
 
     @Override
+    public void unscheduleTeam(UUID teamId) {
+        update("teamId = null, iterationNumber = null where teamId = ?1", teamId);
+    }
+
+    @Override
     public boolean remove(UUID id) {
         return deleteById(id);
     }
@@ -39,6 +45,9 @@ public class FeatureRepositoryAdapter implements FeatureRepository, PanacheRepos
         entity.owner = feature.owner();
         entity.wsjfRank = feature.wsjfRank().isPresent() ? feature.wsjfRank().getAsInt() : null;
         entity.estimate = feature.estimate().isPresent() ? feature.estimate().getAsInt() : null;
+        entity.teamId = feature.scheduling().map(Scheduling::teamId).orElse(null);
+        entity.iterationNumber =
+                feature.scheduling().map(Scheduling::iterationNumber).orElse(null);
         persist(entity);
     }
 
@@ -50,7 +59,10 @@ public class FeatureRepositoryAdapter implements FeatureRepository, PanacheRepos
                 entity.description,
                 entity.owner,
                 toOptional(entity.wsjfRank),
-                toOptional(entity.estimate));
+                toOptional(entity.estimate),
+                entity.teamId == null
+                        ? Optional.empty()
+                        : Optional.of(new Scheduling(entity.teamId, entity.iterationNumber)));
     }
 
     private static OptionalInt toOptional(Integer value) {

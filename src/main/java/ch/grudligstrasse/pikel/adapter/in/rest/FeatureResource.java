@@ -67,6 +67,25 @@ public class FeatureResource {
                 request.estimate()));
     }
 
+    /**
+     * Plant ein Feature in die Zelle Team × Iteration ein: 200 mit dem Feature; 400 bei der IP-Iteration, einer
+     * Iteration, die es im PI nicht gibt, oder fehlenden Angaben; 404 bei unbekanntem PI, Feature oder Team.
+     */
+    @PUT
+    @Path("/{id}/scheduling")
+    public FeatureDto schedule(
+            @PathParam("piId") String piId, @PathParam("id") String id, @NotNull SchedulingRequest request) {
+        return FeatureDto.from(
+                useCase.schedule(toUuid(piId), toFeatureUuid(id), request.teamId(), request.iterationNumber()));
+    }
+
+    /** Nimmt ein Feature zurück ins Backlog: 200 mit dem Feature; 404 bei unbekanntem PI oder Feature. */
+    @DELETE
+    @Path("/{id}/scheduling")
+    public FeatureDto unschedule(@PathParam("piId") String piId, @PathParam("id") String id) {
+        return FeatureDto.from(useCase.unschedule(toUuid(piId), toFeatureUuid(id)));
+    }
+
     /** Löscht ein Feature: 204; 404 bei unbekanntem PI oder Feature. */
     @DELETE
     @Path("/{id}")

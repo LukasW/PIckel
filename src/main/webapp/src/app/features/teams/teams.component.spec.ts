@@ -236,6 +236,24 @@ describe('TeamsComponent', () => {
     expect(el.textContent).toContain('Noch keine Teams. Erfasse das erste Team.');
   });
 
+  // Delta US-6 (Issue #13), AK 5: fester Hinweistext, keine Zählung. Der Wortlaut ist nicht festgelegt, darum
+  // prüft der Test die drei Aussagen: eingeplante Features, in allen PIs, zurück ins Backlog.
+  it('weist in der Bestätigung darauf hin, dass die eingeplanten Features in allen PIs ins Backlog zurückgehen (US-6)', async () => {
+    const fixture = await render([RAKETE, ZEBRA]);
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.textContent).not.toMatch(/eingeplant/i);
+
+    await click(fixture, button(row(el, 'Rakete'), 'Entfernen'));
+
+    const text = row(el, 'Rakete').textContent ?? '';
+    expect(text).toContain('Wirklich entfernen?');
+    expect(text).toMatch(/eingeplanten Features/);
+    expect(text).toMatch(/allen PIs/);
+    expect(text).toMatch(/Backlog/);
+    expect(row(el, 'Zebra').textContent).not.toMatch(/eingeplant/i);
+    expect(repository.remove).not.toHaveBeenCalled();
+  });
+
   it('behält das Team, wenn das Entfernen abgebrochen wird (US-6)', async () => {
     const fixture = await render([RAKETE]);
     const el = fixture.nativeElement as HTMLElement;
