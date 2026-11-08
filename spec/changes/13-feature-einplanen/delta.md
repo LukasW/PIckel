@@ -12,11 +12,15 @@ Der Kern des Plannings: Features in die Zellen Team × Iteration legen und umhä
   ADR 0006)
 - **IP-Iteration gesperrt:** Dort wird keine Feature-Arbeit geplant; der Server lehnt ab, die Oberfläche lässt das
   Ablegen gar nicht zu
-- **Bedienung ohne Maus:** Jede Karte hat zusätzlich eine Aktion «Einplanen …» mit Auswahl von Team und Iteration
-  (Tastatur, Barrierefreiheit). Angular CDK Drag & Drop als Kandidat; Entscheid im Plan
+- **Drag & Drop mit Angular CDK:** `@angular/cdk` kommt vorab von Hand per `chore/`-PR auf `main` (`package.json`
+  gehört nie in einen Nachtlauf)
+- **Bedienung ohne Maus:** Jede Karte hat zusätzlich eine Aktion «Einplanen …», die ein Inline-Formular an der Karte
+  aufklappt (Auswahl Team und Iteration ohne IP-Iteration, «Einplanen», «Abbrechen», bei eingeplanten Karten «Zurück
+  ins Backlog»); native Auswahlfelder, kein Dialog
 - **Optimistisch mit Rücknahme:** Die Karte springt sofort, bei einem Fehler zurück, mit Meldung
 - **Team entfernen:** Seine eingeplanten Features kommen in allen PIs zurück ins Backlog (ergänzt die Team-Story
-  #6 um einen Fall, den es dort noch nicht gab)
+  #6 um einen Fall, den es dort noch nicht gab). Die Bestätigung beim Entfernen weist mit festem Text darauf hin;
+  eine Zählung der betroffenen Features ist bewusst nicht Teil dieser Story
 - **Nicht in dieser Story:** gleichzeitiges Arbeiten mehrerer Personen (M2), Reihenfolge innerhalb einer Zelle
 
 ## Neu
@@ -32,6 +36,8 @@ Der Kern des Plannings: Features in die Zellen Team × Iteration legen und umhä
 ### AK: Schlägt das Speichern fehl, springt die Karte an ihren alten Ort zurück und eine Meldung erscheint
 
 ### AK: Wird ein Team entfernt, kommen seine eingeplanten Features in allen PIs zurück ins Backlog
+
+### AK: Die Bestätigung beim Entfernen eines Teams weist darauf hin, dass seine eingeplanten Features in allen PIs zurück ins Backlog gehen
 
 ### Szenario: Feature wird in eine Zelle eingeplant
 - **Gegeben sei** das PI "PI 27.1" vom "2027-01-04" bis "2027-03-26" mit Iterationen zu 2 Wochen
