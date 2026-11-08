@@ -1,0 +1,270 @@
+<a
+  [routerLink]="['/program-increments', id()]"
+  class="mb-4 inline-block text-sm text-accent hover:underline"
+  >← Zum PI</a
+>
+
+<h1 class="mb-4 text-2xl font-semibold">Program Board</h1>
+
+@if (service.actionError(); as actionError) {
+  <p role="alert" class="mb-4 text-danger">{{ actionError }}</p>
+}
+
+@if (service.board(); as board) {
+  <!-- Oberhalb des Rasters, damit die Liste ohne Scrollen sichtbar ist (US-18). -->
+  <section
+    data-testid="dependency-issues"
+    aria-labelledby="dependency-issues-heading"
+    class="mb-4 rounded-lg border border-border bg-surface p-3"
+  >
+    <h2 id="dependency-issues-heading" class="mb-2 font-semibold">Konflikte</h2>
+    @if (service.dependencyIssues().length > 0) {
+      <ul class="grid gap-1 text-sm text-danger">
+        @for (
+          issue of service.dependencyIssues();
+          track issue.neededFeatureId + '->' + issue.needingFeatureId
+        ) {
+          <li>
+            @if (issue.kind === 'conflict') {
+              {{ issue.neededTitle }} wird in {{ issue.neededIterationName }} geliefert,
+              {{ issue.needingTitle }} braucht es in {{ issue.needingIterationName }}.
+            } @else {
+              {{ issue.neededTitle }} ist nicht eingeplant, {{ issue.needingTitle }} braucht es in
+              {{ issue.needingIterationName }}.
+            }
+          </li>
+        }
+      </ul>
+    } @else {
+      <p class="text-sm text-muted">Keine Konflikte</p>
+    }
+  </section>
+
+  <div cdkDropListGroup class="flex items-start gap-4">
+    <section
+      data-testid="board-backlog"
+      aria-labelledby="board-backlog-heading"
+      class="w-64 shrink-0 rounded-lg border border-border bg-surface p-3"
+    >
+      <h2 id="board-backlog-heading" class="mb-2 font-semibold">Backlog</h2>
+      <ul
+        cdkDropList
+        [cdkDropListData]="backlogTarget"
+        (cdkDropListDropped)="drop($event)"
+        class="grid min-h-12 gap-2"
+      >
+        @for (feature of board.backlog; track feature.id) {
+          <li
+            cdkDrag
+            [cdkDragData]="feature"
+            [attr.data-feature-id]="feature.id"
+            (mouseenter)="focus(feature.id)"
+            (mouseleave)="blur()"
+            (focusin)="focus(feature.id)"
+            (focusout)="blur($event)"
+          >
+            <app-board-card
+              [feature]="feature"
+              [teams]="board.teams"
+              [iterations]="board.iterations"
+              [unlinkedDependencies]="service.unlinkedDependencyCount(feature.id)"
+              (schedule)="service.schedule(feature, $event.teamId, $event.iterationNumber)"
+              (unschedule)="service.unschedule(feature)"
+            />
+          </li>
+        }
+      </ul>
+      @if (board.backlog.length === 0) {
+        <p class="mt-2 text-sm text-muted">
+          @if (board.scheduled.length > 0) {
+            Alle Features sind eingeplant.
+          } @else {
+            Noch keine Features.
+            <a [routerLink]="['/program-increments', id()]" class="ml-1 text-accent hover:underline"
+              >Zum PI</a
+            >
+          }
+        </p>
+      }
+    </section>
+
+    @if (board.teams.length > 0) {
+      <!-- Das Raster scrollt waagrecht in seinem eigenen Container; die Seite bleibt stehen. -->
+      <div class="min-w-0 flex-1 overflow-x-auto">
+        <!-- Die Linien liegen im selben Container wie die Tabelle und scrollen deshalb mit ihr (US-17). -->
+        <div #grid class="relative w-full min-w-max">
+          <table
+            data-testid="board-grid"
+            class="w-full rounded-lg border border-border bg-surface text-left"
+          >
+            <thead class="border-b border-border text-sm">
+              <tr>
+                <th scope="col" class="px-3 py-2 font-medium text-muted">Team</th>
+                @for (iteration of board.iterations; track iteration.number) {
+                  <th
+                    scope="col"
+                    class="min-w-40 border-l border-border px-3 py-2 font-medium"
+                    [class.bg-background]="iteration.innovationAndPlanning"
+                  >
+                    @for (milestone of milestonesIn(board, iteration.number); track milestone.id) {
+                      <span
+                        data-testid="milestone-marker"
+                        class="mb-1 block rounded border border-accent px-1.5 py-0.5 text-xs"
+                        ><span aria-hidden="true">◆</span> {{ milestone.name }}
+                        <span class="text-muted">{{ milestone.date | date: 'dd.MM.' }}</span></span
+                      >
+                    }
+                    <span class="block">{{ iteration.name }}</span>
+                    <span class="block text-xs text-muted"
+                      >{{ iteration.startDate | date: 'dd.MM.' }} –
+                      {{ iteration.endDate | date: 'dd.MM.' }}</span
+                    >
+                    @if (iteration.innovationAndPlanning) {
+                      <span
+                        class="mt-1 inline-block rounded bg-accent px-1.5 py-0.5 text-xs text-accent-foreground"
+                        >IP-Iteration</span
+                      >
+                    }
+                  </th>
+                }
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-border">
+              @for (team of board.teams; track team.id) {
+                <tr>
+                  <th scope="row" class="px-3 py-2 font-medium">{{ team.name }}</th>
+                  @for (iteration of board.iterations; track iteration.number) {
+                    @let load = service.loadOf(team.id, iteration.number);
+                    <!-- Kennzeichnet die IP-Zelle, damit ein Loslassen darüber erkannt wird (US-13). -->
+                    <td
+                      class="h-16 border-l px-3 py-2 align-top"
+                      [attr.data-innovation-and-planning]="
+                        iteration.innovationAndPlanning ? '' : null
+                      "
+                      [class.bg-background]="iteration.innovationAndPlanning"
+                      [class]="
+                        load?.overloaded ? 'border-2 border-danger bg-danger/10' : 'border-border'
+                      "
+                    >
+                      @if (load) {
+                        <!-- Nicht nur Farbe: Überlast steht auch als Text da. -->
+                        <p
+                          data-testid="cell-load"
+                          class="mb-2 text-xs"
+                          [class.text-muted]="!load.overloaded"
+                          [class.text-danger]="load.overloaded"
+                        >
+                          {{ load.planned }} / {{ load.available }} SP
+                          @if (load.overloaded) {
+                            <span class="ml-1 font-semibold">Überlast</span>
+                          }
+                        </p>
+                      }
+                      <!-- In der IP-Iteration gibt es keine Drop-Zone: Dort wird keine Feature-Arbeit geplant. -->
+                      @if (!iteration.innovationAndPlanning) {
+                        <ul
+                          cdkDropList
+                          [cdkDropListData]="cell(team.id, iteration.number)"
+                          (cdkDropListDropped)="drop($event)"
+                          class="grid min-h-12 gap-2"
+                        >
+                          @for (
+                            feature of cardsIn(board, team.id, iteration.number);
+                            track feature.id
+                          ) {
+                            <li
+                              cdkDrag
+                              [cdkDragData]="feature"
+                              [attr.data-feature-id]="feature.id"
+                              (mouseenter)="focus(feature.id)"
+                              (mouseleave)="blur()"
+                              (focusin)="focus(feature.id)"
+                              (focusout)="blur($event)"
+                            >
+                              <app-board-card
+                                [feature]="feature"
+                                [teams]="board.teams"
+                                [iterations]="board.iterations"
+                                [unlinkedDependencies]="service.unlinkedDependencyCount(feature.id)"
+                                [lacksDelivery]="service.lacksDelivery(feature.id)"
+                                (schedule)="
+                                  service.schedule(feature, $event.teamId, $event.iterationNumber)
+                                "
+                                (unschedule)="service.unschedule(feature)"
+                              />
+                            </li>
+                          }
+                        </ul>
+                      }
+                    </td>
+                  }
+                </tr>
+              }
+            </tbody>
+          </table>
+          <!-- Dekorativ: Die Abhängigkeiten selbst stehen im Backlog (US-16). -->
+          <svg
+            aria-hidden="true"
+            class="pointer-events-none absolute inset-0 h-full w-full overflow-visible text-muted"
+          >
+            <defs>
+              <marker
+                id="dependency-arrow"
+                viewBox="0 0 10 10"
+                refX="10"
+                refY="5"
+                markerWidth="8"
+                markerHeight="8"
+                orient="auto"
+              >
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor" />
+              </marker>
+              <!-- Ein Marker erbt die Farbe nicht vom Pfad; der Konflikt braucht einen eigenen roten. -->
+              <marker
+                id="dependency-arrow-conflict"
+                viewBox="0 0 10 10"
+                refX="10"
+                refY="5"
+                markerWidth="8"
+                markerHeight="8"
+                orient="auto"
+                class="text-danger"
+              >
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor" />
+              </marker>
+            </defs>
+            @for (line of lines(); track line.from + '->' + line.to) {
+              <!-- Ein Konflikt bleibt rot und gestrichelt, auch hervorgehoben (US-18). -->
+              <path
+                [attr.d]="line.path"
+                [attr.data-from]="line.from"
+                [attr.data-to]="line.to"
+                [attr.data-emphasis]="line.emphasis"
+                [attr.data-conflict]="line.conflict ? '' : null"
+                [attr.stroke-dasharray]="line.conflict ? '6 4' : null"
+                [attr.marker-end]="
+                  line.conflict ? 'url(#dependency-arrow-conflict)' : 'url(#dependency-arrow)'
+                "
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                [class.text-danger]="line.conflict"
+                [class.text-accent]="line.emphasis === 'highlighted' && !line.conflict"
+                [class.opacity-20]="line.emphasis === 'dimmed'"
+              />
+            }
+          </svg>
+        </div>
+      </div>
+    } @else {
+      <p class="flex-1 rounded-lg border border-border bg-surface p-4 text-muted">
+        Noch keine Teams. Erfasse zuerst die Teams des ART.
+        <a routerLink="/teams" class="ml-1 text-accent hover:underline">Zu den Teams</a>
+      </p>
+    }
+  </div>
+} @else if (service.error(); as error) {
+  <p role="alert" class="text-danger">{{ error }}</p>
+} @else {
+  <p class="text-muted">Lade …</p>
+}

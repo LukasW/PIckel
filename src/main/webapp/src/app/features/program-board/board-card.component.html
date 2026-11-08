@@ -1,0 +1,76 @@
+<div data-testid="feature-card" class="rounded border border-border bg-background p-2 text-sm">
+  <p class="font-medium">{{ feature().title }}</p>
+  &ngsp;
+  <p class="text-muted">
+    @if (feature().wsjfRank != null) {
+      <span>WSJF {{ feature().wsjfRank }}</span>
+      &ngsp;
+    }
+    @if (feature().estimate != null) {
+      <span class="ml-2">{{ feature().estimate }} SP</span>
+    } @else {
+      <!-- Zählt in der Zelle 0 (ADR 0006); der Hinweis zeigt, warum. -->
+      <span class="ml-2 italic">ohne Schätzung</span>
+    }
+  </p>
+  @if (unlinkedDependencies() > 0) {
+    <p data-testid="unlinked-dependencies" class="text-xs text-muted">
+      {{ unlinkedDependencies() }}
+      {{ unlinkedDependencies() === 1 ? 'Abhängigkeit' : 'Abhängigkeiten' }}
+    </p>
+  }
+  @if (lacksDelivery()) {
+    <!-- Nicht nur Farbe: Der Hinweis steht als Text da (US-18). -->
+    <p data-testid="lacks-delivery" class="text-xs font-semibold text-danger">
+      Lieferung nicht eingeplant
+    </p>
+  }
+</div>
+
+@if (open()) {
+  <form
+    data-testid="schedule-form"
+    (submit)="$event.preventDefault(); submit()"
+    class="mt-1 grid gap-2 rounded border border-border bg-surface p-2 text-sm"
+  >
+    <select
+      aria-label="Team"
+      (change)="teamId.set(valueOf($event))"
+      class="rounded border border-border bg-background px-1 py-0.5"
+    >
+      <option value="" [selected]="teamId() === ''">Team wählen</option>
+      @for (team of teams(); track team.id) {
+        <option [value]="team.id" [selected]="team.id === teamId()">{{ team.name }}</option>
+      }
+    </select>
+    <select
+      aria-label="Iteration"
+      (change)="iterationNumber.set(valueOf($event))"
+      class="rounded border border-border bg-background px-1 py-0.5"
+    >
+      <option value="" [selected]="iterationNumber() === ''">Iteration wählen</option>
+      @for (iteration of developmentIterations(); track iteration.number) {
+        <option [value]="iteration.number" [selected]="'' + iteration.number === iterationNumber()">
+          {{ iteration.name }}
+        </option>
+      }
+    </select>
+    <div class="flex flex-wrap items-center gap-2">
+      <button
+        type="submit"
+        [attr.aria-disabled]="!complete()"
+        class="rounded bg-accent px-2 py-0.5 text-accent-foreground aria-disabled:opacity-50"
+      >
+        Einplanen
+      </button>
+      <button type="button" (click)="open.set(false)" class="text-muted">Abbrechen</button>
+      @if (feature().scheduled) {
+        <button type="button" (click)="takeBack()" class="text-danger">Zurück ins Backlog</button>
+      }
+    </div>
+  </form>
+} @else {
+  <button type="button" (click)="openForm()" class="mt-1 text-xs text-accent hover:underline">
+    Einplanen …
+  </button>
+}

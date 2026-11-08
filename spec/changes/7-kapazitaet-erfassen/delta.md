@@ -1,6 +1,6 @@
 # Delta US-7 — Kapazität pro Team und Iteration erfassen (Issue #7)
 
-Story: `spec/user-stories/7-kapazitaet-erfassen.md` (neu) · Status: entwurf
+Story: `spec/user-stories/7-kapazitaet-erfassen.md` (neu) · Status: eingepflegt
 
 ## Warum
 
@@ -57,6 +57,31 @@ gehört zum PI, die Teams zum ART (ADR 0005).
 - **Und** das Team "Rakete"
 - **Wenn** ich für "Rakete" in "Iteration 1" von "PI 27.1" die Kapazität 40 erfasse
 - **Dann** hat "Rakete" in "Iteration 1" von "PI 27.2" die Kapazität 0
+
+### Szenario: Kapazität mit Nachkommastellen wird abgelehnt
+<!-- Ergänzt im Nachtlauf (notes.md): belegt «ganze Zahl» aus AK 2 am REST-Vertrag -->
+- **Gegeben sei** das PI "PI 27.1" vom "2027-01-04" bis "2027-03-26" mit Iterationen zu 2 Wochen
+- **Und** das Team "Rakete"
+- **Wenn** ich für "Rakete" in "Iteration 1" von "PI 27.1" die Kapazität 1.5 erfasse
+- **Dann** wird das Erfassen mit der Meldung "Die Anfrage enthält einen ungültigen Wert." abgelehnt
+
+### Szenario: Kapazität für ein unbekanntes Team wird abgelehnt
+<!-- Ergänzt im Nachtlauf (notes.md): REST-Vertrag 404 wie US-6 -->
+- **Gegeben sei** das PI "PI 27.1" vom "2027-01-04" bis "2027-03-26" mit Iterationen zu 2 Wochen
+- **Wenn** ich für ein unbekanntes Team in "Iteration 1" von "PI 27.1" die Kapazität 40 erfasse
+- **Dann** wird die Änderung mit dem Status 404 und der Meldung "Das Team gibt es nicht." abgelehnt
+
+### Szenario: Kapazität in einem unbekannten PI wird abgelehnt
+<!-- Ergänzt im Nachtlauf (notes.md): REST-Vertrag 404 wie US-5 -->
+- **Gegeben sei** das Team "Rakete"
+- **Wenn** ich für "Rakete" in der ersten Iteration eines unbekannten PI die Kapazität 40 erfasse
+- **Dann** wird die Änderung mit dem Status 404 und der Meldung "Das PI gibt es nicht." abgelehnt
+
+### Szenario: Ohne Teams zeigt die Tabelle einen Hinweis
+<!-- Ergänzt im Nachtlauf: belegt AK 5, @Unit über Vitest -->
+- **Gegeben sei** ein PI ohne Teams
+- **Wenn** ich die Detailseite öffne
+- **Dann** sehe ich einen Hinweis mit Link zur Teamseite
 
 ## Geändert
 

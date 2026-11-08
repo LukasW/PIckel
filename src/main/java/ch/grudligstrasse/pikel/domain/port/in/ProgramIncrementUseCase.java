@@ -24,4 +24,28 @@ public interface ProgramIncrementUseCase {
      * @throws ch.grudligstrasse.pikel.domain.model.ProgramIncrementNotFoundException wenn es die ID nicht gibt
      */
     ProgramIncrement get(UUID id);
+
+    /**
+     * Ersetzt Business-Kontext und PI Objectives des ART.
+     *
+     * @throws ch.grudligstrasse.pikel.domain.model.ProgramIncrementNotFoundException wenn es die ID nicht gibt
+     * @throws ch.grudligstrasse.pikel.domain.model.InvalidProgramIncrementException bei zu langem Text
+     */
+    ProgramIncrement updateBusinessContext(UUID id, String businessContext, String artObjectives);
+
+    /**
+     * Fügt dem PI einen Link hinzu.
+     *
+     * @throws ch.grudligstrasse.pikel.domain.model.ProgramIncrementNotFoundException wenn es die ID nicht gibt
+     * @throws ch.grudligstrasse.pikel.domain.model.InvalidProgramIncrementException bei ungültigem Titel oder URL
+     */
+    ProgramIncrement addLink(UUID id, String title, String url);
+
+    /**
+     * Entfernt einen Link vom PI.
+     *
+     * @throws ch.grudligstrasse.pikel.domain.model.ProgramIncrementNotFoundException wenn es die ID nicht gibt
+     * @throws ch.grudligstrasse.pikel.domain.model.PiLinkNotFoundException wenn das PI den Link nicht hat
+     */
+    ProgramIncrement removeLink(UUID id, UUID linkId);
 }

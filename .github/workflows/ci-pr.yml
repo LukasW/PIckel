@@ -18,15 +18,19 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      pull-requests: write
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           fetch-depth: 0
 
-      - uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0
+      # Eigenes Skript statt gitleaks-action: Es lädt das Binary angemeldet und prüft die Prüfsumme; der anonyme
+      # Release-Download der Action fiel mit HTTP 504 aus (#40). Gescannt werden die Commits des PR.
+      - name: Gitleaks
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: scripts/gitleaks.sh git --redact --no-banner --log-opts="$BASE_SHA..$HEAD_SHA" .
 
   # Pfade mit hohem Risiko (Schema, Pipeline, Agenten-Konfiguration, Abhängigkeiten) bekommen das Label
   # needs-human-review. /flow-ship merged solche PRs nie ohne ausdrückliche Freigabe, der Nachtlauf gar nicht.
@@ -108,10 +112,12 @@ jobs:
       - name: ADR-Index aktuell
         run: bash scripts/adr-index.sh --check
 
-      - name: Label- und Push-Guard gegen bekannte Umgehungen prüfen
+      - name: Hooks gegen bekannte Umgehungen und beide Eingabeformate prüfen (Claude Code, Copilot CLI)
         run: |
           bash .claude/flow/scripts/test-guard-labels.sh
           bash .claude/flow/scripts/test-guard-push.sh
+          bash .claude/flow/scripts/test-guard-env.sh
+          bash .claude/flow/scripts/test-hook-input.sh
           bash .claude/flow/scripts/test-issue-cost.sh
 
       - name: Bekannte Schwachstellen in npm-Abhängigkeiten (Laufzeit, ab high)

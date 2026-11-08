@@ -26,12 +26,22 @@ mit Tests auf jeder Ebene und CI. Siehe [ADR 0001](../../docs/adr/0001-walking-s
 6. Eine unvollständige oder ungültige Anfrage wird mit einer verständlichen Meldung abgelehnt
 7. Das Formular zeigt fehlende oder zu lange Angaben am Feld an und legt dann nichts an
 8. Start- und Enddatum erscheinen im Format TT.MM.JJJJ
+9. Die Kopfzeile verlinkt auf jeder Seite die PI-Übersicht («Program Increments») und die Teams
 
 ## BDD-Szenarien
 
 Siehe [`src/test/resources/features/program-increments/1-pi-anlegen.feature`](../../src/test/resources/features/program-increments/1-pi-anlegen.feature).
 
+## Tests
+
+- AK 9 (Kopfzeile): `@Unit` «Kopfzeile führt zur PI-Übersicht»; Vitest `app.spec.ts` → «führt über «Program
+  Increments» in der Kopfzeile zur Liste der PIs (US-1)», «zeigt den Link «Program Increments» auf jeder Seite, auch
+  auf Detailseite und Board (US-1)», «verlinkt in der Kopfzeile «Program Increments» auf die PI-Übersicht, neben
+  «Teams» (US-1)»
+- Übrige Kriterien: siehe Feature-Datei
+
 ## Änderungen
 
 - Chore Projekt-Review: Fehlervertrag, fehlende Szenarien, Formular — `spec/changes/chore-review-massnahmen/delta.md`
 - #5: PI anlegen: Antwort mit Iterationen und `Location` — `spec/changes/5-iterationen-festlegen/delta.md`
+- #50: Nacharbeiten aus dem Playwright-Test — `spec/changes/50-nacharbeiten-playwright/delta.md`

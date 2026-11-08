@@ -17,5 +17,20 @@ export const routes: Routes = [
       ),
     title: 'Program Increment – PIkel',
   },
+  {
+    path: 'program-increments/:id/board',
+    loadComponent: () =>
+      import('./features/program-board/program-board.component').then(
+        (m) => m.ProgramBoardComponent,
+      ),
+    title: 'Program Board – PIkel',
+    // Das Board braucht alle Iterationen nebeneinander, App lässt dafür die Lesebreite weg (US-12).
+    data: { fullWidth: true },
+  },
+  {
+    path: 'teams',
+    loadComponent: () => import('./features/teams/teams.component').then((m) => m.TeamsComponent),
+    title: 'Teams – PIkel',
+  },
   { path: '**', redirectTo: '' },
 ];

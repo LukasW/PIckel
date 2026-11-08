@@ -1,6 +1,6 @@
 # Delta US-15 — Milestones auf dem Board (Issue #15)
 
-Story: `spec/user-stories/15-milestones.md` (neu) · Status: entwurf
+Story: `spec/user-stories/15-milestones.md` (neu) · Status: eingepflegt
 
 ## Warum
 
@@ -50,6 +50,12 @@ Releases, Messen oder Audits legen Termine fest, um die herum die Teams planen. 
 - **Und** im PI "PI 27.1" der Milestone "Release 4.0" am "2027-02-10"
 - **Wenn** ich den Milestone "Release 4.0" lösche
 - **Dann** hat das Board von "PI 27.1" keine Milestones
+
+### Szenario: Unbekannter Milestone wird nicht gefunden
+Im Nachtlauf ergänzt: ADR 0003 verlangt für jede neue Fehlerart ein `CucumberIT`-Szenario mit der Meldung.
+- **Gegeben sei** das PI "PI 27.1" vom "2027-01-04" bis "2027-03-26" mit Iterationen zu 2 Wochen
+- **Wenn** ich im PI "PI 27.1" einen unbekannten Milestone lösche
+- **Dann** antwortet der Server mit 404 und der Meldung "Den Milestone gibt es nicht."
 
 ## Geändert
 

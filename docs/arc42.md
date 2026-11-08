@@ -9,7 +9,7 @@ jede Regel hat genau einen Ort:
 |-------|-----|
 | Fachbegriffe, Datenmodell, REST-API | [`spec/fachliche-spezifikation.md`](../spec/fachliche-spezifikation.md) |
 | Einzelne Änderungen mit Akzeptanzkriterien | [`spec/user-stories/`](../spec/user-stories/), Szenarien unter `src/test/resources/features/` |
-| Tech Stack, Schichten, Testpyramide, Code-Regeln, Sprache | [`CLAUDE.md`](../CLAUDE.md), [`.claude/rules/`](../.claude/rules/) |
+| Tech Stack, Schichten, Testpyramide, Code-Regeln, Sprache (gilt für Claude Code und Copilot CLI, ADR 0007) | [`CLAUDE.md`](../CLAUDE.md), [`.claude/rules/`](../.claude/rules/) |
 | Entscheide | [`docs/adr/`](adr/) |
 | Ablauf, Build, Definition of Done | [`.claude/flow.md`](../.claude/flow.md) |
 
@@ -46,7 +46,7 @@ Heute umgesetzt ist ein Durchstich durch alle Schichten: **Program Increment anl
 | Product Owner / Product Management | Features ins PI bringen und priorisieren (WSJF) |
 | Business Owner | PI Objectives der Teams mit Business Value bewerten |
 | Agile Teams | Features auf Iterationen planen, Abhängigkeiten und PI Objectives erfassen, im Confidence Vote abstimmen |
-| Entwicklung (Lukas, Claude Code) | Klare Schichten, schneller Test-Loop, Regeln, die der Build prüft |
+| Entwicklung (Lukas, Claude Code, Copilot CLI) | Klare Schichten, schneller Test-Loop, Regeln, die der Build prüft |
 
 ## 2. Randbedingungen
 
@@ -222,6 +222,11 @@ unbekanntes PI in HTTP 404 mit demselben Körper (Vertrag:
 [ADR 0003](adr/0003-fehlervertrag.md)). Das Formular prüft Pflichtfelder und Länge nur, um früher zu melden. Die Datenbank sichert zusätzlich mit Constraints ab (`NOT NULL`, `CHECK (end_date > start_date)`,
 `CHECK (iteration_length_weeks BETWEEN 1 AND 4)`).
 
+Business-Kontext, PI Objectives des ART und Links gehören zum Aggregat PI ([ADR 0005](adr/0005-aggregatschnitt-mvp.md)):
+Änderungen laufen über das PI (`withBusinessContext`, `withLink`, `withoutLink`), der Adapter speichert den ganzen
+Stand samt Links (Tabelle `pi_link`, Reihenfolge über `position`). Ein Link lässt nur `http` und `https` zu, damit
+ein Link auf der Detailseite kein Skript ausführt; die Oberfläche öffnet ihn mit `rel="noopener noreferrer"`.
+
 Abgeleitetes wird berechnet, nicht gespeichert: Von den Iterationen eines PI speichert PIkel nur die Länge, die
 Domain berechnet daraus die Iterationen ([ADR 0006](adr/0006-kapazitaet-story-points.md)). Andere Objekte
 verweisen auf eine Iteration über PI und Nummer; das trägt, solange Länge und Zeitraum eines PI unveränderlich sind.
@@ -241,6 +246,9 @@ Fachliche Fehler → 400 mit Meldung in Du-Form; ein Mapping für technische Feh
 
 Services in `core/services` halten State als Signals; Regeln für Komponenten und Design-Tokens:
 [`.claude/rules/angular.md`](../.claude/rules/angular.md).
+
+Regeln, die dem optimistischen Einplanen sofort folgen müssen (Kapazität je Zelle, Konflikte von Abhängigkeiten),
+leitet `BoardService` als `computed` aus dem Board-Signal ab; die REST-API liefert sie nicht.
 
 ### Sicherheit
 

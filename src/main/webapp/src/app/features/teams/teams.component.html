@@ -1,0 +1,97 @@
+<h1 class="mb-4 text-2xl font-semibold">Teams</h1>
+
+<form
+  [formGroup]="form"
+  (ngSubmit)="submit()"
+  novalidate
+  class="mb-6 flex flex-col gap-3 rounded-lg border border-border bg-surface p-4 sm:flex-row sm:items-start"
+  aria-label="Neues Team erfassen"
+>
+  <label class="flex flex-1 flex-col gap-1 text-sm">
+    Name
+    <input
+      formControlName="name"
+      [attr.aria-invalid]="hasError('required') || hasError('maxlength')"
+      class="rounded border border-border bg-background px-2 py-1"
+    />
+    @if (hasError('required')) {
+      <span class="text-danger">Der Teamname darf nicht leer sein.</span>
+    }
+    @if (hasError('maxlength')) {
+      <span class="text-danger"
+        >Der Teamname darf höchstens {{ maxNameLength }} Zeichen lang sein.</span
+      >
+    }
+  </label>
+  <button type="submit" class="rounded bg-accent px-3 py-1.5 text-accent-foreground sm:mt-6">
+    Team erfassen
+  </button>
+</form>
+
+@if (service.error(); as error) {
+  <p role="alert" class="mb-4 text-danger">{{ error }}</p>
+}
+
+@if (service.loading()) {
+  <p class="text-muted">Lade …</p>
+} @else {
+  <ul class="divide-y divide-border rounded-lg border border-border bg-surface">
+    @for (team of service.teams(); track team.id) {
+      <li class="flex flex-wrap items-center gap-2 px-4 py-3" data-testid="team-row">
+        @if (editing() === team.id) {
+          <input
+            [formControl]="renameControl"
+            aria-label="Neuer Teamname"
+            [attr.aria-invalid]="renameControl.touched && renameControl.invalid"
+            class="flex-1 rounded border border-border bg-background px-2 py-1"
+          />
+          <button
+            type="button"
+            (click)="saveRename(team)"
+            class="rounded bg-accent px-3 py-1 text-sm text-accent-foreground"
+          >
+            Speichern
+          </button>
+          <button type="button" (click)="cancelRename()" class="text-sm text-muted">
+            Abbrechen
+          </button>
+          @if (renameControl.touched && renameControl.hasError('required')) {
+            <span class="w-full text-sm text-danger">Der Teamname darf nicht leer sein.</span>
+          }
+          @if (renameControl.touched && renameControl.hasError('maxlength')) {
+            <span class="w-full text-sm text-danger"
+              >Der Teamname darf höchstens {{ maxNameLength }} Zeichen lang sein.</span
+            >
+          }
+        } @else {
+          <span class="flex-1 font-medium">{{ team.name }}</span>
+          @if (confirmingRemoval() === team.id) {
+            <span class="text-sm"
+              >Wirklich entfernen? Seine eingeplanten Features gehen in allen PIs zurück ins
+              Backlog.</span
+            >
+            <button
+              type="button"
+              (click)="confirmRemoval(team)"
+              class="rounded border border-border px-3 py-1 text-sm text-danger"
+            >
+              Ja, entfernen
+            </button>
+            <button type="button" (click)="cancelRemoval()" class="text-sm text-muted">
+              Abbrechen
+            </button>
+          } @else {
+            <button type="button" (click)="startRename(team)" class="text-sm text-accent">
+              Umbenennen
+            </button>
+            <button type="button" (click)="askRemoval(team)" class="text-sm text-danger">
+              Entfernen
+            </button>
+          }
+        }
+      </li>
+    } @empty {
+      <li class="px-4 py-3 text-muted">Noch keine Teams. Erfasse das erste Team.</li>
+    }
+  </ul>
+}

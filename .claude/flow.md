@@ -84,7 +84,7 @@ als Commit-Status mit denselben Namen (ADR 0004):
 
 | Pflicht-Check | lokal |
 |---|---|
-| Secret-Scan (Gitleaks) | `gitleaks git` über die Commits des Branches (`brew install gitleaks`) |
+| Secret-Scan (Gitleaks) | `scripts/gitleaks.sh git` über die Commits des Branches (lädt das Binary über `gh`) |
 | Spec-Drift | `check-story-drift.sh`, ausser der PR trägt das Übersteuer-Label |
 | Unit Tests, Integration + Smoke | `scripts/gate.sh` (braucht Podman oder Docker) |
 
@@ -154,6 +154,35 @@ Zusätzlich zu den Fällen aus `.claude/flow/shared/stop-conditions.md` immer fr
 
 - eine Liquibase-Migration bringt, die bestehende Daten umschreibt oder löscht
 - Anmeldung, Sessions oder Rollen einführt oder ändert
+
+## Agent wechseln
+
+Jeder Schritt läuft mit Claude Code oder der Copilot CLI, gewechselt wird nur zwischen zwei Schritten (ADR 0007). Der
+Zustand liegt im Repository (Issue, Change-Ordner, Branch, Labels), nicht im Werkzeug. Claude Code bleibt die
+Referenz.
+
+| Skill | Claude Code | Copilot CLI | VS Code Agent-Modus |
+|-------|-------------|-------------|---------------------|
+| `flow-task` | ja | ja | nein (nicht gemessen) |
+| `flow-grill-me` | ja | ja | nein (nicht gemessen) |
+| `flow-plan` | ja | ja | nein (nicht gemessen) |
+| `flow-implement` | ja | nein (Subagenten) | nein |
+| `flow-fast` | ja | nein (Subagenten) | nein |
+| `flow-ship` | ja | ja | nein (nicht gemessen) |
+| `flow-fix-build` | ja | ja | nein (nicht gemessen) |
+| `flow-night-batch` | ja | nein (Nachtlauf nur mit Claude Code) | nein |
+
+Bedingungen für die Copilot CLI:
+
+- Vor dem ersten Schreibzugriff einer Session prüfen, dass die Hooks greifen: `/env` listet unter «Hooks» die
+  Einträge aus `.github/hooks/flow.json`, und `git push --dry-run origin HEAD:main` wird mit «Denied by preToolUse
+  hook: guard-push: …» abgelehnt. Sonst nicht weiterarbeiten
+- Im Prompt-Modus (`copilot -p`) lädt die CLI Repository-Hooks nur in einem vertrauten Ordner (`--trust-folder`)
+- Copilot liest `CLAUDE.md`, `.claude/rules/` und `.agents/skills/` selbst; die Hooks interaktiv aus
+  `.github/hooks/flow.json`, im Prompt-Modus zusätzlich aus `.claude/settings.json` (dieselben Skripte). Ob Copilot die Erlaubnis-Regeln aus `settings.json`
+  (`permissions`) beachtet, ist nicht gemessen; als Schutz zählen unter Copilot nur die Hooks. Das Leseverbot für
+  die Geheimnis-Datei setzt `guard-env` deshalb auch bei Lese- und Suchwerkzeugen durch (ausser bei einer Suche über
+  einen ganzen Ordner)
 
 ## Nachtlauf
 

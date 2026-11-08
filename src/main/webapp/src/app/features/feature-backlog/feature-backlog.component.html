@@ -1,0 +1,171 @@
+<h2 class="mb-2 mt-8 text-xl font-semibold">Backlog</h2>
+
+<form
+  [formGroup]="form"
+  (ngSubmit)="submit()"
+  novalidate
+  class="mb-6 grid gap-3 rounded-lg border border-border bg-surface p-4 sm:grid-cols-2"
+  aria-label="Neues Feature erfassen"
+>
+  <app-feature-fields [form]="form" [submitted]="submitted()" />
+  <div class="flex items-end gap-3">
+    <button type="submit" class="rounded bg-accent px-3 py-1.5 text-accent-foreground">
+      Feature erfassen
+    </button>
+  </div>
+</form>
+
+<p class="mb-2 text-sm text-muted">
+  CSV-Datei in UTF-8 mit Kopfzeile, getrennt durch Semikolon oder Komma. Spalten: Titel (Pflicht),
+  Beschreibung, WSJF-Rang, Owner, Schätzung.
+  <a
+    [href]="sampleCsvHref"
+    download="pikel-backlog-beispiel.csv"
+    class="ml-1 text-accent hover:underline"
+    >Beispieldatei herunterladen</a
+  >
+</p>
+<label class="mb-4 flex flex-col gap-1 text-sm">
+  CSV importieren
+  <input
+    type="file"
+    accept=".csv,text/csv"
+    (change)="importFile($event)"
+    class="rounded border border-border bg-background px-2 py-1"
+  />
+</label>
+
+@let count = service.imported();
+@if (count !== undefined) {
+  <p role="status" class="mb-4 text-foreground">
+    {{ count === 1 ? '1 Feature importiert.' : count + ' Features importiert.' }}
+  </p>
+}
+
+@if (service.error(); as error) {
+  <p role="alert" class="mb-4 text-danger">{{ error }}</p>
+}
+<!-- Meldungen von Erfassen und Entfernen stehen in der Zeile (US-16); hier nur ein gescheitertes Laden. -->
+@if (dependencies.error(); as error) {
+  @if (!dependencyError()) {
+    <p role="alert" class="mb-4 text-danger">{{ error }}</p>
+  }
+}
+
+@if (service.loading()) {
+  <p class="text-muted">Lade …</p>
+} @else {
+  <ul class="divide-y divide-border rounded-lg border border-border bg-surface">
+    @for (feature of service.features(); track feature.id) {
+      <li class="flex flex-wrap items-center gap-3 px-4 py-3" data-testid="feature-row">
+        @if (editing() === feature.id) {
+          <form
+            [formGroup]="editForm"
+            (ngSubmit)="saveEdit()"
+            novalidate
+            class="grid w-full gap-3 sm:grid-cols-2"
+            aria-label="Feature bearbeiten"
+          >
+            <app-feature-fields [form]="editForm" [submitted]="editSubmitted()" />
+            <div class="flex items-end gap-3">
+              <button type="submit" class="rounded bg-accent px-3 py-1.5 text-accent-foreground">
+                Speichern
+              </button>
+              <button type="button" (click)="cancelEdit()" class="text-sm text-muted">
+                Abbrechen
+              </button>
+            </div>
+          </form>
+        } @else {
+          <span class="w-10 text-sm text-muted">
+            @if (feature.wsjfRank !== undefined && feature.wsjfRank !== null) {
+              #{{ feature.wsjfRank }}
+            }
+          </span>
+          <span class="flex-1 font-medium">{{ feature.title }}</span>
+          @if (feature.owner) {
+            <span class="text-sm text-muted">{{ feature.owner }}</span>
+          }
+          @if (feature.estimate !== undefined && feature.estimate !== null) {
+            <span class="text-sm text-muted">{{ feature.estimate }} SP</span>
+          }
+          @if (confirmingRemoval() === feature.id) {
+            <span class="text-sm">Wirklich löschen?</span>
+            <button
+              type="button"
+              (click)="confirmRemoval(feature)"
+              class="rounded border border-border px-3 py-1 text-sm text-danger"
+            >
+              Wirklich löschen
+            </button>
+            <button type="button" (click)="cancelRemoval()" class="text-sm text-muted">
+              Abbrechen
+            </button>
+          } @else {
+            <button type="button" (click)="startEdit(feature)" class="text-sm text-accent">
+              Bearbeiten
+            </button>
+            <button type="button" (click)="askRemoval(feature)" class="text-sm text-danger">
+              Löschen
+            </button>
+          }
+        }
+        @let needed = featuresWithIds(dependencies.needs(feature.id));
+        @if (needed.length > 0) {
+          <p class="w-full text-sm" data-testid="needs">
+            Braucht:
+            @for (other of needed; track other.id) {
+              <span class="ml-2">{{ other.title }}</span>
+              <button
+                type="button"
+                (click)="removeDependency(feature, other)"
+                [attr.aria-label]="'Abhängigkeit zu ' + other.title + ' entfernen'"
+                class="ml-1 text-danger"
+              >
+                Entfernen
+              </button>
+            }
+          </p>
+        }
+        @let neededBy = featuresWithIds(dependencies.neededBy(feature.id));
+        @if (neededBy.length > 0) {
+          <p class="w-full text-sm text-muted" data-testid="needed-by">
+            Wird gebraucht von:
+            @for (other of neededBy; track other.id) {
+              <span class="ml-2">{{ other.title }}</span>
+            }
+          </p>
+        }
+        <div class="flex w-full items-center gap-2 text-sm">
+          <select
+            #neededSelect
+            aria-label="Braucht Feature"
+            (change)="chooseNeeded(feature, neededSelect.value)"
+            class="rounded border border-border bg-background px-2 py-1"
+          >
+            <option value="" selected>Feature wählen …</option>
+            @for (other of candidatesFor(feature); track other.id) {
+              <option [value]="other.id">{{ other.title }}</option>
+            }
+          </select>
+          <button
+            type="button"
+            (click)="addDependency(feature, neededSelect)"
+            [disabled]="!neededChoice(feature)"
+            class="text-accent disabled:text-muted"
+          >
+            Abhängigkeit hinzufügen
+          </button>
+        </div>
+        @let rowError = dependencyError();
+        @if (rowError?.featureId === feature.id) {
+          <p role="alert" class="w-full text-sm text-danger">{{ rowError?.message }}</p>
+        }
+      </li>
+    } @empty {
+      <li class="px-4 py-3 text-muted">
+        Noch keine Features. Erfasse das erste Feature oder importiere eine CSV-Datei.
+      </li>
+    }
+  </ul>
+}

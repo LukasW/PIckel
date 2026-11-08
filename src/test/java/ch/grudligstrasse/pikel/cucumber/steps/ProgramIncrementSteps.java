@@ -9,6 +9,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 
+import ch.grudligstrasse.pikel.adapter.out.persistence.FeatureRepositoryAdapter;
 import ch.grudligstrasse.pikel.adapter.out.persistence.ProgramIncrementRepositoryAdapter;
 import io.cucumber.java.de.Dann;
 import io.cucumber.java.de.Gegebensei;
@@ -17,6 +18,7 @@ import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import jakarta.inject.Inject;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 
@@ -27,18 +29,38 @@ public class ProgramIncrementSteps {
     @Inject
     ProgramIncrementRepositoryAdapter repository;
 
+    // Die Features (US-9) werden im PI erfasst und brauchen dessen ID.
+    @Inject
+    ScenarioContext context;
+
     private Response response;
+    private String addedLinkUrl;
+
+    @Inject
+    FeatureRepositoryAdapter features;
 
     // Szenarien teilen sich die Datenbank; ohne Leeren hängen Sortierung und Leerzustand von der Reihenfolge ab.
+    // Features zuerst: Sie verweisen per Fremdschlüssel auf ihr PI (US-9).
     @Gegebensei("eine leere Liste der PIs")
     public void eineLeereListe() {
-        QuarkusTransaction.requiringNew().run(repository::deleteAll);
+        QuarkusTransaction.requiringNew().run(() -> {
+            features.deleteAll();
+            repository.deleteAll();
+        });
     }
 
     @Gegebensei("das PI {string} vom {string} bis {string}")
     public void dasPiExistiert(String name, String start, String end) {
         ichDasPiAnlege(name, start, end);
-        response.then().statusCode(201);
+        String id = response.then().statusCode(201).extract().path("id");
+        context.programIncrementCreated(name, id);
+    }
+
+    @Gegebensei("das PI {string} vom {string} bis {string} mit Iterationen zu {int} Wochen")
+    public void dasPiMitIterationslaengeExistiert(String name, String start, String end, int weeks) {
+        ichDasPiMitIterationslaengeAnlege(name, start, end, weeks);
+        String id = response.then().statusCode(201).extract().path("id");
+        context.programIncrementCreated(name, id);
     }
 
     @Wenn("ich das PI {string} vom {string} bis {string} anlege")
@@ -134,6 +156,108 @@ public class ProgramIncrementSteps {
     @Dann("wird die Abfrage mit dem Status {int} und der Meldung {string} abgelehnt")
     public void wirdDieAbfrageAbgelehnt(int status, String message) {
         response.then().statusCode(status).contentType(ContentType.JSON).body("message", is(message));
+    }
+
+    // US-8
+
+    @Wenn("ich für {string} den Business-Kontext {string} erfasse")
+    public void ichDenBusinessKontextErfasse(String name, String businessContext) {
+        response = given().contentType(ContentType.JSON)
+                .body(Map.of("businessContext", businessContext, "artObjectives", ""))
+                .put(PATH + "/" + idOf(name) + "/business-context");
+    }
+
+    @Wenn("ich für {string} den Link {string} mit der URL {string} hinzufüge")
+    public void ichDenLinkHinzufuege(String name, String title, String url) {
+        addedLinkUrl = url;
+        response = given().contentType(ContentType.JSON)
+                .body(Map.of("title", title, "url", url))
+                .post(PATH + "/" + idOf(name) + "/links");
+    }
+
+    // Prüft Antwort und gespeicherten Stand: Das PUT liefert das ganze PI, GET /{id} zeigt, dass es gespeichert ist.
+    @Dann("zeigt {string} den Business-Kontext {string}")
+    public void zeigtDenBusinessKontext(String name, String businessContext) {
+        response.then().statusCode(200).body("name", is(name)).body("businessContext", is(businessContext));
+        given().get(PATH + "/" + idOf(name))
+                .then()
+                .statusCode(200)
+                .body("businessContext", is(businessContext))
+                .body("artObjectives", is(""));
+    }
+
+    @Dann("zeigt {string} den Link {string}")
+    public void zeigtDenLink(String name, String title) {
+        response.then().statusCode(200).body("links.title", contains(title));
+        given().get(PATH + "/" + idOf(name))
+                .then()
+                .statusCode(200)
+                .body("links.title", contains(title))
+                .body("links[0].id", notNullValue())
+                .body("links[0].url", is(addedLinkUrl));
+    }
+
+    // Prüft auch den gespeicherten Stand: Ein abgelehnter Link darf nicht doch am PI hängen.
+    @Dann("wird das Hinzufügen mit der Meldung {string} abgelehnt")
+    public void wirdDasHinzufuegenAbgelehnt(String message) {
+        response.then().statusCode(400).contentType(ContentType.JSON).body("message", is(message));
+        given().get(PATH + "/" + onlyProgramIncrementId())
+                .then()
+                .statusCode(200)
+                .body("links", hasSize(0));
+    }
+
+    @Gegebensei("für {string} ist der Business-Kontext {string} erfasst")
+    public void istDerBusinessKontextErfasst(String name, String businessContext) {
+        ichDenBusinessKontextErfasse(name, businessContext);
+        response.then().statusCode(200);
+    }
+
+    @Gegebensei("für {string} sind die Links {string} und {string} erfasst")
+    public void sindDieLinksErfasst(String name, String firstTitle, String secondTitle) {
+        for (String title : new String[] {firstTitle, secondTitle}) {
+            ichDenLinkHinzufuege(name, title, "https://wiki.example.ch/" + title.toLowerCase(Locale.ROOT));
+            response.then().statusCode(200);
+        }
+    }
+
+    @Wenn("ich für {string} den Link {string} entferne")
+    public void ichDenLinkEntferne(String name, String title) {
+        String id = idOf(name);
+        String linkId = given().get(PATH + "/" + id)
+                .then()
+                .statusCode(200)
+                .extract()
+                .jsonPath()
+                .param("title", title)
+                .getString("links.find { it.title == title }.id");
+        response = given().delete(PATH + "/" + id + "/links/" + linkId);
+    }
+
+    // Prüft den gespeicherten Stand: Der entfernte Link darf in der Datenbank nicht übrig bleiben.
+    @Dann("zeigt {string} nur noch den Link {string}")
+    public void zeigtNurNochDenLink(String name, String title) {
+        response.then().statusCode(200).body("links.title", contains(title));
+        given().get(PATH + "/" + idOf(name)).then().statusCode(200).body("links.title", contains(title));
+    }
+
+    private String idOf(String name) {
+        return given().get(PATH)
+                .then()
+                .statusCode(200)
+                .extract()
+                .jsonPath()
+                .param("name", name)
+                .getString("find { it.name == name }.id");
+    }
+
+    private String onlyProgramIncrementId() {
+        return given().get(PATH)
+                .then()
+                .statusCode(200)
+                .body("$", hasSize(1))
+                .extract()
+                .path("[0].id");
     }
 
     private Response storedProgramIncrement() {
