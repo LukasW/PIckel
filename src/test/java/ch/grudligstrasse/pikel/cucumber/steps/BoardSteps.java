@@ -1,6 +1,7 @@
 package ch.grudligstrasse.pikel.cucumber.steps;
 
 import static io.restassured.RestAssured.given;
+import static io.restassured.RestAssured.withArgs;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasItem;
@@ -49,6 +50,15 @@ public class BoardSteps {
                 .body("iterations", hasSize(count))
                 .body("iterations[-1].name", is(last))
                 .body("iterations[-1].innovationAndPlanning", is(true));
+    }
+
+    // US-17: Die Richtung zählt; vom brauchenden Feature aus genau diese eine Lieferung.
+    @Dann("liefert das Board die Abhängigkeit {string} braucht {string}")
+    public void liefertDasBoardDieAbhaengigkeit(String needing, String needed) {
+        ok().then()
+                .body(
+                        "dependencies.findAll { it.needingFeatureId == '%s' }.neededFeatureId",
+                        withArgs(context.featureId(needing)), contains(context.featureId(needed)));
     }
 
     // Liest das Board des PI, zu dem das Feature gehört, frisch: Nach einer Änderung (US-13: zurück ins Backlog, Team

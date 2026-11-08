@@ -12,7 +12,8 @@ Als Teilnehmerin oder Teilnehmer des PI Planning möchte ich festhalten, dass ei
 Abhängigkeiten zwischen Teams im Planning erfasst sind und nicht im Kopf einzelner Personen.
 
 Feature A **braucht** Feature B; B ist die Lieferung, A der Bedarf. Der Zeitpunkt ergibt sich aus der Einplanung
-beider Features, es gibt kein eigenes Datum. Die Linie auf dem Board folgt mit #17.
+beider Features, es gibt kein eigenes Datum. Die Linie auf dem Board beschreibt
+[US-17](17-abhaengigkeit-linie.md).
 
 ## Akzeptanzkriterien
 

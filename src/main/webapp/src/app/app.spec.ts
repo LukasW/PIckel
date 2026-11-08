@@ -33,6 +33,7 @@ const EMPTY_BOARD: Board = {
   scheduled: [],
   milestones: [],
   capacities: [],
+  dependencies: [],
 };
 
 /**

@@ -1,4 +1,5 @@
 import { Capacity } from './capacity.model';
+import { FeatureDependency } from './feature-dependency.model';
 import { Feature } from './feature.model';
 import { BoardMilestone } from './milestone.model';
 import { Iteration } from './program-increment.model';
@@ -15,6 +16,14 @@ export interface Board {
   readonly milestones: readonly BoardMilestone[];
   /** Verfügbare Kapazität je Team und Entwicklungs-Iteration (ohne Eintrag 0); keine für die IP-Iteration. */
   readonly capacities: readonly Capacity[];
+  /** Alle Abhängigkeiten des PI (US-17); welche eine Linie bekommt, leitet der `BoardService` ab. */
+  readonly dependencies: readonly FeatureDependency[];
+}
+
+/** Eine Linie auf dem Board: von der liefernden zur brauchenden Karte (US-17). */
+export interface DependencyLink {
+  readonly neededFeatureId: string;
+  readonly needingFeatureId: string;
 }
 
 /** Last einer Zelle Team × Iteration in Story Points; `overloaded`, wenn geplant grösser als verfügbar ist. */

@@ -56,7 +56,15 @@ function board(
   backlog: Feature[] = [PORTAL, LOGIN],
   milestones: BoardMilestone[] = [],
 ): Board {
-  return { teams, iterations: ITERATIONS, backlog, scheduled: [], milestones, capacities: [] };
+  return {
+    teams,
+    iterations: ITERATIONS,
+    backlog,
+    scheduled: [],
+    milestones,
+    capacities: [],
+    dependencies: [],
+  };
 }
 
 // Milestones in PI 27.1 (US-15); `iterationNumber` liefert der Server.
@@ -378,6 +386,7 @@ describe('ProgramBoardComponent', () => {
         scheduled,
         milestones: [],
         capacities: [],
+        dependencies: [],
       };
     }
 
@@ -659,6 +668,7 @@ describe('ProgramBoardComponent', () => {
         scheduled,
         milestones: [],
         capacities,
+        dependencies: [],
       };
     }
 
@@ -812,5 +822,270 @@ describe('ProgramBoardComponent', () => {
       expect(loadShown(cell(el, 'Adler', 2))).toBe('0 / 10 SP');
       expect(repository.get).toHaveBeenCalledTimes(1);
     });
+  });
+
+  // --- US-17: Abhängigkeiten als Linie ---
+
+  /**
+   * Vertrag mit der Vorlage (US-17): Über dem Raster liegt ein `<svg aria-hidden="true">` mit einem `<path>` je
+   * Linie; `data-from` ist die ID der liefernden, `data-to` die der brauchenden Karte, `data-emphasis` ist
+   * `normal`, `highlighted` oder `dimmed`, der Pfeil hängt als `marker-end` an einem `<marker>`. Jede Karte trägt
+   * `data-feature-id`; `mouseenter`/`mouseleave`/`focusin`/`focusout` an ihrem `li` setzen den Fokus.
+   *
+   * jsdom misst jede Karte 0 × 0. Geprüft wird darum, welche Linien da sind und wie sie markiert sind, nicht wo.
+   * Annahme: Eine 0 × 0 gemessene Karte gilt als gemessen, die Linie erscheint also auch in jsdom.
+   */
+  describe('Abhängigkeiten (US-17)', () => {
+    let fixture: ComponentFixture<ProgramBoardComponent>;
+    let schedule: ReturnType<typeof vi.fn>;
+
+    // Szenarien: Portal bei Adler in Iteration 3, Login bei Zebra in Iteration 2, Suche bei Zebra in Iteration 1.
+    const PORTAL_PLANNED: Feature = { ...PORTAL, scheduled: true, teamId: 'a', iterationNumber: 3 };
+    const LOGIN_PLANNED: Feature = { ...LOGIN, scheduled: true, teamId: 'z', iterationNumber: 2 };
+    const SUCHE_PLANNED: Feature = {
+      ...feature('f3', 'Suche', 3, 5),
+      scheduled: true,
+      teamId: 'z',
+      iterationNumber: 1,
+    };
+    const PORTAL_NEEDS_LOGIN = { needingFeatureId: 'f1', neededFeatureId: 'f2' };
+    const SUCHE_NEEDS_LOGIN = { needingFeatureId: 'f3', neededFeatureId: 'f2' };
+
+    function withDependencies(
+      backlog: Feature[],
+      scheduled: Feature[],
+      dependencies: Board['dependencies'],
+    ): Board {
+      return {
+        teams: [ADLER, ZEBRA],
+        iterations: ITERATIONS,
+        backlog,
+        scheduled,
+        milestones: [],
+        capacities: [],
+        dependencies,
+      };
+    }
+
+    async function settle(): Promise<void> {
+      // Die Messung läuft nach dem Rendern und löst ein zweites Rendern aus.
+      await fixture.whenStable();
+      await fixture.whenStable();
+    }
+
+    async function show(answer: Board): Promise<HTMLElement> {
+      repository = { get: vi.fn().mockResolvedValue(answer) };
+      schedule = vi.fn();
+      TestBed.configureTestingModule({
+        imports: [ProgramBoardComponent],
+        providers: [
+          provideRouter([]),
+          { provide: BoardRepository, useValue: repository },
+          { provide: FeaturesRepository, useValue: { schedule, unschedule: vi.fn() } },
+        ],
+      });
+      fixture = TestBed.createComponent(ProgramBoardComponent);
+      fixture.componentRef.setInput('id', 'pi-7');
+      await settle();
+      return fixture.nativeElement as HTMLElement;
+    }
+
+    function lineElements(el: HTMLElement): SVGPathElement[] {
+      return Array.from(el.querySelectorAll<SVGPathElement>('svg path[data-from]'));
+    }
+
+    /** Die Linien als «liefernd->brauchend», sortiert. */
+    function lines(el: HTMLElement): string[] {
+      return lineElements(el)
+        .map((p) => `${p.getAttribute('data-from')}->${p.getAttribute('data-to')}`)
+        .sort();
+    }
+
+    function emphasis(el: HTMLElement, from: string, to: string): string | null {
+      const found = lineElements(el).find(
+        (p) => p.getAttribute('data-from') === from && p.getAttribute('data-to') === to,
+      );
+      expect(found, `Linie ${from} → ${to}`).toBeDefined();
+      return found!.getAttribute('data-emphasis');
+    }
+
+    /** Das `li` der Karte, an dem Hover und Fokus hängen. */
+    function itemOf(el: HTMLElement, featureId: string): HTMLElement {
+      const card = el.querySelector<HTMLElement>(`[data-feature-id="${featureId}"]`);
+      expect(card, `Karte mit data-feature-id «${featureId}»`).not.toBeNull();
+      const item = card!.closest('li');
+      expect(item, `li der Karte «${featureId}»`).not.toBeNull();
+      return item!;
+    }
+
+    function cardText(el: HTMLElement, title: string): string {
+      const found = Array.from(el.querySelectorAll<HTMLElement>('app-board-card')).find((c) =>
+        (c.querySelector('[data-testid="feature-card"]')?.textContent ?? '').includes(title),
+      );
+      expect(found, `Karte «${title}»`).toBeDefined();
+      return (found!.textContent ?? '').replace(/\s+/g, ' ').trim();
+    }
+
+    it('zieht eine Linie von Login zu Portal, wenn beide eingeplant sind (US-17)', async () => {
+      const el = await show(
+        withDependencies([], [LOGIN_PLANNED, PORTAL_PLANNED], [PORTAL_NEEDS_LOGIN]),
+      );
+
+      expect(lines(el)).toEqual(['f2->f1']);
+    });
+
+    it('zeichnet die Linie mit einem Pfeil und verbirgt die Linien vor Screenreadern (US-17)', async () => {
+      const el = await show(
+        withDependencies([], [LOGIN_PLANNED, PORTAL_PLANNED], [PORTAL_NEEDS_LOGIN]),
+      );
+
+      const line = lineElements(el)[0];
+      expect(line, 'Linie').toBeDefined();
+      const marker = /^url\(#(.+)\)$/.exec(line.getAttribute('marker-end') ?? '');
+      expect(marker, 'marker-end als url(#…)').not.toBeNull();
+      expect(el.querySelector(`marker[id="${marker![1]}"]`), 'Pfeil-Marker').not.toBeNull();
+      expect(line.closest('svg')!.getAttribute('aria-hidden')).toBe('true');
+    });
+
+    it('zieht keine Linie und zeigt an beiden Karten 1 Abhängigkeit, wenn Login im Backlog liegt (US-17)', async () => {
+      const el = await show(withDependencies([LOGIN], [PORTAL_PLANNED], [PORTAL_NEEDS_LOGIN]));
+
+      expect(lines(el)).toEqual([]);
+      expect(cardText(el, 'Login')).toContain('1 Abhängigkeit');
+      expect(cardText(el, 'Portal')).toContain('1 Abhängigkeit');
+    });
+
+    it('zeigt keine Anzahl an Karten, deren Abhängigkeiten alle eine Linie haben (US-17)', async () => {
+      const el = await show(
+        withDependencies([], [LOGIN_PLANNED, PORTAL_PLANNED], [PORTAL_NEEDS_LOGIN]),
+      );
+
+      expect(cardText(el, 'Login')).not.toContain('Abhängigkeit');
+      expect(cardText(el, 'Portal')).not.toContain('Abhängigkeit');
+    });
+
+    it('zeigt ohne Hover und Fokus alle Linien normal (US-17)', async () => {
+      const el = await show(
+        withDependencies(
+          [],
+          [LOGIN_PLANNED, PORTAL_PLANNED, SUCHE_PLANNED],
+          [PORTAL_NEEDS_LOGIN, SUCHE_NEEDS_LOGIN],
+        ),
+      );
+
+      expect(lines(el)).toEqual(['f2->f1', 'f2->f3']);
+      expect(emphasis(el, 'f2', 'f1')).toBe('normal');
+      expect(emphasis(el, 'f2', 'f3')).toBe('normal');
+    });
+
+    it('hebt bei Hover auf Suche die Linie Login → Suche hervor und blendet Login → Portal ab (US-17)', async () => {
+      const el = await show(
+        withDependencies(
+          [],
+          [LOGIN_PLANNED, PORTAL_PLANNED, SUCHE_PLANNED],
+          [PORTAL_NEEDS_LOGIN, SUCHE_NEEDS_LOGIN],
+        ),
+      );
+
+      itemOf(el, 'f3').dispatchEvent(new MouseEvent('mouseenter'));
+      await settle();
+
+      expect(emphasis(el, 'f2', 'f3')).toBe('highlighted');
+      expect(emphasis(el, 'f2', 'f1')).toBe('dimmed');
+
+      itemOf(el, 'f3').dispatchEvent(new MouseEvent('mouseleave'));
+      await settle();
+
+      expect(emphasis(el, 'f2', 'f3')).toBe('normal');
+      expect(emphasis(el, 'f2', 'f1')).toBe('normal');
+    });
+
+    it('hebt bei Tastaturfokus auf Suche dieselben Linien hervor wie Hover (US-17)', async () => {
+      const el = await show(
+        withDependencies(
+          [],
+          [LOGIN_PLANNED, PORTAL_PLANNED, SUCHE_PLANNED],
+          [PORTAL_NEEDS_LOGIN, SUCHE_NEEDS_LOGIN],
+        ),
+      );
+      const focusable = itemOf(el, 'f3').querySelector('button');
+      expect(focusable, 'Button in der Karte «Suche»').not.toBeNull();
+
+      focusable!.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+      await settle();
+
+      expect(emphasis(el, 'f2', 'f3')).toBe('highlighted');
+      expect(emphasis(el, 'f2', 'f1')).toBe('dimmed');
+
+      focusable!.dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
+      await settle();
+
+      expect(emphasis(el, 'f2', 'f3')).toBe('normal');
+      expect(emphasis(el, 'f2', 'f1')).toBe('normal');
+    });
+
+    it('behält die Hervorhebung, wenn der Fokus innerhalb derselben Karte weiterwandert (US-17)', async () => {
+      const el = await show(
+        withDependencies(
+          [],
+          [LOGIN_PLANNED, PORTAL_PLANNED, SUCHE_PLANNED],
+          [PORTAL_NEEDS_LOGIN, SUCHE_NEEDS_LOGIN],
+        ),
+      );
+      const suche = itemOf(el, 'f3');
+      const button = suche.querySelector('button')!;
+      const inside = document.createElement('input');
+      suche.appendChild(inside);
+
+      button.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+      button.dispatchEvent(new FocusEvent('focusout', { bubbles: true, relatedTarget: inside }));
+      await settle();
+
+      expect(emphasis(el, 'f2', 'f3')).toBe('highlighted');
+      expect(emphasis(el, 'f2', 'f1')).toBe('dimmed');
+
+      const elsewhere = itemOf(el, 'f1').querySelector('button')!;
+      button.dispatchEvent(new FocusEvent('focusout', { bubbles: true, relatedTarget: elsewhere }));
+      await settle();
+
+      expect(emphasis(el, 'f2', 'f3')).toBe('normal');
+    });
+
+    it('zieht nach dem Einplanen per Aktion die Linie, ohne das Board neu zu laden (US-17)', async () => {
+      const el = await show(withDependencies([LOGIN], [PORTAL_PLANNED], [PORTAL_NEEDS_LOGIN]));
+      schedule.mockResolvedValue(LOGIN_PLANNED);
+      const login = itemOf(el, 'f2');
+
+      buttonOf(login, 'Einplanen …').click();
+      await settle();
+      chooseIn(login, 'Team', 'Zebra');
+      chooseIn(login, 'Iteration', 'Iteration 2');
+      buttonOf(login, 'Einplanen').click();
+      await settle();
+
+      expect(schedule).toHaveBeenCalledWith('pi-7', 'f2', 'z', 2);
+      expect(lines(el)).toEqual(['f2->f1']);
+      expect(el.textContent).not.toContain('Abhängigkeit');
+      expect(repository.get).toHaveBeenCalledTimes(1);
+    });
+
+    function buttonOf(scope: Element, label: string): HTMLButtonElement {
+      const found = Array.from(scope.querySelectorAll('button')).find(
+        (b) => (b.textContent ?? '').replace(/\s+/g, ' ').trim() === label,
+      );
+      expect(found, `Button «${label}»`).toBeDefined();
+      return found!;
+    }
+
+    function chooseIn(scope: Element, label: string, option: string): void {
+      const field = Array.from(scope.querySelectorAll('select')).find(
+        (s) => (s.getAttribute('aria-label') ?? '') === label,
+      );
+      expect(field, `Auswahl «${label}»`).toBeDefined();
+      const found = Array.from(field!.options).find((o) => (o.textContent ?? '').trim() === option);
+      expect(found, `Option «${option}»`).toBeDefined();
+      field!.value = found!.value;
+      field!.dispatchEvent(new Event('change'));
+    }
   });
 });
