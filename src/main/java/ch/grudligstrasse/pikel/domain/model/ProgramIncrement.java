@@ -138,6 +138,18 @@ public record ProgramIncrement(
         return List.copyOf(iterations);
     }
 
+    /**
+     * Die Iteration, in deren Zeitraum das Datum liegt.
+     *
+     * @throws IllegalArgumentException wenn das Datum ausserhalb des PI liegt
+     */
+    public Iteration iterationOf(LocalDate date) {
+        return iterations().stream()
+                .filter(iteration -> !date.isBefore(iteration.startDate()) && !date.isAfter(iteration.endDate()))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Das Datum liegt ausserhalb des PI."));
+    }
+
     /** Anzahl Iterationen: Zeitraum inklusiv geteilt durch die Länge, aufgerundet; ein Rest wird zur kürzeren IP. */
     private static int iterationCount(LocalDate startDate, LocalDate endDate, int iterationLengthWeeks) {
         long days = ChronoUnit.DAYS.between(startDate, endDate) + 1;

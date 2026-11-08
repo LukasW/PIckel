@@ -1,0 +1,99 @@
+<section class="mt-8" aria-labelledby="milestones-heading">
+  <h2 id="milestones-heading" class="mb-3 text-xl font-semibold">Milestones</h2>
+
+  @if (service.error(); as error) {
+    <p role="alert" class="mb-4 text-danger">{{ error }}</p>
+  }
+
+  <ul class="mb-4 divide-y divide-border rounded-lg border border-border bg-surface">
+    @for (milestone of service.milestones(); track milestone.id) {
+      <li class="flex flex-wrap items-center gap-3 px-4 py-3" data-testid="milestone-row">
+        <span class="w-24 text-sm text-muted">{{ milestone.date | date: 'dd.MM.yyyy' }}</span>
+        <span class="flex-1 font-medium">{{ milestone.name }}</span>
+        @if (confirmingRemoval() === milestone.id) {
+          <span class="text-sm">Wirklich löschen?</span>
+          <button
+            type="button"
+            (click)="confirmRemoval(milestone)"
+            class="rounded border border-border px-3 py-1 text-sm text-danger"
+          >
+            Wirklich löschen
+          </button>
+          <button type="button" (click)="cancelRemoval()" class="text-sm text-muted">
+            Abbrechen
+          </button>
+        } @else {
+          <button type="button" (click)="startEdit(milestone)" class="text-sm text-accent">
+            Bearbeiten
+          </button>
+          <button type="button" (click)="askRemoval(milestone)" class="text-sm text-danger">
+            Löschen
+          </button>
+        }
+      </li>
+    } @empty {
+      <li class="px-4 py-3 text-muted">Noch keine Milestones.</li>
+    }
+  </ul>
+
+  @if (editing()) {
+    <form
+      [formGroup]="editForm"
+      (ngSubmit)="save()"
+      novalidate
+      class="mb-4 grid gap-3 rounded-lg border border-border bg-surface p-4 sm:grid-cols-4 sm:items-end"
+      aria-label="Milestone ändern"
+    >
+      <label class="flex flex-col gap-1 text-sm sm:col-span-2">
+        Name
+        <input
+          formControlName="name"
+          [maxlength]="maxNameLength"
+          class="rounded border border-border bg-background px-2 py-1"
+        />
+      </label>
+      <label class="flex flex-col gap-1 text-sm">
+        Datum
+        <input
+          type="date"
+          formControlName="date"
+          class="rounded border border-border bg-background px-2 py-1"
+        />
+      </label>
+      <div class="flex gap-2">
+        <button type="submit" class="rounded bg-accent px-3 py-1.5 text-accent-foreground">
+          Speichern
+        </button>
+        <button type="button" (click)="cancelEdit()" class="text-sm text-muted">Abbrechen</button>
+      </div>
+    </form>
+  }
+
+  <form
+    [formGroup]="addForm"
+    (ngSubmit)="add()"
+    novalidate
+    class="grid gap-3 rounded-lg border border-border bg-surface p-4 sm:grid-cols-4 sm:items-end"
+    aria-label="Milestone erfassen"
+  >
+    <label class="flex flex-col gap-1 text-sm sm:col-span-2">
+      Name
+      <input
+        formControlName="name"
+        [maxlength]="maxNameLength"
+        class="rounded border border-border bg-background px-2 py-1"
+      />
+    </label>
+    <label class="flex flex-col gap-1 text-sm">
+      Datum
+      <input
+        type="date"
+        formControlName="date"
+        class="rounded border border-border bg-background px-2 py-1"
+      />
+    </label>
+    <button type="submit" class="rounded bg-accent px-3 py-1.5 text-accent-foreground">
+      Milestone erfassen
+    </button>
+  </form>
+</section>

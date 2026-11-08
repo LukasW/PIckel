@@ -1,4 +1,5 @@
 import { Feature } from './feature.model';
+import { BoardMilestone } from './milestone.model';
 import { Iteration } from './program-increment.model';
 import { Team } from './team.model';
 
@@ -7,4 +8,6 @@ export interface Board {
   readonly teams: readonly Team[];
   readonly iterations: readonly Iteration[];
   readonly backlog: readonly Feature[];
+  /** Aufsteigend nach Datum; je ein Marker über der Iteration mit `iterationNumber`. */
+  readonly milestones: readonly BoardMilestone[];
 }

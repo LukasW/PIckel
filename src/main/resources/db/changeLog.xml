@@ -33,4 +33,8 @@
         <sqlFile path="db/migration/V7__create_feature_dependency.sql"/>
     </changeSet>
 
+    <changeSet id="8" author="pikel">
+        <sqlFile path="db/migration/V8__create_milestones.sql"/>
+    </changeSet>
+
 </databaseChangeLog>

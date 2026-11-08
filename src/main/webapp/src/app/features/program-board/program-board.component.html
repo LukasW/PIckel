@@ -52,6 +52,14 @@
                   class="min-w-40 border-l border-border px-3 py-2 font-medium"
                   [class.bg-background]="iteration.innovationAndPlanning"
                 >
+                  @for (milestone of milestonesIn(board, iteration.number); track milestone.id) {
+                    <span
+                      data-testid="milestone-marker"
+                      class="mb-1 block rounded border border-accent px-1.5 py-0.5 text-xs"
+                      ><span aria-hidden="true">◆</span> {{ milestone.name }}
+                      <span class="text-muted">{{ milestone.date | date: 'dd.MM.' }}</span></span
+                    >
+                  }
                   <span class="block">{{ iteration.name }}</span>
                   <span class="block text-xs text-muted"
                     >{{ iteration.startDate | date: 'dd.MM.' }} –

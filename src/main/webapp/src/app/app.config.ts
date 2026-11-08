@@ -18,6 +18,8 @@ import { CapacitiesRepository } from './core/ports/capacities.repository';
 import { CapacitiesHttpAdapter } from './core/api/capacities-http.adapter';
 import { BoardRepository } from './core/ports/board.repository';
 import { BoardHttpAdapter } from './core/api/board-http.adapter';
+import { MilestonesRepository } from './core/ports/milestones.repository';
+import { MilestonesHttpAdapter } from './core/api/milestones-http.adapter';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -31,5 +33,6 @@ export const appConfig: ApplicationConfig = {
     { provide: FeatureDependenciesRepository, useExisting: FeatureDependenciesHttpAdapter },
     { provide: CapacitiesRepository, useExisting: CapacitiesHttpAdapter },
     { provide: BoardRepository, useExisting: BoardHttpAdapter },
+    { provide: MilestonesRepository, useExisting: MilestonesHttpAdapter },
   ],
 };
