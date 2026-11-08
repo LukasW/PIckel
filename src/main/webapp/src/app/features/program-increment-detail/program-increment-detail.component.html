@@ -94,73 +94,107 @@
       <p class="mb-4 text-muted">Noch kein Business-Kontext erfasst.</p>
     }
 
-    <form
-      [formGroup]="contextForm"
-      (ngSubmit)="saveContext()"
-      novalidate
-      class="mb-4 grid gap-3 rounded-lg border border-border bg-surface p-4"
-      aria-label="Business-Kontext erfassen"
-    >
-      <label class="flex flex-col gap-1 text-sm">
-        Business-Kontext
-        <textarea
-          formControlName="businessContext"
-          rows="4"
-          [attr.aria-invalid]="tooLong('businessContext')"
-          class="rounded border border-border bg-background px-2 py-1"
-        ></textarea>
-        @if (tooLong('businessContext')) {
-          <span class="text-danger">Der Text darf höchstens 10 000 Zeichen lang sein.</span>
+    @if (!editingContext() || !addingLink()) {
+      <div class="mb-4 flex gap-3">
+        @if (!editingContext()) {
+          <button
+            type="button"
+            (click)="openContextForm()"
+            class="rounded border border-border px-3 py-1.5 text-sm"
+          >
+            {{ hasBusinessContext() ? 'Bearbeiten' : 'Erfassen' }}
+          </button>
         }
-      </label>
-      <label class="flex flex-col gap-1 text-sm">
-        PI Objectives des ART
-        <textarea
-          formControlName="artObjectives"
-          rows="4"
-          [attr.aria-invalid]="tooLong('artObjectives')"
-          class="rounded border border-border bg-background px-2 py-1"
-        ></textarea>
-        @if (tooLong('artObjectives')) {
-          <span class="text-danger">Der Text darf höchstens 10 000 Zeichen lang sein.</span>
+        @if (!addingLink()) {
+          <button
+            type="button"
+            (click)="openLinkForm()"
+            class="rounded border border-border px-3 py-1.5 text-sm"
+          >
+            Link hinzufügen
+          </button>
         }
-      </label>
-      <button
-        type="submit"
-        class="justify-self-start rounded bg-accent px-3 py-1.5 text-accent-foreground"
-      >
-        Speichern
-      </button>
-    </form>
+      </div>
+    }
 
-    <form
-      [formGroup]="linkForm"
-      (ngSubmit)="addLink()"
-      novalidate
-      class="grid gap-3 rounded-lg border border-border bg-surface p-4 sm:grid-cols-3 sm:items-end"
-      aria-label="Link hinzufügen"
-    >
-      <label class="flex flex-col gap-1 text-sm">
-        Titel
-        <input
-          formControlName="title"
-          maxlength="100"
-          class="rounded border border-border bg-background px-2 py-1"
-        />
-      </label>
-      <label class="flex flex-col gap-1 text-sm">
-        URL
-        <input
-          type="url"
-          formControlName="url"
-          placeholder="https://"
-          class="rounded border border-border bg-background px-2 py-1"
-        />
-      </label>
-      <button type="submit" class="rounded bg-accent px-3 py-1.5 text-accent-foreground">
-        Link hinzufügen
-      </button>
-    </form>
+    @if (editingContext()) {
+      <form
+        [formGroup]="contextForm"
+        (ngSubmit)="saveContext()"
+        novalidate
+        class="mb-4 grid gap-3 rounded-lg border border-border bg-surface p-4"
+        aria-label="Business-Kontext erfassen"
+      >
+        <label class="flex flex-col gap-1 text-sm">
+          Business-Kontext
+          <textarea
+            formControlName="businessContext"
+            rows="4"
+            [attr.aria-invalid]="tooLong('businessContext')"
+            class="rounded border border-border bg-background px-2 py-1"
+          ></textarea>
+          @if (tooLong('businessContext')) {
+            <span class="text-danger">Der Text darf höchstens 10 000 Zeichen lang sein.</span>
+          }
+        </label>
+        <label class="flex flex-col gap-1 text-sm">
+          PI Objectives des ART
+          <textarea
+            formControlName="artObjectives"
+            rows="4"
+            [attr.aria-invalid]="tooLong('artObjectives')"
+            class="rounded border border-border bg-background px-2 py-1"
+          ></textarea>
+          @if (tooLong('artObjectives')) {
+            <span class="text-danger">Der Text darf höchstens 10 000 Zeichen lang sein.</span>
+          }
+        </label>
+        <div class="flex items-center gap-3">
+          <button type="submit" class="rounded bg-accent px-3 py-1.5 text-accent-foreground">
+            Speichern
+          </button>
+          <button type="button" (click)="cancelContextForm()" class="text-sm text-muted">
+            Abbrechen
+          </button>
+        </div>
+      </form>
+    }
+
+    @if (addingLink()) {
+      <form
+        [formGroup]="linkForm"
+        (ngSubmit)="addLink()"
+        novalidate
+        class="grid gap-3 rounded-lg border border-border bg-surface p-4 sm:grid-cols-3 sm:items-end"
+        aria-label="Link hinzufügen"
+      >
+        <label class="flex flex-col gap-1 text-sm">
+          Titel
+          <input
+            formControlName="title"
+            maxlength="100"
+            class="rounded border border-border bg-background px-2 py-1"
+          />
+        </label>
+        <label class="flex flex-col gap-1 text-sm">
+          URL
+          <input
+            type="url"
+            formControlName="url"
+            placeholder="https://"
+            class="rounded border border-border bg-background px-2 py-1"
+          />
+        </label>
+        <div class="flex items-center gap-3">
+          <button type="submit" class="rounded bg-accent px-3 py-1.5 text-accent-foreground">
+            Hinzufügen
+          </button>
+          <button type="button" (click)="cancelLinkForm()" class="text-sm text-muted">
+            Abbrechen
+          </button>
+        </div>
+      </form>
+    }
   </section>
 
   <app-feature-backlog [programIncrementId]="pi.id" />

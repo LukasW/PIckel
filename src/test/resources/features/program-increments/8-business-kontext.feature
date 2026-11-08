@@ -43,3 +43,13 @@ Funktionalität: US-8 Business-Kontext und ART-Ziele am PI
     Gegeben sei das PI "PI 27.1" vom "2027-01-04" bis "2027-03-26"
     Wenn ich für "PI 27.1" einen Business-Kontext mit 10 001 Zeichen erfasse
     Dann wird das Erfassen mit der Meldung "Der Text darf höchstens 10 000 Zeichen lang sein." abgelehnt
+
+  # Vitest: src/main/webapp/src/app/features/program-increment-detail/program-increment-detail.component.spec.ts → ändert den Business-Kontext über «Bearbeiten» (US-8)
+  # Vitest: src/main/webapp/src/app/features/program-increment-detail/program-increment-detail.component.spec.ts → schliesst beim Abbrechen das Formular und verwirft die Eingabe (US-8)
+  @Unit
+  Szenario: Business-Kontext wird über Bearbeiten geändert
+    Gegeben sei ein PI mit dem Business-Kontext "Digitalisierung"
+    Wenn ich die Detailseite öffne
+    Dann steht "Digitalisierung" einmal auf der Seite und kein Eingabefeld dafür
+    Wenn ich "Bearbeiten" wähle, den Text ändere und speichere
+    Dann zeigt die Seite den neuen Text und das Formular ist wieder zu

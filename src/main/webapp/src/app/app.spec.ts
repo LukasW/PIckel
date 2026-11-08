@@ -118,6 +118,55 @@ describe('App', () => {
     return fixture.nativeElement.querySelector('main');
   }
 
+  /** Die Links der Kopfzeile mit sichtbarem Text und Ziel. */
+  function headerLinks(): { text: string; href: string | null }[] {
+    return Array.from(header().querySelectorAll('a')).map((a) => ({
+      text: (a.textContent ?? '').trim(),
+      href: a.getAttribute('href'),
+    }));
+  }
+
+  function headerLink(text: string): HTMLAnchorElement {
+    const found = Array.from(header().querySelectorAll('a')).filter(
+      (a) => (a.textContent ?? '').trim() === text,
+    );
+    expect(found, `Link «${text}» in der Kopfzeile`).toHaveLength(1);
+    return found[0];
+  }
+
+  // --- Delta US-1 (Issue #50): Kopfzeile verlinkt die PI-Übersicht ---
+
+  it('verlinkt in der Kopfzeile «Program Increments» auf die PI-Übersicht, neben «Teams» (US-1)', async () => {
+    await open('/teams');
+
+    expect(headerLinks()).toEqual(
+      expect.arrayContaining([
+        { text: 'Program Increments', href: '/' },
+        { text: 'Teams', href: '/teams' },
+      ]),
+    );
+  });
+
+  it('zeigt den Link «Program Increments» auf jeder Seite, auch auf Detailseite und Board (US-1)', async () => {
+    for (const url of ['/', '/program-increments/pi-7', '/program-increments/pi-7/board']) {
+      await open(url);
+
+      expect(router.url).toBe(url);
+      expect(headerLink('Program Increments').getAttribute('href'), `auf ${url}`).toBe('/');
+    }
+  });
+
+  it('führt über «Program Increments» in der Kopfzeile zur Liste der PIs (US-1)', async () => {
+    await open('/teams');
+    expect(content().textContent).not.toContain('PI 27.1');
+
+    headerLink('Program Increments').click();
+    await settle();
+
+    expect(router.url).toBe('/');
+    expect(content().textContent).toContain('PI 27.1');
+  });
+
   it('nutzt auf dem Board die volle Fensterbreite für Kopfzeile und Inhalt (US-12)', async () => {
     await open('/program-increments/pi-7/board');
 

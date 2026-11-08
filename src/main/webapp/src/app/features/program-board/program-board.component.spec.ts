@@ -345,6 +345,66 @@ describe('ProgramBoardComponent', () => {
     expect(rows(el)).toEqual([expect.stringContaining('Adler')]);
   });
 
+  // --- Delta US-12 (Issue #50): Überschrift der Team-Spalte, leeres Backlog ---
+
+  it('trägt in der ersten Spalte sichtbar die Überschrift «Team» (US-12)', async () => {
+    const el = await render(board([ADLER, ZEBRA]));
+
+    const first = grid(el)?.querySelector<HTMLElement>('thead th');
+    expect(first, 'erster Spaltenkopf').not.toBeNull();
+    expect((first!.textContent ?? '').trim()).toBe('Team');
+    // Sichtbar heisst: weder der Kopf noch ein Element darin ist nur für Screenreader.
+    expect(first!.classList).not.toContain('sr-only');
+    expect(first!.querySelector('.sr-only'), 'sr-only im Kopf «Team»').toBeNull();
+  });
+
+  /** Der Text des Backlogs ohne Überschrift, Leerraum zusammengefasst. */
+  function backlogText(el: HTMLElement): string {
+    return (el.querySelector('[data-testid="board-backlog"]')?.textContent ?? '')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  const ALL_SCHEDULED_HINT = 'Alle Features sind eingeplant.';
+  const NO_FEATURES_HINT = 'Noch keine Features.';
+
+  function withScheduled(scheduled: Feature[], backlog: Feature[]): Board {
+    return { ...board([ADLER, ZEBRA], backlog), scheduled };
+  }
+
+  const PORTAL_PLANNED: Feature = { ...PORTAL, scheduled: true, teamId: 'a', iterationNumber: 2 };
+
+  it('zeigt im leeren Backlog «Alle Features sind eingeplant.», wenn alle Features eingeplant sind (US-12)', async () => {
+    const el = await render(withScheduled([PORTAL_PLANNED], []), 'pi-8');
+
+    expect(backlogText(el)).toContain(ALL_SCHEDULED_HINT);
+    expect(backlogText(el)).not.toContain(NO_FEATURES_HINT);
+    expect(
+      el.querySelector('[data-testid="board-backlog"] a[href="/program-increments/pi-8"]'),
+      'Link zur Detailseite im Backlog',
+    ).toBeNull();
+  });
+
+  it('zeigt im leeren Backlog eines PI ohne Features «Noch keine Features.» mit Link zur Detailseite des PI (US-12)', async () => {
+    const el = await render(withScheduled([], []), 'pi-8');
+
+    expect(backlogText(el)).toContain(NO_FEATURES_HINT);
+    expect(backlogText(el)).not.toContain(ALL_SCHEDULED_HINT);
+    expect(
+      el.querySelector('[data-testid="board-backlog"] a[href="/program-increments/pi-8"]'),
+      'Link zur Detailseite im Backlog',
+    ).not.toBeNull();
+  });
+
+  // Nachbarzweig: Backlog nicht leer, obwohl auch Eingeplante da sind. Grün schon vor der Umsetzung.
+  it('zeigt bei Features im Backlog keinen der beiden Hinweise (US-12)', async () => {
+    const el = await render(withScheduled([PORTAL_PLANNED], [LOGIN]), 'pi-8');
+
+    expect(backlogText(el)).toContain('Login');
+    expect(backlogText(el)).not.toContain(ALL_SCHEDULED_HINT);
+    expect(backlogText(el)).not.toContain(NO_FEATURES_HINT);
+  });
+
   // --- US-13: Einplanen ---
 
   /**

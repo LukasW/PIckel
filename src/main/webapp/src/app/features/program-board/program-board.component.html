@@ -74,6 +74,18 @@
           </li>
         }
       </ul>
+      @if (board.backlog.length === 0) {
+        <p class="mt-2 text-sm text-muted">
+          @if (board.scheduled.length > 0) {
+            Alle Features sind eingeplant.
+          } @else {
+            Noch keine Features.
+            <a [routerLink]="['/program-increments', id()]" class="ml-1 text-accent hover:underline"
+              >Zum PI</a
+            >
+          }
+        </p>
+      }
     </section>
 
     @if (board.teams.length > 0) {
@@ -85,11 +97,9 @@
             data-testid="board-grid"
             class="w-full rounded-lg border border-border bg-surface text-left"
           >
-            <thead class="text-sm">
+            <thead class="border-b border-border text-sm">
               <tr>
-                <th scope="col" class="px-3 py-2 font-medium text-muted">
-                  <span class="sr-only">Team</span>
-                </th>
+                <th scope="col" class="px-3 py-2 font-medium text-muted">Team</th>
                 @for (iteration of board.iterations; track iteration.number) {
                   <th
                     scope="col"

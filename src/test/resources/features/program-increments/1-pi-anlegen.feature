@@ -68,3 +68,12 @@ Funktionalität: US-1 PI anlegen
     Gegeben sei das PI "PI 27.1" vom "2027-01-04" bis "2027-03-26"
     Wenn ich die Seite der PIs öffne
     Dann sehe ich "04.01.2027 – 26.03.2027"
+
+  # Vitest: src/main/webapp/src/app/app.spec.ts → führt über «Program Increments» in der Kopfzeile zur Liste der PIs (US-1)
+  # Vitest: src/main/webapp/src/app/app.spec.ts → zeigt den Link «Program Increments» auf jeder Seite, auch auf Detailseite und Board (US-1)
+  # Vitest: src/main/webapp/src/app/app.spec.ts → verlinkt in der Kopfzeile «Program Increments» auf die PI-Übersicht, neben «Teams» (US-1)
+  @Unit
+  Szenario: Kopfzeile führt zur PI-Übersicht
+    Gegeben sei eine beliebige Seite von PIkel
+    Wenn ich in der Kopfzeile "Program Increments" wähle
+    Dann sehe ich die Liste der PIs

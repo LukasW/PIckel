@@ -88,3 +88,14 @@ Funktionalität: US-10 Backlog nach WSJF-Rang bearbeiten
     Wenn ich das Feature "Login" im PI "PI 27.2" lösche
     Dann antwortet der Server mit 404 und der Meldung "Das Feature gibt es nicht."
     Und erscheint "Login" weiterhin im Backlog von "PI 27.1"
+
+  # Vitest: src/main/webapp/src/app/features/feature-backlog/feature-backlog.component.spec.ts → macht beim Bearbeiten die Zeile des Features zum Formular, das Erfassen bleibt leer (US-10)
+  # Vitest: src/main/webapp/src/app/features/feature-backlog/feature-backlog.component.spec.ts → zeigt nach dem Speichern die neuen Angaben in der Zeile des Features (US-10)
+  # Vitest: src/main/webapp/src/app/features/feature-backlog/feature-backlog.component.spec.ts → schliesst beim Bearbeiten eines zweiten Features das erste ohne zu speichern (US-10)
+  @Unit
+  Szenario: Feature wird in seiner Zeile bearbeitet
+    Gegeben sei das Backlog mit den Features "Login" und "Shop"
+    Wenn ich bei "Shop" "Bearbeiten" wähle
+    Dann wird die Zeile von "Shop" zum Formular mit seinen Angaben
+    Und das Formular zum Erfassen bleibt leer
+    Und nach "Speichern" zeigt die Zeile die neuen Angaben

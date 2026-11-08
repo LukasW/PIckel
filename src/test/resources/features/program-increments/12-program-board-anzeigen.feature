@@ -46,3 +46,25 @@ Funktionalität: US-12 Program Board anzeigen
     Wenn ich das Board des PI öffne
     Dann sind Kopfzeile und Inhalt nicht auf die Lesebreite der übrigen Seiten begrenzt
     Und auf der Liste der Program Increments sind sie es weiterhin
+
+  # Vitest: src/main/webapp/src/app/features/program-board/program-board.component.spec.ts → trägt in der ersten Spalte sichtbar die Überschrift «Team» (US-12)
+  @Unit
+  Szenario: Board zeigt die Überschrift der Team-Spalte
+    Gegeben sei das Board eines PI mit den Teams "Adler" und "Zebra"
+    Wenn ich das Board öffne
+    Dann trägt die erste Spalte die Überschrift "Team"
+
+  # Vitest: src/main/webapp/src/app/features/program-board/program-board.component.spec.ts → zeigt im leeren Backlog «Alle Features sind eingeplant.», wenn alle Features eingeplant sind (US-12)
+  # Vitest: src/main/webapp/src/app/features/program-board/program-board.component.spec.ts → zeigt bei Features im Backlog keinen der beiden Hinweise (US-12)
+  @Unit
+  Szenario: Leeres Backlog auf dem Board zeigt einen Hinweis
+    Gegeben sei das Board eines PI, dessen Features alle eingeplant sind
+    Wenn ich das Board öffne
+    Dann zeigt das Backlog "Alle Features sind eingeplant."
+
+  # Vitest: src/main/webapp/src/app/features/program-board/program-board.component.spec.ts → zeigt im leeren Backlog eines PI ohne Features «Noch keine Features.» mit Link zur Detailseite des PI (US-12)
+  @Unit
+  Szenario: Board ohne Features verweist auf die Detailseite
+    Gegeben sei das Board eines PI ohne Features
+    Wenn ich das Board öffne
+    Dann zeigt das Backlog "Noch keine Features." mit einem Link zur Detailseite des PI

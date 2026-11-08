@@ -50,6 +50,9 @@ export class ProgramIncrementDetailComponent implements OnInit {
 
   /** Feldfehler erst nach dem ersten Absenden zeigen, nicht schon beim Tippen. */
   protected readonly contextSubmitted = signal(false);
+  /** Die Formulare öffnen erst auf Knopfdruck, damit der Text nicht doppelt auf der Seite steht (US-8). */
+  protected readonly editingContext = signal(false);
+  protected readonly addingLink = signal(false);
 
   protected readonly contextForm = this.fb.nonNullable.group({
     businessContext: ['', Validators.maxLength(MAX_TEXT_LENGTH)],
@@ -62,7 +65,34 @@ export class ProgramIncrementDetailComponent implements OnInit {
   });
 
   async ngOnInit(): Promise<void> {
-    this.showWithContextForm(await this.service.get(this.id()));
+    const pi = await this.service.get(this.id());
+    if (pi) {
+      this.programIncrement.set(pi);
+    }
+  }
+
+  /** Öffnet das Kontext-Formular mit dem gespeicherten Stand; eine frühere Eingabe ist damit verworfen. */
+  protected openContextForm(): void {
+    const pi = this.programIncrement();
+    this.contextForm.reset({
+      businessContext: pi?.businessContext ?? '',
+      artObjectives: pi?.artObjectives ?? '',
+    });
+    this.contextSubmitted.set(false);
+    this.editingContext.set(true);
+  }
+
+  protected cancelContextForm(): void {
+    this.editingContext.set(false);
+  }
+
+  protected openLinkForm(): void {
+    this.linkForm.reset();
+    this.addingLink.set(true);
+  }
+
+  protected cancelLinkForm(): void {
+    this.addingLink.set(false);
   }
 
   protected tooLong(field: 'businessContext' | 'artObjectives'): boolean {
@@ -74,9 +104,15 @@ export class ProgramIncrementDetailComponent implements OnInit {
     if (this.contextForm.invalid) {
       return;
     }
-    this.showWithContextForm(
-      await this.service.updateBusinessContext(this.id(), this.contextForm.getRawValue()),
+    const updated = await this.service.updateBusinessContext(
+      this.id(),
+      this.contextForm.getRawValue(),
     );
+    // Bei einem Fehler bleibt das Formular mit der Eingabe offen.
+    if (updated) {
+      this.programIncrement.set(updated);
+      this.editingContext.set(false);
+    }
   }
 
   // Links ändern nur die Anzeige: Ungespeicherte Eingaben im Kontext-Formular bleiben erhalten.
@@ -87,7 +123,7 @@ export class ProgramIncrementDetailComponent implements OnInit {
     const updated = await this.service.addLink(this.id(), this.linkForm.getRawValue());
     if (updated) {
       this.programIncrement.set(updated);
-      this.linkForm.reset();
+      this.addingLink.set(false);
     }
   }
 
@@ -96,21 +132,5 @@ export class ProgramIncrementDetailComponent implements OnInit {
     if (updated) {
       this.programIncrement.set(updated);
     }
-  }
-
-  /**
-   * Zeigt ein geladenes oder gespeichertes PI und füllt das Kontext-Formular damit; bei einem Fehler bleibt das
-   * bisherige stehen.
-   */
-  private showWithContextForm(pi: ProgramIncrement | undefined): void {
-    if (!pi) {
-      return;
-    }
-    this.programIncrement.set(pi);
-    this.contextForm.reset({
-      businessContext: pi.businessContext,
-      artObjectives: pi.artObjectives,
-    });
-    this.contextSubmitted.set(false);
   }
 }

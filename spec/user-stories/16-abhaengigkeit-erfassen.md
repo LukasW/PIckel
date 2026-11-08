@@ -23,6 +23,10 @@ beider Features, es gibt kein eigenes Datum. Die Linie auf dem Board beschreibt
 3. Beim Feature sind die Abhängigkeiten in beide Richtungen sichtbar («braucht» und «wird gebraucht von»)
 4. Eine Abhängigkeit lässt sich entfernen
 5. Wird ein Feature gelöscht, verschwinden auch seine Abhängigkeiten
+6. Zur Wahl stehen nur Features, mit denen das Feature in keiner Richtung verbunden ist; ohne Wahl zeigt die Auswahl
+   «Feature wählen …», und «Abhängigkeit hinzufügen» ist nicht aktiv
+7. Lehnt der Server eine Abhängigkeit ab oder scheitert das Entfernen, steht die Meldung als Alarm in der Zeile des
+   Features, dessen Aktion scheiterte, und verschwindet mit der nächsten Aktion an Abhängigkeiten
 
 ## BDD-Szenarien
 
@@ -37,7 +41,10 @@ Siehe [`src/test/resources/features/features/16-abhaengigkeit-erfassen.feature`]
 | 3 Beide Richtungen sichtbar | CucumberIT «Abhängigkeit wird erfasst» (beide Richtungen über die Liste); Vitest `feature-dependencies.service.spec.ts` → «nennt die Features, die ein Feature braucht, …», «nennt die Features, die ein Feature brauchen, …»; `feature-backlog.component.spec.ts` → «zeigt beim Feature, welches Feature es braucht (US-16)», «zeigt beim gebrauchten Feature, von welchem Feature es gebraucht wird (US-16)», «zeigt bei einem Feature beide Richtungen getrennt (US-16)» |
 | 4 Abhängigkeit entfernen | `FeatureDependencyServiceTest` → `removeDeletesDependency`, `removeRejectsNeedingFeatureOfOtherProgramIncrementAsNotFound`; CucumberIT «Abhängigkeit wird entfernt»; Vitest → «entfernt eine Abhängigkeit und zeigt sie danach nicht mehr (US-16)», «entfernt nur die gewählte Abhängigkeit (US-16)» |
 | 5 Gelöschtes Feature nimmt Abhängigkeiten mit | CucumberIT «Gelöschtes Feature nimmt seine Abhängigkeiten mit», «Gelöschtes brauchendes Feature nimmt seine Abhängigkeiten mit»; Vitest → «lädt nach dem Löschen eines Features dessen Abhängigkeiten neu, sie verschwinden (US-16)» |
+| 6 Auswahl nur nicht verbundener Features | `@Unit` «Auswahl bietet nur noch nicht verbundene Features an»; Vitest `feature-backlog.component.spec.ts` → «bietet in der Auswahl nur Features an, mit denen das Feature in keiner Richtung verbunden ist (US-16)», «zeigt ohne Wahl den Platzhalter «Feature wählen …», «Abhängigkeit hinzufügen» ist nicht aktiv (US-16)», «sperrt «Abhängigkeit hinzufügen» wieder, wenn das gewählte Feature aus der Auswahl fällt (US-16)», «bietet je Feature die anderen Features des Backlogs zur Auswahl an (US-16)», «hält ohne Auswahl keine Abhängigkeit fest (US-16)» |
+| 7 Meldung in der Zeile | `@Unit` «Abgelehnte Abhängigkeit meldet sich beim Feature»; Vitest `feature-backlog.component.spec.ts` → «zeigt eine abgelehnte Abhängigkeit in der Zeile des Features, nicht über der Liste (US-16)», «lässt die Meldung verschwinden, sobald in einer anderen Zeile eine Abhängigkeit erfasst wird (US-16)», «lässt die Meldung verschwinden, sobald in einer anderen Zeile eine Abhängigkeit entfernt wird (US-16)», «ersetzt die Meldung, wenn die nächste Aktion in einer anderen Zeile ebenfalls scheitert (US-16)», «lässt die Meldung eines gescheiterten Entfernens bei der nächsten Aktion verschwinden (US-16)», «zeigt die Meldung des Servers als Alarm, wenn er die Abhängigkeit ablehnt (US-16)», «zeigt die Meldung des Servers als Alarm, wenn das Entfernen scheitert (US-16)» |
 
 ## Änderungen
 
 - #16: Abhängigkeit zwischen Features erfassen — `spec/changes/16-abhaengigkeit-erfassen/delta.md`
+- #50: Nacharbeiten aus dem Playwright-Test — `spec/changes/50-nacharbeiten-playwright/delta.md`
