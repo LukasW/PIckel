@@ -15,6 +15,9 @@ export class FeaturesService {
   readonly features = this.items.asReadonly();
   readonly loading = signal(false);
   readonly error = signal<string | undefined>(undefined);
+  private readonly importedCount = signal<number | undefined>(undefined);
+  /** Anzahl der Features des letzten erfolgreichen Imports; `undefined` vor dem ersten oder nach einem gescheiterten. */
+  readonly imported = this.importedCount.asReadonly();
 
   async load(programIncrementId: string): Promise<void> {
     this.loading.set(true);
@@ -47,6 +50,19 @@ export class FeaturesService {
     return this.changeAndReload(programIncrementId, () =>
       this.repository.remove(programIncrementId, id),
     );
+  }
+
+  /** Wie `add`: `true` bei Erfolg (dann steht die Anzahl in `imported`), sonst steht die Meldung in `error`. */
+  async importCsv(programIncrementId: string, csv: string): Promise<boolean> {
+    this.importedCount.set(undefined);
+    let count = 0;
+    const imported = await this.changeAndReload(programIncrementId, async () => {
+      count = await this.repository.importCsv(programIncrementId, csv);
+    });
+    if (imported) {
+      this.importedCount.set(count);
+    }
+    return imported;
   }
 
   private async changeAndReload(

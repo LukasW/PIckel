@@ -44,6 +44,9 @@ public class FeatureSteps {
     // Titel des Features, das zuletzt bearbeitet oder gelöscht wurde.
     private String edited;
 
+    // Antwort des Löschens im Szenario; fehlt sie, kommt «ist das Backlog leer» nach einem Import (US-11).
+    private Response deletion;
+
     @Wenn("ich im PI {string} das Feature {string} mit WSJF-Rang {int}, Owner {string} und Schätzung {int} erfasse")
     public void ichDasFeatureMitAllenAngabenErfasse(String pi, String title, int wsjfRank, String owner, int estimate) {
         // Mit Beschreibung, damit auch ihr Weg durch REST und Datenbank geprüft ist (das Szenario nennt sie nicht).
@@ -88,14 +91,20 @@ public class FeatureSteps {
         post(UUID.randomUUID().toString(), Map.of("title", title));
     }
 
+    // Auch nach einem CSV-Import (US-11, FeatureImportSteps): Dann prüft der Step nur das Backlog, weil die Antwort
+    // des Imports kein Feature ist und die Angaben in der Datei stehen; die Antwort prüft «wurde … importiert».
     @Dann("erscheint {string} im Backlog von {string}")
     public void erscheintImBacklog(String title, String pi) {
         String piId = context.programIncrementId(pi);
-        response.then().statusCode(201).body("programIncrementId", is(piId));
+        context.lastResponse().then().statusCode(201);
 
         // Jedes Feature im Backlog gehört zu diesem PI: Andere Szenarien erfassen gleichnamige Features in anderen PIs.
         Response backlog = backlog(piId);
         backlog.then().body("title", hasItem(title)).body("programIncrementId", everyItem(is(piId)));
+        if (!sent.containsKey(title)) {
+            return;
+        }
+        response.then().statusCode(201).body("programIncrementId", is(piId));
         for (Map.Entry<String, Object> field : sent.get(title).entrySet()) {
             backlog.then().body("find { it.title == '%s' }.%s", withArgs(title, field.getKey()), is(field.getValue()));
         }
@@ -173,6 +182,7 @@ public class FeatureSteps {
     public void ichDasFeatureLoesche(String title) {
         edited = title;
         response = given().delete(featurePath(piOf(title), idOf(title)));
+        deletion = response;
     }
 
     @Wenn("ich im PI {string} das Feature mit der ID {string} lösche")
@@ -218,9 +228,13 @@ public class FeatureSteps {
         backlog(piOf(edited)).then().body("find { it.id == '%s' }.title", withArgs(idOf(edited)), is(edited));
     }
 
+    // Nach dem Löschen (US-10) auch die Antwort 204; nach einem abgelehnten Import (US-11) hat «wird der Import …
+    // abgelehnt» die Antwort schon geprüft, hier zählt nur, dass nichts gespeichert wurde.
     @Dann("ist das Backlog von {string} leer")
     public void istDasBacklogLeer(String pi) {
-        response.then().statusCode(204);
+        if (deletion != null) {
+            deletion.then().statusCode(204);
+        }
         backlog(context.programIncrementId(pi)).then().body("$", is(empty()));
     }
 

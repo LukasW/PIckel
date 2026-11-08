@@ -84,6 +84,23 @@
   </div>
 </form>
 
+<label class="mb-4 flex flex-col gap-1 text-sm">
+  CSV importieren
+  <input
+    type="file"
+    accept=".csv,text/csv"
+    (change)="importFile($event)"
+    class="rounded border border-border bg-background px-2 py-1"
+  />
+</label>
+
+@let count = service.imported();
+@if (count !== undefined) {
+  <p role="status" class="mb-4 text-foreground">
+    {{ count === 1 ? '1 Feature importiert.' : count + ' Features importiert.' }}
+  </p>
+}
+
 @if (service.error(); as error) {
   <p role="alert" class="mb-4 text-danger">{{ error }}</p>
 }

@@ -23,6 +23,15 @@ export class FeaturesHttpAdapter extends FeaturesRepository {
     return firstValueFrom(this.http.put<Feature>(`${url(programIncrementId)}/${id}`, feature));
   }
 
+  async importCsv(programIncrementId: string, csv: string): Promise<number> {
+    const result = await firstValueFrom(
+      this.http.post<{ imported: number }>(`${url(programIncrementId)}/import`, csv, {
+        headers: { 'Content-Type': 'text/csv; charset=UTF-8' },
+      }),
+    );
+    return result.imported;
+  }
+
   async remove(programIncrementId: string, id: string): Promise<void> {
     await firstValueFrom(this.http.delete<void>(`${url(programIncrementId)}/${id}`));
   }
