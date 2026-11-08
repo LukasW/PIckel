@@ -104,6 +104,9 @@
 @if (service.error(); as error) {
   <p role="alert" class="mb-4 text-danger">{{ error }}</p>
 }
+@if (dependencies.error(); as error) {
+  <p role="alert" class="mb-4 text-danger">{{ error }}</p>
+}
 
 @if (service.loading()) {
   <p class="text-muted">Lade …</p>
@@ -143,6 +146,47 @@
             Löschen
           </button>
         }
+        @let needed = featuresWithIds(dependencies.needs(feature.id));
+        @if (needed.length > 0) {
+          <p class="w-full text-sm" data-testid="needs">
+            Braucht:
+            @for (other of needed; track other.id) {
+              <span class="ml-2">{{ other.title }}</span>
+              <button
+                type="button"
+                (click)="removeDependency(feature, other)"
+                [attr.aria-label]="'Abhängigkeit zu ' + other.title + ' entfernen'"
+                class="ml-1 text-danger"
+              >
+                Entfernen
+              </button>
+            }
+          </p>
+        }
+        @let neededBy = featuresWithIds(dependencies.neededBy(feature.id));
+        @if (neededBy.length > 0) {
+          <p class="w-full text-sm text-muted" data-testid="needed-by">
+            Wird gebraucht von:
+            @for (other of neededBy; track other.id) {
+              <span class="ml-2">{{ other.title }}</span>
+            }
+          </p>
+        }
+        <div class="flex w-full items-center gap-2 text-sm">
+          <select
+            #neededSelect
+            aria-label="Braucht Feature"
+            class="rounded border border-border bg-background px-2 py-1"
+          >
+            <option value=""></option>
+            @for (other of candidatesFor(feature); track other.id) {
+              <option [value]="other.id">{{ other.title }}</option>
+            }
+          </select>
+          <button type="button" (click)="addDependency(feature, neededSelect)" class="text-accent">
+            Abhängigkeit hinzufügen
+          </button>
+        </div>
       </li>
     } @empty {
       <li class="px-4 py-3 text-muted">

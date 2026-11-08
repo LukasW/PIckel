@@ -1,6 +1,6 @@
 # Delta US-16 — Abhängigkeit zwischen Features erfassen (Issue #16)
 
-Story: `spec/user-stories/16-abhaengigkeit-erfassen.md` (neu) · Status: entwurf
+Story: `spec/user-stories/16-abhaengigkeit-erfassen.md` (neu) · Status: eingepflegt
 
 ## Warum
 
@@ -82,6 +82,15 @@ werden, nicht im Kopf einzelner Personen.
 - **Und** "Portal" braucht "Login"
 - **Wenn** ich das Feature "Login" lösche
 - **Dann** braucht "Portal" kein Feature
+
+### Szenario: Gelöschtes brauchendes Feature nimmt seine Abhängigkeiten mit
+<!-- Im Nachtlauf ergänzt: AK 5 gilt in beide Richtungen, das Szenario oben prüft nur das gebrauchte Feature. -->
+- **Gegeben sei** das PI "PI 27.1" vom "2027-01-04" bis "2027-03-26"
+- **Und** im PI "PI 27.1" das Feature "Portal" mit WSJF-Rang 1
+- **Und** im PI "PI 27.1" das Feature "Login" ohne WSJF-Rang
+- **Und** "Portal" braucht "Login"
+- **Wenn** ich das Feature "Portal" lösche
+- **Dann** wird "Login" von keinem Feature gebraucht
 
 ## Geändert
 

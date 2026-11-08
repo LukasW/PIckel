@@ -260,6 +260,7 @@ public class FeatureSteps {
         String title = (String) body.get("title");
         ids.put(title, id);
         piIds.put(title, piId);
+        context.featureCreated(title, id, piId);
     }
 
     // PUT ersetzt alle Angaben; der Step schickt darum den gespeicherten Stand mit, nur die genannten Felder neu.

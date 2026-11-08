@@ -1,6 +1,8 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Feature } from '../../core/models/feature.model';
+import { FeatureDependency } from '../../core/models/feature-dependency.model';
+import { FeatureDependenciesRepository } from '../../core/ports/feature-dependencies.repository';
 import { FeaturesRepository } from '../../core/ports/features.repository';
 import { FeatureBacklogComponent } from './feature-backlog.component';
 
@@ -41,6 +43,17 @@ describe('FeatureBacklogComponent', () => {
     remove: ReturnType<typeof vi.fn>;
     importCsv: ReturnType<typeof vi.fn>;
   };
+  let dependencyRepository: {
+    list: ReturnType<typeof vi.fn>;
+    add: ReturnType<typeof vi.fn>;
+    remove: ReturnType<typeof vi.fn>;
+  };
+  /** Antworten des Servers auf das erste, zweite, … Laden der Abhängigkeiten (US-16); ohne Angabe keine. */
+  let dependencyLists: FeatureDependency[][];
+
+  beforeEach(() => {
+    dependencyLists = [];
+  });
 
   /** Rendert das Backlog des PI; `lists` sind die Antworten des Servers auf das erste, zweite, … Laden. */
   async function render(...lists: Feature[][]): Promise<ComponentFixture<FeatureBacklogComponent>> {
@@ -50,9 +63,18 @@ describe('FeatureBacklogComponent', () => {
     }
     list.mockResolvedValue(lists.at(-1) ?? []);
     repository = { list, add: vi.fn(), update: vi.fn(), remove: vi.fn(), importCsv: vi.fn() };
+    const dependencyList = vi.fn();
+    for (const answer of dependencyLists) {
+      dependencyList.mockResolvedValueOnce(answer);
+    }
+    dependencyList.mockResolvedValue(dependencyLists.at(-1) ?? []);
+    dependencyRepository = { list: dependencyList, add: vi.fn(), remove: vi.fn() };
     TestBed.configureTestingModule({
       imports: [FeatureBacklogComponent],
-      providers: [{ provide: FeaturesRepository, useValue: repository }],
+      providers: [
+        { provide: FeaturesRepository, useValue: repository },
+        { provide: FeatureDependenciesRepository, useValue: dependencyRepository },
+      ],
     });
     const fixture = TestBed.createComponent(FeatureBacklogComponent);
     fixture.componentRef.setInput('programIncrementId', PI_ID);
@@ -162,7 +184,7 @@ describe('FeatureBacklogComponent', () => {
   it('listet die Features in der Reihenfolge des Servers (US-9)', async () => {
     const el = (await render([LOGIN, PORTAL])).nativeElement as HTMLElement;
 
-    expect(rows(el).map((r) => r.textContent)).toEqual([
+    expect(rows(el).map(ownText)).toEqual([
       expect.stringContaining('Login'),
       expect.stringContaining('Self-Service-Portal'),
     ]);
@@ -188,9 +210,7 @@ describe('FeatureBacklogComponent', () => {
       estimate: 21,
     });
     const el = fixture.nativeElement as HTMLElement;
-    expect(rows(el).map((r) => r.textContent)).toEqual([
-      expect.stringContaining('Self-Service-Portal'),
-    ]);
+    expect(rows(el).map(ownText)).toEqual([expect.stringContaining('Self-Service-Portal')]);
     for (const name of FIELDS) {
       expect(field(form, name).value, `Feld «${name}»`).toBe('');
     }
@@ -384,8 +404,20 @@ describe('FeatureBacklogComponent', () => {
     estimate: 5,
   });
 
+  /**
+   * Text der Zeile ohne die Angaben zu anderen Features: Seit US-16 nennt jede Zeile die Titel anderer Features
+   * (Auswahl «Braucht Feature», «Braucht: …», «Wird gebraucht von: …»).
+   */
+  function ownText(r: HTMLElement): string {
+    const copy = r.cloneNode(true) as HTMLElement;
+    copy
+      .querySelectorAll('select, [data-testid="needs"], [data-testid="needed-by"]')
+      .forEach((e) => e.remove());
+    return copy.textContent!;
+  }
+
   function row(el: HTMLElement, title: string): HTMLElement {
-    const found = rows(el).find((r) => r.textContent!.includes(title));
+    const found = rows(el).find((r) => ownText(r).includes(title));
     expect(found, `Zeile von ${title}`).toBeDefined();
     return found!;
   }
@@ -678,7 +710,7 @@ describe('FeatureBacklogComponent', () => {
 
     expect(repository.remove).toHaveBeenCalledWith(PI_ID, 'l');
     expect(el.querySelector('[role="alert"]')?.textContent).toContain('Das Feature gibt es nicht.');
-    expect(rows(el).map((r) => r.textContent)).toEqual([expect.stringContaining('Login')]);
+    expect(rows(el).map(ownText)).toEqual([expect.stringContaining('Login')]);
   });
 
   // --- US-11: Features per CSV importieren ---
@@ -758,7 +790,7 @@ describe('FeatureBacklogComponent', () => {
 
     const el = fixture.nativeElement as HTMLElement;
     expect(statusText(el)).toContain('2 Features importiert.');
-    expect(rows(el).map((r) => r.textContent)).toEqual([
+    expect(rows(el).map(ownText)).toEqual([
       expect.stringContaining('Portal'),
       expect.stringContaining('Suche'),
     ]);
@@ -804,7 +836,7 @@ describe('FeatureBacklogComponent', () => {
     expect(repository.importCsv).toHaveBeenCalledTimes(1);
     expect(el.querySelector('[role="alert"]')?.textContent).toContain(ROW_ERROR);
     expect(statusText(el)).not.toContain('importiert');
-    expect(rows(el).map((r) => r.textContent)).toEqual([expect.stringContaining('Login')]);
+    expect(rows(el).map(ownText)).toEqual([expect.stringContaining('Login')]);
   });
 
   it('ersetzt die Anzahl eines früheren Imports durch die Meldung, wenn ein neuer Import scheitert (US-11)', async () => {
@@ -834,5 +866,297 @@ describe('FeatureBacklogComponent', () => {
 
     expect(repository.importCsv).not.toHaveBeenCalled();
     expect(statusText(fixture.nativeElement as HTMLElement)).not.toContain('importiert');
+  });
+
+  // --- US-16: Abhängigkeit zwischen Features erfassen ---
+
+  const DEP_PORTAL = feature('dp', 'Portal', { wsjfRank: 1 });
+  const DEP_LOGIN = feature('dl', 'Login');
+  const DEP_ZAHLUNG = feature('dz', 'Zahlung');
+
+  function needs(needing: Feature, needed: Feature): FeatureDependency {
+    return { needingFeatureId: needing.id, neededFeatureId: needed.id };
+  }
+
+  function normalized(e: Element): string {
+    return e.textContent!.replace(/\s+/g, ' ').trim();
+  }
+
+  function needsArea(r: HTMLElement): HTMLElement | null {
+    return r.querySelector<HTMLElement>('[data-testid="needs"]');
+  }
+
+  function neededByArea(r: HTMLElement): HTMLElement | null {
+    return r.querySelector<HTMLElement>('[data-testid="needed-by"]');
+  }
+
+  function dependencySelect(r: HTMLElement): HTMLSelectElement {
+    const select = r.querySelector<HTMLSelectElement>('select[aria-label="Braucht Feature"]');
+    expect(select, 'Auswahl «Braucht Feature»').not.toBeNull();
+    return select!;
+  }
+
+  function removeDependencyButton(scope: HTMLElement, title: string): HTMLButtonElement {
+    const found = scope.querySelector<HTMLButtonElement>(
+      `button[aria-label="Abhängigkeit zu ${title} entfernen"]`,
+    );
+    expect(found, `Button «Abhängigkeit zu ${title} entfernen»`).not.toBeNull();
+    return found!;
+  }
+
+  function alertText(el: HTMLElement): string {
+    return Array.from(el.querySelectorAll('[role="alert"]'))
+      .map((a) => normalized(a))
+      .join(' | ');
+  }
+
+  /** Wartet, bis Aktion und anschliessendes Neuladen durch sind (mehrere Runden asynchroner Aufrufe). */
+  async function settle(fixture: ComponentFixture<FeatureBacklogComponent>): Promise<void> {
+    for (let i = 0; i < 5; i++) {
+      await new Promise((resolve) => setTimeout(resolve));
+      await fixture.whenStable();
+    }
+  }
+
+  async function chooseNeeded(
+    fixture: ComponentFixture<FeatureBacklogComponent>,
+    r: HTMLElement,
+    featureId: string,
+  ): Promise<void> {
+    const select = dependencySelect(r);
+    select.value = featureId;
+    select.dispatchEvent(new Event('change'));
+    await fixture.whenStable();
+  }
+
+  it('lädt die Abhängigkeiten des PI zusätzlich zum Backlog (US-16)', async () => {
+    await render([DEP_PORTAL, DEP_LOGIN]);
+
+    expect(dependencyRepository.list).toHaveBeenCalledWith(PI_ID);
+    expect(repository.list).toHaveBeenCalledWith(PI_ID);
+  });
+
+  it('zeigt beim Feature, welches Feature es braucht (US-16)', async () => {
+    dependencyLists = [[needs(DEP_PORTAL, DEP_LOGIN)]];
+    const fixture = await render([DEP_PORTAL, DEP_LOGIN]);
+    await settle(fixture);
+    const el = fixture.nativeElement as HTMLElement;
+
+    const area = needsArea(row(el, 'Portal'));
+    expect(area, 'Angabe «Braucht» bei Portal').not.toBeNull();
+    expect(normalized(area!)).toMatch(/^Braucht: Login\b/);
+    expect(needsArea(row(el, 'Login')), 'Login braucht nichts').toBeNull();
+  });
+
+  it('zeigt beim gebrauchten Feature, von welchem Feature es gebraucht wird (US-16)', async () => {
+    dependencyLists = [[needs(DEP_PORTAL, DEP_LOGIN)]];
+    const fixture = await render([DEP_PORTAL, DEP_LOGIN]);
+    await settle(fixture);
+    const el = fixture.nativeElement as HTMLElement;
+
+    const area = neededByArea(row(el, 'Login'));
+    expect(area, 'Angabe «Wird gebraucht von» bei Login').not.toBeNull();
+    expect(normalized(area!)).toMatch(/^Wird gebraucht von: Portal\b/);
+    expect(neededByArea(row(el, 'Portal')), 'Portal wird von niemandem gebraucht').toBeNull();
+  });
+
+  it('zeigt bei einem Feature beide Richtungen getrennt (US-16)', async () => {
+    // Portal braucht Login, Login braucht Zahlung: Login steht in der Mitte.
+    dependencyLists = [[needs(DEP_PORTAL, DEP_LOGIN), needs(DEP_LOGIN, DEP_ZAHLUNG)]];
+    const fixture = await render([DEP_PORTAL, DEP_LOGIN, DEP_ZAHLUNG]);
+    await settle(fixture);
+    const login = row(fixture.nativeElement as HTMLElement, 'Login');
+
+    const needed = normalized(needsArea(login)!);
+    const neededBy = normalized(neededByArea(login)!);
+    expect(needed).toContain('Braucht:');
+    expect(needed).toContain('Zahlung');
+    expect(needed).not.toContain('Portal');
+    expect(neededBy).toContain('Wird gebraucht von:');
+    expect(neededBy).toContain('Portal');
+    expect(neededBy).not.toContain('Zahlung');
+  });
+
+  it('nennt alle Features, die ein Feature braucht (US-16)', async () => {
+    dependencyLists = [[needs(DEP_PORTAL, DEP_LOGIN), needs(DEP_PORTAL, DEP_ZAHLUNG)]];
+    const fixture = await render([DEP_PORTAL, DEP_LOGIN, DEP_ZAHLUNG]);
+    await settle(fixture);
+    const el = fixture.nativeElement as HTMLElement;
+
+    const needed = normalized(needsArea(row(el, 'Portal'))!);
+    expect(needed).toContain('Login');
+    expect(needed).toContain('Zahlung');
+    expect(normalized(neededByArea(row(el, 'Login'))!)).toContain('Portal');
+    expect(normalized(neededByArea(row(el, 'Zahlung'))!)).toContain('Portal');
+  });
+
+  it('zeigt ohne Abhängigkeiten weder «Braucht» noch «Wird gebraucht von» (US-16)', async () => {
+    const fixture = await render([DEP_PORTAL, DEP_LOGIN]);
+    await settle(fixture);
+    const el = fixture.nativeElement as HTMLElement;
+
+    expect(el.querySelectorAll('[data-testid="needs"]')).toHaveLength(0);
+    expect(el.querySelectorAll('[data-testid="needed-by"]')).toHaveLength(0);
+  });
+
+  it('bietet je gebrauchtem Feature einen Button «Entfernen» an (US-16)', async () => {
+    dependencyLists = [[needs(DEP_PORTAL, DEP_LOGIN), needs(DEP_PORTAL, DEP_ZAHLUNG)]];
+    const fixture = await render([DEP_PORTAL, DEP_LOGIN, DEP_ZAHLUNG]);
+    await settle(fixture);
+    const portal = row(fixture.nativeElement as HTMLElement, 'Portal');
+
+    expect(removeDependencyButton(portal, 'Login').textContent!.trim()).toBe('Entfernen');
+    expect(removeDependencyButton(portal, 'Zahlung').textContent!.trim()).toBe('Entfernen');
+  });
+
+  it('entfernt eine Abhängigkeit und zeigt sie danach nicht mehr (US-16)', async () => {
+    dependencyLists = [[needs(DEP_PORTAL, DEP_LOGIN)], []];
+    const fixture = await render([DEP_PORTAL, DEP_LOGIN]);
+    await settle(fixture);
+    dependencyRepository.remove.mockResolvedValue(undefined);
+    const el = fixture.nativeElement as HTMLElement;
+
+    await click(fixture, removeDependencyButton(row(el, 'Portal'), 'Login'));
+    await settle(fixture);
+
+    expect(dependencyRepository.remove).toHaveBeenCalledWith(PI_ID, 'dp', 'dl');
+    expect(dependencyRepository.list).toHaveBeenCalledTimes(2);
+    expect(needsArea(row(el, 'Portal'))).toBeNull();
+    expect(neededByArea(row(el, 'Login'))).toBeNull();
+  });
+
+  it('entfernt nur die gewählte Abhängigkeit (US-16)', async () => {
+    dependencyLists = [[needs(DEP_PORTAL, DEP_LOGIN), needs(DEP_PORTAL, DEP_ZAHLUNG)]];
+    const fixture = await render([DEP_PORTAL, DEP_LOGIN, DEP_ZAHLUNG]);
+    await settle(fixture);
+    dependencyRepository.remove.mockResolvedValue(undefined);
+    const el = fixture.nativeElement as HTMLElement;
+
+    await click(fixture, removeDependencyButton(row(el, 'Portal'), 'Zahlung'));
+    await settle(fixture);
+
+    expect(dependencyRepository.remove).toHaveBeenCalledTimes(1);
+    expect(dependencyRepository.remove).toHaveBeenCalledWith(PI_ID, 'dp', 'dz');
+  });
+
+  it('zeigt die Meldung des Servers als Alarm, wenn das Entfernen scheitert (US-16)', async () => {
+    dependencyLists = [[needs(DEP_PORTAL, DEP_LOGIN)]];
+    const fixture = await render([DEP_PORTAL, DEP_LOGIN]);
+    await settle(fixture);
+    const message = 'Meldung des Servers zum Entfernen';
+    dependencyRepository.remove.mockRejectedValue(
+      new HttpErrorResponse({ status: 404, error: { message } }),
+    );
+    const el = fixture.nativeElement as HTMLElement;
+
+    await click(fixture, removeDependencyButton(row(el, 'Portal'), 'Login'));
+    await settle(fixture);
+
+    expect(alertText(el)).toContain(message);
+    expect(normalized(needsArea(row(el, 'Portal'))!)).toContain('Login');
+  });
+
+  it('bietet je Feature die anderen Features des Backlogs zur Auswahl an (US-16)', async () => {
+    const fixture = await render([DEP_PORTAL, DEP_LOGIN, DEP_ZAHLUNG]);
+    await settle(fixture);
+    const select = dependencySelect(row(fixture.nativeElement as HTMLElement, 'Portal'));
+
+    const options = Array.from(select.options).map((o) => ({
+      value: o.value,
+      text: o.textContent!.trim(),
+    }));
+    expect(
+      options.filter((o) => o.value === ''),
+      'leere Auswahl',
+    ).toHaveLength(1);
+    expect(
+      options.filter((o) => o.value !== '').sort((a, b) => a.value.localeCompare(b.value)),
+    ).toEqual([
+      { value: 'dl', text: 'Login' },
+      { value: 'dz', text: 'Zahlung' },
+    ]);
+  });
+
+  it('hält fest, dass ein Feature das gewählte Feature braucht, und zeigt es danach an (US-16)', async () => {
+    dependencyLists = [[], [needs(DEP_PORTAL, DEP_LOGIN)]];
+    const fixture = await render([DEP_PORTAL, DEP_LOGIN]);
+    await settle(fixture);
+    dependencyRepository.add.mockResolvedValue(needs(DEP_PORTAL, DEP_LOGIN));
+    const el = fixture.nativeElement as HTMLElement;
+
+    await chooseNeeded(fixture, row(el, 'Portal'), 'dl');
+    await click(fixture, button(row(el, 'Portal'), 'Abhängigkeit hinzufügen'));
+    await settle(fixture);
+
+    expect(dependencyRepository.add).toHaveBeenCalledTimes(1);
+    expect(dependencyRepository.add).toHaveBeenCalledWith(PI_ID, 'dp', 'dl');
+    expect(normalized(needsArea(row(el, 'Portal'))!)).toMatch(/^Braucht: Login\b/);
+    expect(normalized(neededByArea(row(el, 'Login'))!)).toMatch(/^Wird gebraucht von: Portal\b/);
+  });
+
+  it('hält die Abhängigkeit für das Feature der Zeile fest, in der gewählt wird (US-16)', async () => {
+    const fixture = await render([DEP_PORTAL, DEP_LOGIN, DEP_ZAHLUNG]);
+    await settle(fixture);
+    dependencyRepository.add.mockResolvedValue(needs(DEP_LOGIN, DEP_ZAHLUNG));
+    const el = fixture.nativeElement as HTMLElement;
+
+    await chooseNeeded(fixture, row(el, 'Login'), 'dz');
+    await click(fixture, button(row(el, 'Login'), 'Abhängigkeit hinzufügen'));
+    await settle(fixture);
+
+    expect(dependencyRepository.add).toHaveBeenCalledTimes(1);
+    expect(dependencyRepository.add).toHaveBeenCalledWith(PI_ID, 'dl', 'dz');
+  });
+
+  it('hält ohne Auswahl keine Abhängigkeit fest (US-16)', async () => {
+    const fixture = await render([DEP_PORTAL, DEP_LOGIN]);
+    await settle(fixture);
+    const el = fixture.nativeElement as HTMLElement;
+
+    await click(fixture, button(row(el, 'Portal'), 'Abhängigkeit hinzufügen'));
+    await settle(fixture);
+
+    expect(dependencyRepository.add).not.toHaveBeenCalled();
+  });
+
+  it('zeigt die Meldung des Servers als Alarm, wenn er die Abhängigkeit ablehnt (US-16)', async () => {
+    dependencyLists = [[needs(DEP_PORTAL, DEP_LOGIN)]];
+    const fixture = await render([DEP_PORTAL, DEP_LOGIN]);
+    await settle(fixture);
+    dependencyRepository.add.mockRejectedValue(
+      new HttpErrorResponse({
+        status: 400,
+        error: { message: 'Die beiden Features hängen schon umgekehrt voneinander ab.' },
+      }),
+    );
+    const el = fixture.nativeElement as HTMLElement;
+    expect(alertText(el)).toBe('');
+
+    await chooseNeeded(fixture, row(el, 'Login'), 'dp');
+    await click(fixture, button(row(el, 'Login'), 'Abhängigkeit hinzufügen'));
+    await settle(fixture);
+
+    expect(dependencyRepository.add).toHaveBeenCalledWith(PI_ID, 'dl', 'dp');
+    expect(alertText(el)).toContain('Die beiden Features hängen schon umgekehrt voneinander ab.');
+  });
+
+  it('lädt nach dem Löschen eines Features dessen Abhängigkeiten neu, sie verschwinden (US-16)', async () => {
+    // Szenario «Gelöschtes Feature nimmt seine Abhängigkeiten mit»: der Server löscht sie mit.
+    dependencyLists = [[needs(DEP_PORTAL, DEP_LOGIN)], []];
+    const fixture = await render([DEP_PORTAL, DEP_LOGIN], [DEP_PORTAL]);
+    await settle(fixture);
+    repository.remove.mockResolvedValue(undefined);
+    const el = fixture.nativeElement as HTMLElement;
+    expect(needsArea(row(el, 'Portal')), 'vor dem Löschen').not.toBeNull();
+
+    await click(fixture, button(row(el, 'Login'), 'Löschen'));
+    await click(fixture, button(row(el, 'Login'), 'Wirklich löschen'));
+    await settle(fixture);
+
+    expect(repository.remove).toHaveBeenCalledWith(PI_ID, 'dl');
+    expect(dependencyRepository.list).toHaveBeenCalledTimes(2);
+    expect(dependencyRepository.list).toHaveBeenLastCalledWith(PI_ID);
+    expect(rows(el).map(ownText)).toEqual([expect.stringContaining('Portal')]);
+    expect(needsArea(row(el, 'Portal'))).toBeNull();
   });
 });

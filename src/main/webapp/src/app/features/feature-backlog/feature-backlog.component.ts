@@ -7,6 +7,7 @@ import {
 } from '@angular/forms';
 import { Feature, NewFeature } from '../../core/models/feature.model';
 import { FeaturesService } from '../../core/services/features.service';
+import { FeatureDependenciesService } from '../../core/services/feature-dependencies.service';
 import { maxTrimmedLength, notBlank } from '../../shared/validators/text.validators';
 
 /** Wie die Grenzen in `Feature` im Backend, gemessen nach dem Trimmen; das Formular meldet sie nur früher. */
@@ -27,8 +28,8 @@ function optionalIntegerFrom(min: number) {
 }
 
 /**
- * Backlog der Features eines PI mit Formular zum Erfassen (US-9) und Bearbeiten, Löschen nach Bestätigung (US-10);
- * die PI-ID kommt vom Elternelement.
+ * Backlog der Features eines PI mit Formular zum Erfassen (US-9) und Bearbeiten, Löschen nach Bestätigung (US-10)
+ * und Abhängigkeiten in beide Richtungen (US-16); die PI-ID kommt vom Elternelement.
  */
 @Component({
   selector: 'app-feature-backlog',
@@ -38,6 +39,7 @@ function optionalIntegerFrom(min: number) {
 })
 export class FeatureBacklogComponent implements OnInit {
   protected readonly service = inject(FeaturesService);
+  protected readonly dependencies = inject(FeatureDependenciesService);
   private readonly fb = inject(FormBuilder);
 
   readonly programIncrementId = input.required<string>();
@@ -62,6 +64,30 @@ export class FeatureBacklogComponent implements OnInit {
 
   ngOnInit(): void {
     void this.service.load(this.programIncrementId());
+    void this.dependencies.load(this.programIncrementId());
+  }
+
+  /** Die Features zu den IDs in Backlog-Reihenfolge; IDs ausserhalb des Backlogs fallen weg. */
+  protected featuresWithIds(ids: string[]): Feature[] {
+    return this.service.features().filter((feature) => ids.includes(feature.id));
+  }
+
+  /** Die anderen Features des Backlogs als Auswahl, was ein Feature braucht; die Regeln prüft der Server. */
+  protected candidatesFor(feature: Feature): Feature[] {
+    return this.service.features().filter((other) => other.id !== feature.id);
+  }
+
+  protected async addDependency(feature: Feature, select: HTMLSelectElement): Promise<void> {
+    if (!select.value) {
+      return;
+    }
+    if (await this.dependencies.add(this.programIncrementId(), feature.id, select.value)) {
+      select.value = '';
+    }
+  }
+
+  protected removeDependency(feature: Feature, needed: Feature): Promise<boolean> {
+    return this.dependencies.remove(this.programIncrementId(), feature.id, needed.id);
   }
 
   protected hasError(field: keyof typeof this.form.controls, error: string): boolean {
@@ -111,6 +137,8 @@ export class FeatureBacklogComponent implements OnInit {
   protected async confirmRemoval(feature: Feature): Promise<void> {
     if (await this.service.remove(this.programIncrementId(), feature.id)) {
       this.confirmingRemoval.set(undefined);
+      // Der Server löscht die Abhängigkeiten des Features mit (US-16).
+      await this.dependencies.load(this.programIncrementId());
       if (this.editing() === feature.id) {
         this.resetForm();
       }
