@@ -12,6 +12,8 @@ import java.util.Objects;
  * @param backlog nicht eingeplante Features in Backlog-Reihenfolge
  * @param scheduled eingeplante Features in Backlog-Reihenfolge; die Zelle steht am Feature
  * @param milestones aufsteigend nach Datum; je ein Marker über der Iteration, in die das Datum fällt
+ * @param capacities verfügbare Kapazität je Team und Entwicklungs-Iteration, ohne Eintrag 0; keine Zelle für die
+ *     IP-Iteration
  */
 public record ProgramBoard(
         ProgramIncrement programIncrement,
@@ -19,7 +21,8 @@ public record ProgramBoard(
         List<Iteration> iterations,
         List<Feature> backlog,
         List<Feature> scheduled,
-        List<Milestone> milestones) {
+        List<Milestone> milestones,
+        List<Capacity> capacities) {
 
     public ProgramBoard {
         Objects.requireNonNull(programIncrement, "programIncrement");
@@ -28,6 +31,7 @@ public record ProgramBoard(
         backlog = List.copyOf(backlog);
         scheduled = List.copyOf(scheduled);
         milestones = List.copyOf(milestones);
+        capacities = List.copyOf(capacities);
     }
 
     /**

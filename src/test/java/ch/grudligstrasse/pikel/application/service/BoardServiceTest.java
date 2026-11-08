@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
+import ch.grudligstrasse.pikel.domain.model.Capacity;
 import ch.grudligstrasse.pikel.domain.model.Feature;
 import ch.grudligstrasse.pikel.domain.model.Iteration;
 import ch.grudligstrasse.pikel.domain.model.Milestone;
@@ -14,6 +15,7 @@ import ch.grudligstrasse.pikel.domain.model.ProgramBoard;
 import ch.grudligstrasse.pikel.domain.model.ProgramIncrement;
 import ch.grudligstrasse.pikel.domain.model.ProgramIncrementNotFoundException;
 import ch.grudligstrasse.pikel.domain.model.Team;
+import ch.grudligstrasse.pikel.domain.port.in.CapacityUseCase;
 import ch.grudligstrasse.pikel.domain.port.in.FeatureUseCase;
 import ch.grudligstrasse.pikel.domain.port.in.MilestoneUseCase;
 import ch.grudligstrasse.pikel.domain.port.in.ProgramIncrementUseCase;
@@ -55,6 +57,10 @@ class BoardServiceTest {
     // US-15; ohne Stub liefert der Mock eine leere Liste, die bisherigen Fälle bleiben ohne Milestones.
     @Mock
     MilestoneUseCase milestones;
+
+    // US-14; ohne Stub liefert der Mock eine leere Liste, die bisherigen Fälle bleiben ohne Kapazitäten.
+    @Mock
+    CapacityUseCase capacities;
 
     @InjectMocks
     BoardService service;
@@ -237,6 +243,26 @@ class BoardServiceTest {
         assertEquals(
                 "Iteration 3",
                 board.iterations().get(board.iterationNumberOf(release) - 1).name());
+    }
+
+    // --- US-14: Kapazität pro Zelle ---
+
+    // Plan → Test-Strategie: die Liste aus CapacityUseCase.list unverändert, «ohne Eintrag 0» rechnet der Use Case
+    // (entscheide.md). Verschiedene Teams, Iterationen und Punkte, nicht nach Team sortiert: Ein Verlust, eine eigene
+    // Sortierung oder ein Nachrechnen fiele auf.
+    @Test
+    void boardCarriesCapacitiesOfProgramIncrementAsDeliveredByUseCase() {
+        piExists();
+        teamsAre(ADLER, ZEBRA);
+        backlogIs();
+        List<Capacity> perCell = List.of(
+                new Capacity(ZEBRA.id(), 1, 13),
+                new Capacity(ADLER.id(), 1, 20),
+                new Capacity(ADLER.id(), 2, 0),
+                new Capacity(ZEBRA.id(), 2, 8));
+        when(capacities.list(PI.id())).thenReturn(perCell);
+
+        assertEquals(perCell, service.get(PI.id()).capacities());
     }
 
     // --- Unbekanntes PI → 404 ---
