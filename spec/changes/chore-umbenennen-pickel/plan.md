@@ -16,7 +16,5 @@ Delta: keines — nur der Name ändert sich (Oberfläche, Java-Paket, Build, Dok
 
 ## Folgen für bestehende Umgebungen
 
-- Eine dauerhafte Datenbank (falls es doch eine gibt) vor dem ersten Start mit der neuen Version nachführen, sonst
-  führt Liquibase alle ChangeSets erneut aus. Die Prüfsumme hängt nicht am Autor:
-  `UPDATE databasechangelog SET author = 'pickel' WHERE author = 'pikel';`
+- Keine Datenbank ist produktiv, darum ist kein Nachführen von `databasechangelog` nötig
 - Die Volumes `pickel-*` sind beim nächsten Rebuild leer; Inhalt vorher von `pikel-*` kopieren.
