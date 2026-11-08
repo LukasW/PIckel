@@ -409,6 +409,31 @@ describe('BoardService', () => {
       expect(service.board()).toEqual(before);
       expect(service.actionError()).toBe(GENERIC_ERROR);
     });
+
+    it('meldet die Sperre der IP-Iteration, ohne den Server zu fragen und ohne das Board zu ändern (US-13)', async () => {
+      const before = await loaded();
+
+      service.rejectInnovationAndPlanning();
+
+      expect(service.actionError()).toBe(IP_REJECTED);
+      expect(service.board()).toEqual(before);
+      expect(features.schedule).not.toHaveBeenCalled();
+      expect(features.unschedule).not.toHaveBeenCalled();
+      expect(repository.get).toHaveBeenCalledTimes(1);
+    });
+
+    it('ersetzt eine frühere Meldung durch die Sperre der IP-Iteration (US-13)', async () => {
+      await loaded();
+      features.unschedule.mockRejectedValue(
+        new HttpErrorResponse({ status: 404, error: { message: 'Das Feature gibt es nicht.' } }),
+      );
+      await service.unschedule(SUCHE);
+      expect(service.actionError()).toBe('Das Feature gibt es nicht.');
+
+      service.rejectInnovationAndPlanning();
+
+      expect(service.actionError()).toBe(IP_REJECTED);
+    });
   });
 
   // --- US-14: Kapazität pro Zelle ---

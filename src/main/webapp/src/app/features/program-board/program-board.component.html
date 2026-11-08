@@ -125,8 +125,12 @@
                   <th scope="row" class="px-3 py-2 font-medium">{{ team.name }}</th>
                   @for (iteration of board.iterations; track iteration.number) {
                     @let load = service.loadOf(team.id, iteration.number);
+                    <!-- Kennzeichnet die IP-Zelle, damit ein Loslassen darüber erkannt wird (US-13). -->
                     <td
                       class="h-16 border-l px-3 py-2 align-top"
+                      [attr.data-innovation-and-planning]="
+                        iteration.innovationAndPlanning ? '' : null
+                      "
                       [class.bg-background]="iteration.innovationAndPlanning"
                       [class]="
                         load?.overloaded ? 'border-2 border-danger bg-danger/10' : 'border-border'

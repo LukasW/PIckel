@@ -613,6 +613,137 @@ describe('ProgramBoardComponent', () => {
       expect(grid(el), 'Raster').not.toBeNull();
     });
 
+    // --- Loslassen ausserhalb einer Ablage (Delta US-13, Issue #50) ---
+
+    const IP_REJECTED = 'In der IP-Iteration wird keine Feature-Arbeit geplant.';
+    /** «Portal» bei Adler in Iteration 2 eingeplant (Szenario «Karte über der IP-Iteration losgelassen …»). */
+    const PORTAL_PLANNED: Feature = { ...PORTAL, scheduled: true, teamId: 'a', iterationNumber: 2 };
+    /** Ablagepunkt des Loslassens; bewusst verschieden von `distance`, damit nur er die Stelle bestimmt. */
+    const RELEASE_POINT = { x: 812, y: 143 };
+
+    const originalElementFromPoint = Object.getOwnPropertyDescriptor(document, 'elementFromPoint');
+
+    afterEach(() => {
+      if (originalElementFromPoint) {
+        Object.defineProperty(document, 'elementFromPoint', originalElementFromPoint);
+      } else {
+        delete (document as { elementFromPoint?: unknown }).elementFromPoint;
+      }
+    });
+
+    /** jsdom misst kein Layout: Am Ablagepunkt liegt das genannte Element, sonst nichts. */
+    function underReleasePoint(found: Element | null): void {
+      Object.defineProperty(document, 'elementFromPoint', {
+        configurable: true,
+        writable: true,
+        value: vi.fn((x: number, y: number) =>
+          x === RELEASE_POINT.x && y === RELEASE_POINT.y ? found : null,
+        ),
+      });
+    }
+
+    /**
+     * Loslassen ausserhalb jeder Ablage, wie es CDK meldet: `dropped` kommt von der zuletzt überfahrenen Liste
+     * (`lastOver`), `isPointerOverContainer` ist falsch.
+     */
+    async function release(title: string, from: HTMLElement, lastOver: HTMLElement): Promise<void> {
+      const source = dropList(from);
+      const target = dropList(lastOver);
+      const event: CdkDragDrop<unknown, unknown, unknown> = {
+        previousIndex: 0,
+        currentIndex: 0,
+        item: dragOf(title),
+        container: target,
+        previousContainer: source,
+        isPointerOverContainer: false,
+        distance: { x: 300, y: 5 },
+        dropPoint: RELEASE_POINT,
+        event: new MouseEvent('mouseup'),
+      };
+      target.dropped.emit(event);
+      await fixture.whenStable();
+    }
+
+    /** Text des Alarms über dem Board; leer, wenn keiner da ist. */
+    function alertText(el: HTMLElement): string {
+      return el.querySelector('[role="alert"]')?.textContent ?? '';
+    }
+
+    it('lässt eine Karte, die über der IP-Iteration losgelassen wird, an ihrem Ort und meldet die Sperre der IP (US-13)', async () => {
+      const el = await show(planned([PORTAL_PLANNED], [LOGIN]));
+      underReleasePoint(cell(el, 'Adler', 6));
+
+      // Über die Zellen von Adler gezogen: Zuletzt überfahren ist Iteration 5, losgelassen über der IP.
+      await release('Portal', cell(el, 'Adler', 2), cell(el, 'Adler', 5));
+
+      expect(schedule).not.toHaveBeenCalled();
+      expect(unschedule).not.toHaveBeenCalled();
+      expect(titlesIn(cell(el, 'Adler', 2))).toEqual([expect.stringContaining('Portal')]);
+      expect(alertText(el)).toContain(IP_REJECTED);
+    });
+
+    it('lässt eine Karte, die neben dem Raster losgelassen wird, im Backlog, ohne Meldung (US-13)', async () => {
+      const el = await show(planned([]));
+      underReleasePoint(document.body);
+
+      await release('Portal', backlog(el), cell(el, 'Adler', 1));
+
+      expect(schedule).not.toHaveBeenCalled();
+      expect(unschedule).not.toHaveBeenCalled();
+      expect(cards(el)).toEqual([
+        expect.stringContaining('Portal'),
+        expect.stringContaining('Login'),
+      ]);
+      expect(el.querySelector('[role="alert"]')).toBeNull();
+    });
+
+    it('nimmt eine eingeplante Karte nicht zurück, die zuletzt über dem Backlog war und ausserhalb einer Ablage losgelassen wird (US-13)', async () => {
+      const el = await show(planned([SUCHE]));
+      underReleasePoint(null);
+
+      await release('Suche', cell(el, 'Adler', 2), backlog(el));
+
+      expect(unschedule).not.toHaveBeenCalled();
+      expect(schedule).not.toHaveBeenCalled();
+      expect(el.querySelector('[role="alert"]')).toBeNull();
+    });
+
+    it('meldet die Sperre der IP auch, wenn die Karte zuletzt nur über ihrer eigenen Zelle war (US-13)', async () => {
+      const inFive: Feature = { ...PORTAL, scheduled: true, teamId: 'a', iterationNumber: 5 };
+      const el = await show(planned([inFive], [LOGIN]));
+      underReleasePoint(cell(el, 'Adler', 6));
+
+      // Aus Iteration 5 direkt in die Nachbarspalte IP: CDK meldet die eigene Liste als Ziel.
+      await release('Portal', cell(el, 'Adler', 5), cell(el, 'Adler', 5));
+
+      expect(schedule).not.toHaveBeenCalled();
+      expect(unschedule).not.toHaveBeenCalled();
+      expect(alertText(el)).toContain(IP_REJECTED);
+    });
+
+    it('erkennt die IP auch, wenn der Ablagepunkt auf einem Element in der IP-Zelle liegt (US-13)', async () => {
+      const el = await show(planned([], [PORTAL, LOGIN]));
+      const inside = document.createElement('span');
+      cell(el, 'Zebra', 6).appendChild(inside);
+      underReleasePoint(inside);
+
+      await release('Portal', backlog(el), cell(el, 'Zebra', 5));
+
+      expect(schedule).not.toHaveBeenCalled();
+      expect(alertText(el)).toContain(IP_REJECTED);
+    });
+
+    it('meldet nichts, wenn die Karte im Raster, aber nicht über der IP losgelassen wird (US-13)', async () => {
+      const el = await show(planned([PORTAL_PLANNED], [LOGIN]));
+      underReleasePoint(teamRow(el, 'Adler').querySelector('th'));
+
+      await release('Portal', cell(el, 'Adler', 2), cell(el, 'Adler', 1));
+
+      expect(schedule).not.toHaveBeenCalled();
+      expect(unschedule).not.toHaveBeenCalled();
+      expect(el.querySelector('[role="alert"]')).toBeNull();
+    });
+
     function buttonIn(scope: Element, label: string): HTMLButtonElement {
       const found = Array.from(scope.querySelectorAll('button')).find(
         (b) => (b.textContent ?? '').replace(/\s+/g, ' ').trim() === label,

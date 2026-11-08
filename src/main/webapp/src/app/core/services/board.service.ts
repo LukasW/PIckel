@@ -6,6 +6,8 @@ import { BoardRepository } from '../ports/board.repository';
 import { FeaturesRepository } from '../ports/features.repository';
 
 const GENERIC_ERROR = 'Das hat nicht geklappt. Bitte versuche es nochmals.';
+/** Derselbe Text wie die Ablehnung des Servers (US-13, AK 3); einen gemeinsamen Ort für Java und TypeScript gibt es nicht. */
+const INNOVATION_AND_PLANNING_REJECTED = 'In der IP-Iteration wird keine Feature-Arbeit geplant.';
 
 /** Use Case: das Board eines PI laden (US-12); hält den Zustand als Signals. */
 @Injectable({ providedIn: 'root' })
@@ -166,6 +168,14 @@ export class BoardService {
   /** Anzahl Abhängigkeiten des Features (beide Richtungen), für die keine Linie gezeichnet ist (US-17). */
   unlinkedDependencyCount(featureId: string): number {
     return this.unlinkedCounts().get(featureId) ?? 0;
+  }
+
+  /**
+   * Lehnt ein Einplanen in die IP-Iteration ab, ohne den Server zu fragen (US-13): Die Meldung erscheint wie eine
+   * gescheiterte Aktion über dem Board, die Karte bleibt am Ort.
+   */
+  rejectInnovationAndPlanning(): void {
+    this.actionError.set(INNOVATION_AND_PLANNING_REJECTED);
   }
 
   /** Plant ein Feature in die Zelle ein: Das Board ändert sich sofort, bei einem Fehler kehrt es zurück (US-13). */
