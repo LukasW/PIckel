@@ -252,4 +252,32 @@ describe('BoardCardComponent', () => {
     expect(text).not.toContain('Abhängigkeit');
     expect(text).toContain('Portal');
   });
+
+  // --- US-14: Hinweis «ohne Schätzung» ---
+
+  function text(el: HTMLElement): string {
+    return (el.textContent ?? '').replace(/\s+/g, ' ').trim();
+  }
+
+  it('trägt auf einer Karte ohne Schätzung den Hinweis «ohne Schätzung» (US-14)', async () => {
+    const { estimate: _estimate, ...withoutEstimate } = PORTAL;
+
+    const el = await render(withoutEstimate);
+
+    expect(text(el)).toContain('ohne Schätzung');
+    expect(text(el)).not.toMatch(/\d+ SP/);
+  });
+
+  it('trägt den Hinweis auch, wenn der Server die Schätzung als null liefert (US-14)', async () => {
+    const el = await render({ ...PORTAL, estimate: null } as never);
+
+    expect(text(el)).toContain('ohne Schätzung');
+  });
+
+  it('zeigt bei Schätzung 0 «0 SP» und keinen Hinweis (US-14)', async () => {
+    const el = await render({ ...PORTAL, estimate: 0 });
+
+    expect(text(el)).toContain('0 SP');
+    expect(text(el)).not.toContain('ohne Schätzung');
+  });
 });

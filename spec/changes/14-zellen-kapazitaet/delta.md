@@ -1,6 +1,6 @@
 # Delta US-14 — Kapazität pro Zelle mit Überlast anzeigen (Issue #14)
 
-Story: `spec/user-stories/14-zellen-kapazitaet.md` (neu) · Status: bestätigt
+Story: `spec/user-stories/14-zellen-kapazitaet.md` (neu) · Status: eingepflegt
 
 ## Warum
 

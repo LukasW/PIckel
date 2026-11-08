@@ -3,6 +3,7 @@ package ch.grudligstrasse.pikel.cucumber.steps;
 import static io.restassured.RestAssured.given;
 import static io.restassured.RestAssured.withArgs;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
@@ -11,6 +12,7 @@ import static org.hamcrest.Matchers.not;
 import io.cucumber.java.de.Dann;
 import io.cucumber.java.de.Wenn;
 import io.restassured.http.ContentType;
+import io.restassured.path.json.JsonPath;
 import io.restassured.response.Response;
 import jakarta.inject.Inject;
 import java.util.UUID;
@@ -69,6 +71,31 @@ public class BoardSteps {
                 .contentType(ContentType.JSON)
                 .body("backlog.title", hasItem(title))
                 .body("scheduled.title", not(hasItem(title)));
+    }
+
+    // US-14: Team und Iteration über die Zeilen und Spalten desselben Boards. contains: genau eine Zelle mit diesen
+    // Punkten, auch ohne Eintrag (dann 0).
+    @Dann("liefert das Board für {string} in {string} die Kapazität {int}")
+    public void liefertDasBoardDieKapazitaet(String team, String iteration, int points) {
+        JsonPath json = ok().jsonPath();
+        String teamId = json.param("name", team).getString("teams.find { it.name == name }.id");
+        int number = json.param("name", iteration).getInt("iterations.find { it.name == name }.number");
+
+        board.then()
+                .body(
+                        "capacities.findAll { it.teamId == '%s' && it.iterationNumber == %d }.points"
+                                .formatted(teamId, number),
+                        contains(points));
+    }
+
+    // In der IP-Iteration wird keine Kapazität geplant (ADR 0006): keine Zelle, für kein Team.
+    @Dann("liefert das Board für die IP-Iteration keine Kapazität")
+    public void liefertDasBoardFuerDieIpIterationKeineKapazitaet() {
+        int ipNumber = ok().jsonPath().getInt("iterations.find { it.innovationAndPlanning }.number");
+
+        board.then()
+                .body("capacities.findAll { it.iterationNumber == %d }".formatted(ipNumber), empty())
+                .body("capacities", not(empty()));
     }
 
     private void get(String piId) {

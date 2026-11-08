@@ -95,10 +95,28 @@
                 <tr>
                   <th scope="row" class="px-3 py-2 font-medium">{{ team.name }}</th>
                   @for (iteration of board.iterations; track iteration.number) {
+                    @let load = service.loadOf(team.id, iteration.number);
                     <td
-                      class="h-16 border-l border-border px-3 py-2 align-top"
+                      class="h-16 border-l px-3 py-2 align-top"
                       [class.bg-background]="iteration.innovationAndPlanning"
+                      [class]="
+                        load?.overloaded ? 'border-2 border-danger bg-danger/10' : 'border-border'
+                      "
                     >
+                      @if (load) {
+                        <!-- Nicht nur Farbe: Überlast steht auch als Text da. -->
+                        <p
+                          data-testid="cell-load"
+                          class="mb-2 text-xs"
+                          [class.text-muted]="!load.overloaded"
+                          [class.text-danger]="load.overloaded"
+                        >
+                          {{ load.planned }} / {{ load.available }} SP
+                          @if (load.overloaded) {
+                            <span class="ml-1 font-semibold">Überlast</span>
+                          }
+                        </p>
+                      }
                       <!-- In der IP-Iteration gibt es keine Drop-Zone: Dort wird keine Feature-Arbeit geplant. -->
                       @if (!iteration.innovationAndPlanning) {
                         <ul

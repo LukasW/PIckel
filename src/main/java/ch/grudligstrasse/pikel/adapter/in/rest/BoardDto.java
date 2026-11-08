@@ -10,6 +10,7 @@ public record BoardDto(
         List<FeatureDto> backlog,
         List<FeatureDto> scheduled,
         List<BoardMilestoneDto> milestones,
+        List<CapacityDto> capacities,
         List<FeatureDependencyDto> dependencies) {
 
     static BoardDto from(ProgramBoard board) {
@@ -21,6 +22,7 @@ public record BoardDto(
                 board.milestones().stream()
                         .map(milestone -> BoardMilestoneDto.from(milestone, board.iterationNumberOf(milestone)))
                         .toList(),
+                board.capacities().stream().map(CapacityDto::from).toList(),
                 board.dependencies().stream().map(FeatureDependencyDto::from).toList());
     }
 }

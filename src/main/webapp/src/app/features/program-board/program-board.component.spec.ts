@@ -56,7 +56,15 @@ function board(
   backlog: Feature[] = [PORTAL, LOGIN],
   milestones: BoardMilestone[] = [],
 ): Board {
-  return { teams, iterations: ITERATIONS, backlog, scheduled: [], milestones, dependencies: [] };
+  return {
+    teams,
+    iterations: ITERATIONS,
+    backlog,
+    scheduled: [],
+    milestones,
+    capacities: [],
+    dependencies: [],
+  };
 }
 
 // Milestones in PI 27.1 (US-15); `iterationNumber` liefert der Server.
@@ -210,11 +218,12 @@ describe('ProgramBoardComponent', () => {
     expect(shown[1]).toContain('13 SP');
   });
 
-  // Annahme im Nachtlauf (notes.md): fehlender Rang oder fehlende Schätzung wird weggelassen.
-  it('lässt auf der Karte fehlenden Rang und fehlende Schätzung weg (US-12)', async () => {
+  // Annahme im Nachtlauf (notes.md US-12): fehlender Rang wird weggelassen. Statt einer fehlenden Schätzung steht
+  // seit US-14 (Delta, AK 5) der Hinweis «ohne Schätzung».
+  it('lässt auf der Karte fehlenden Rang weg und zeigt statt fehlender Schätzung «ohne Schätzung» (US-12, US-14)', async () => {
     const el = await render(board([ADLER], [feature('f3', 'Suche')]));
 
-    expect(cards(el)).toEqual(['Suche']);
+    expect(cards(el)).toEqual(['Suche ohne Schätzung']);
   });
 
   it('übernimmt die Reihenfolge des Backlogs vom Server (US-12)', async () => {
@@ -376,6 +385,7 @@ describe('ProgramBoardComponent', () => {
         backlog,
         scheduled,
         milestones: [],
+        capacities: [],
         dependencies: [],
       };
     }
@@ -627,6 +637,193 @@ describe('ProgramBoardComponent', () => {
     }
   });
 
+  // --- US-14: Kapazität pro Zelle ---
+
+  /**
+   * Vertrag mit der Vorlage (US-14): Jede Zelle `tbody tr td` einer Entwicklungs-Iteration zeigt oben
+   * «geplant / verfügbar SP», auch leer; eine überlastete Zelle trägt den Text «Überlast» und ist mit `border-danger`
+   * und `bg-danger/10` markiert (die Zelle selbst oder ein Element darin). Die IP-Spalte zeigt keine Kapazität.
+   */
+  describe('Kapazität pro Zelle (US-14)', () => {
+    let fixture: ComponentFixture<ProgramBoardComponent>;
+    let features: { schedule: ReturnType<typeof vi.fn>; unschedule: ReturnType<typeof vi.fn> };
+
+    function placed(f: Feature, teamId: string, iterationNumber: number): Feature {
+      return { ...f, scheduled: true, teamId, iterationNumber };
+    }
+
+    /** Wie der Server: jede Zelle Team × Entwicklungs-Iteration hat einen Eintrag, ohne Erfassung 0; die IP keinen. */
+    function withCapacities(scheduled: Feature[], points: Record<string, number>): Board {
+      const capacities = [ADLER, ZEBRA].flatMap((team) =>
+        ITERATIONS.filter((i) => !i.innovationAndPlanning).map((i) => ({
+          teamId: team.id,
+          iterationNumber: i.number,
+          points: points[`${team.id}|${i.number}`] ?? 0,
+        })),
+      );
+      return {
+        teams: [ADLER, ZEBRA],
+        iterations: ITERATIONS,
+        backlog: [],
+        scheduled,
+        milestones: [],
+        capacities,
+        dependencies: [],
+      };
+    }
+
+    async function show(answer: Board): Promise<HTMLElement> {
+      repository = { get: vi.fn().mockResolvedValue(answer) };
+      features = { schedule: vi.fn(), unschedule: vi.fn() };
+      TestBed.configureTestingModule({
+        imports: [ProgramBoardComponent],
+        providers: [
+          provideRouter([]),
+          { provide: BoardRepository, useValue: repository },
+          { provide: FeaturesRepository, useValue: features },
+        ],
+      });
+      fixture = TestBed.createComponent(ProgramBoardComponent);
+      fixture.componentRef.setInput('id', 'pi-7');
+      await fixture.whenStable();
+      return fixture.nativeElement as HTMLElement;
+    }
+
+    function cell(el: HTMLElement, team: string, iterationNumber: number): HTMLElement {
+      const row = Array.from(grid(el)?.querySelectorAll<HTMLElement>('tbody tr') ?? []).find(
+        (tr) => (tr.querySelector('th')?.textContent ?? '').trim() === team,
+      );
+      expect(row, `Zeile ${team}`).toBeDefined();
+      const cells = Array.from(row!.querySelectorAll<HTMLElement>('td'));
+      expect(cells, `Zellen von ${team}`).toHaveLength(ITERATIONS.length);
+      return cells[iterationNumber - 1];
+    }
+
+    function text(scope: Element): string {
+      return (scope.textContent ?? '').replace(/\s+/g, ' ').trim();
+    }
+
+    /** Die Anzeige «geplant / verfügbar SP» der Zelle, oder `undefined`, wenn sie fehlt. */
+    function loadShown(scope: HTMLElement): string | undefined {
+      const match = /(\d+)\s*\/\s*(\d+)\s*SP/.exec(text(scope));
+      return match ? `${match[1]} / ${match[2]} SP` : undefined;
+    }
+
+    function hasClass(scope: HTMLElement, name: string): boolean {
+      return [scope, ...Array.from(scope.querySelectorAll('*'))].some((e) =>
+        e.classList.contains(name),
+      );
+    }
+
+    function markedAsOverload(scope: HTMLElement): boolean {
+      return hasClass(scope, 'border-danger') && hasClass(scope, 'bg-danger/10');
+    }
+
+    function expectNotOverloaded(scope: HTMLElement): void {
+      expect(text(scope)).not.toContain('Überlast');
+      expect(hasClass(scope, 'border-danger'), 'border-danger').toBe(false);
+      expect(hasClass(scope, 'bg-danger/10'), 'bg-danger/10').toBe(false);
+    }
+
+    it('zeigt in der Zelle «geplant / verfügbar SP» und keine Überlast (US-14)', async () => {
+      const el = await show(withCapacities([placed(LOGIN, 'a', 1)], { 'a|1': 20 }));
+
+      expect(loadShown(cell(el, 'Adler', 1))).toBe('13 / 20 SP');
+      expectNotOverloaded(cell(el, 'Adler', 1));
+    });
+
+    it('zeigt die Anzeige in jeder Zelle einer Entwicklungs-Iteration, auch leer (US-14)', async () => {
+      const el = await show(withCapacities([placed(LOGIN, 'a', 1)], { 'a|1': 20, 'z|3': 10 }));
+
+      expect(loadShown(cell(el, 'Zebra', 3))).toBe('0 / 10 SP');
+      for (const team of ['Adler', 'Zebra']) {
+        for (const iteration of ITERATIONS.filter((i) => !i.innovationAndPlanning)) {
+          if (team === 'Adler' && iteration.number === 1) continue;
+          if (team === 'Zebra' && iteration.number === 3) continue;
+          expect(loadShown(cell(el, team, iteration.number)), `${team} × ${iteration.name}`).toBe(
+            '0 / 0 SP',
+          );
+        }
+      }
+    });
+
+    it('zeigt die Anzeige oben in der Zelle, vor den Karten (US-14)', async () => {
+      const el = await show(withCapacities([placed(LOGIN, 'a', 1)], { 'a|1': 20 }));
+
+      const shown = cell(el, 'Adler', 1);
+      expect(text(shown).indexOf('13 / 20 SP'), 'Anzeige').toBeGreaterThanOrEqual(0);
+      expect(text(shown).indexOf('13 / 20 SP')).toBeLessThan(text(shown).indexOf('Login'));
+    });
+
+    it('zeigt in der IP-Spalte keine Kapazität (US-14)', async () => {
+      const el = await show(withCapacities([placed(LOGIN, 'a', 1)], { 'a|1': 20 }));
+
+      for (const team of ['Adler', 'Zebra']) {
+        const ip = cell(el, team, 6);
+        expect(loadShown(ip), `${team} × IP`).toBeUndefined();
+        expect(text(ip), `${team} × IP`).not.toContain('SP');
+        expect(text(ip), `${team} × IP`).not.toContain('Überlast');
+      }
+    });
+
+    it('hebt eine Zelle über der Kapazität rot hervor und beschriftet sie mit «Überlast» (US-14)', async () => {
+      // Login 13 + Suche 8 = 21 > 20
+      const suche = feature('f3', 'Suche', 3, 8);
+      const el = await show(
+        withCapacities([placed(LOGIN, 'a', 1), placed(suche, 'a', 1)], { 'a|1': 20, 'z|1': 20 }),
+      );
+
+      const shown = cell(el, 'Adler', 1);
+      expect(loadShown(shown)).toBe('21 / 20 SP');
+      expect(text(shown)).toContain('Überlast');
+      expect(markedAsOverload(shown), 'rot markiert').toBe(true);
+      expectNotOverloaded(cell(el, 'Zebra', 1));
+    });
+
+    it('markiert eine genau ausgelastete Zelle nicht als Überlast (US-14)', async () => {
+      const el = await show(withCapacities([placed(LOGIN, 'a', 1)], { 'a|1': 13 }));
+
+      expect(loadShown(cell(el, 'Adler', 1))).toBe('13 / 13 SP');
+      expectNotOverloaded(cell(el, 'Adler', 1));
+    });
+
+    it('zählt ein Feature ohne Schätzung als 0 und zeigt auf der Karte «ohne Schätzung» (US-14)', async () => {
+      const ohne = feature('f2', 'Login', 5);
+      const el = await show(withCapacities([placed(ohne, 'a', 1)], {}));
+
+      const shown = cell(el, 'Adler', 1);
+      expect(loadShown(shown)).toBe('0 / 0 SP');
+      expectNotOverloaded(shown);
+      const card = shown.querySelector<HTMLElement>('app-board-card');
+      expect(card, 'Karte «Login» in der Zelle').not.toBeNull();
+      expect(text(card!)).toContain('ohne Schätzung');
+    });
+
+    it('zeigt nach dem Verschieben die neuen Werte ohne Neuladen, nach einem Fehler wieder die alten (US-14)', async () => {
+      const portal = placed(PORTAL, 'a', 1);
+      const el = await show(withCapacities([portal], { 'a|1': 10, 'a|2': 10 }));
+      let reject: (e: unknown) => void = () => undefined;
+      features.schedule.mockReturnValue(new Promise((_, rej) => (reject = rej)));
+      const service = TestBed.inject(BoardService);
+
+      const moving = service.schedule(portal, 'a', 2);
+      moving.catch(() => undefined);
+      await fixture.whenStable();
+
+      expect(loadShown(cell(el, 'Adler', 1))).toBe('0 / 10 SP');
+      expect(loadShown(cell(el, 'Adler', 2))).toBe('8 / 10 SP');
+      expect(repository.get).toHaveBeenCalledTimes(1);
+
+      reject(new Error('offline'));
+      await moving;
+      await fixture.whenStable();
+
+      expect(loadShown(cell(el, 'Adler', 1))).toBe('8 / 10 SP');
+      expect(loadShown(cell(el, 'Adler', 2))).toBe('0 / 10 SP');
+      expect(repository.get).toHaveBeenCalledTimes(1);
+    });
+  });
+
   // --- US-17: Abhängigkeiten als Linie ---
 
   /**
@@ -665,6 +862,7 @@ describe('ProgramBoardComponent', () => {
         backlog,
         scheduled,
         milestones: [],
+        capacities: [],
         dependencies,
       };
     }

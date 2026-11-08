@@ -44,6 +44,7 @@ const BOARD: Board = {
   ],
   scheduled: [],
   milestones: [],
+  capacities: [],
   dependencies: [],
 };
 
@@ -190,6 +191,7 @@ describe('BoardService', () => {
       backlog: [PORTAL, LOGIN],
       scheduled: [SUCHE],
       milestones: [],
+      capacities: [],
       dependencies: [],
     };
 
@@ -406,6 +408,256 @@ describe('BoardService', () => {
 
       expect(service.board()).toEqual(before);
       expect(service.actionError()).toBe(GENERIC_ERROR);
+    });
+  });
+
+  // --- US-14: Kapazität pro Zelle ---
+
+  describe('Last pro Zelle (US-14)', () => {
+    const PI = 'pi-27-1';
+    const TEAM_IDS = ['a', 'z'];
+    const DEVELOPMENT = [1, 2, 3];
+    const IP = 4;
+
+    function card(id: string, title: string, estimate?: number, cell?: [string, number]): Feature {
+      return {
+        id,
+        programIncrementId: PI,
+        title,
+        description: '',
+        owner: '',
+        wsjfRank: Number(id.slice(1)),
+        ...(estimate === undefined ? {} : { estimate }),
+        scheduled: cell !== undefined,
+        ...(cell ? { teamId: cell[0], iterationNumber: cell[1] } : {}),
+      };
+    }
+
+    /** Wie der Server: jede Zelle Team × Entwicklungs-Iteration hat einen Eintrag, ohne Erfassung 0; die IP keinen. */
+    function capacities(points: Record<string, number>): Board['capacities'] {
+      return TEAM_IDS.flatMap((teamId) =>
+        DEVELOPMENT.map((iterationNumber) => ({
+          teamId,
+          iterationNumber,
+          points: points[`${teamId}|${iterationNumber}`] ?? 0,
+        })),
+      );
+    }
+
+    function boardWith(
+      scheduled: Feature[],
+      points: Record<string, number>,
+      backlog: Feature[] = [],
+    ): Board {
+      return {
+        teams: [
+          { id: 'a', name: 'Adler' },
+          { id: 'z', name: 'Zebra' },
+        ],
+        iterations: [
+          ['Iteration 1', '2027-01-04', '2027-01-17'],
+          ['Iteration 2', '2027-01-18', '2027-01-31'],
+          ['Iteration 3', '2027-02-01', '2027-02-14'],
+          ['IP', '2027-02-15', '2027-02-26'],
+        ].map(([name, startDate, endDate], i) => ({
+          number: i + 1,
+          name,
+          startDate,
+          endDate,
+          innovationAndPlanning: name === 'IP',
+        })),
+        backlog,
+        scheduled,
+        milestones: [],
+        capacities: capacities(points),
+        dependencies: [],
+      };
+    }
+
+    async function show(board: Board): Promise<void> {
+      repository.get.mockResolvedValue(board);
+      await service.load(PI);
+    }
+
+    function pending<T>(): {
+      promise: Promise<T>;
+      resolve: (v: T) => void;
+      reject: (e: unknown) => void;
+    } {
+      let resolve: (v: T) => void = () => undefined;
+      let reject: (e: unknown) => void = () => undefined;
+      const promise = new Promise<T>((res, rej) => {
+        resolve = res;
+        reject = rej;
+      });
+      return { promise, resolve, reject };
+    }
+
+    it('zeigt geplant gegenüber verfügbar: 13 von 20, nicht überlastet (US-14)', async () => {
+      await show(boardWith([card('f1', 'Portal', 13, ['a', 1])], { 'a|1': 20 }));
+
+      expect(service.loadOf('a', 1)).toEqual({ planned: 13, available: 20, overloaded: false });
+    });
+
+    it('summiert die Schätzungen der Features einer Zelle, Karten anderer Zellen und des Backlogs zählen nicht (US-14)', async () => {
+      await show(
+        boardWith(
+          [
+            card('f1', 'Portal', 13, ['a', 1]),
+            card('f2', 'Suche', 8, ['a', 1]),
+            card('f3', 'Kasse', 5, ['z', 1]),
+            card('f4', 'Archiv', 3, ['a', 2]),
+          ],
+          { 'a|1': 30, 'z|1': 7, 'a|2': 4, 'a|3': 6 },
+          [card('f5', 'Login', 2)],
+        ),
+      );
+
+      expect(service.loadOf('a', 1)).toEqual({ planned: 21, available: 30, overloaded: false });
+      expect(service.loadOf('z', 1)).toEqual({ planned: 5, available: 7, overloaded: false });
+      expect(service.loadOf('a', 2)).toEqual({ planned: 3, available: 4, overloaded: false });
+      expect(service.loadOf('a', 3)).toEqual({ planned: 0, available: 6, overloaded: false });
+      expect(service.loadOf('z', 2)).toEqual({ planned: 0, available: 0, overloaded: false });
+    });
+
+    it('ist überlastet, wenn geplant grösser als verfügbar ist: 21 > 20 (US-14)', async () => {
+      await show(
+        boardWith([card('f1', 'Portal', 13, ['a', 1]), card('f2', 'Suche', 8, ['a', 1])], {
+          'a|1': 20,
+        }),
+      );
+
+      expect(service.loadOf('a', 1)).toEqual({ planned: 21, available: 20, overloaded: true });
+    });
+
+    it('ist bei genau ausgelasteter Zelle nicht überlastet: 13 = 13 (US-14)', async () => {
+      await show(boardWith([card('f1', 'Portal', 13, ['a', 1])], { 'a|1': 13 }));
+
+      expect(service.loadOf('a', 1)).toEqual({ planned: 13, available: 13, overloaded: false });
+    });
+
+    it('zählt ein Feature ohne Schätzung als 0: «0 / 0» bei einem Team ohne Kapazität (US-14)', async () => {
+      await show(boardWith([card('f2', 'Login', undefined, ['a', 1])], {}));
+
+      expect(service.loadOf('a', 1)).toEqual({ planned: 0, available: 0, overloaded: false });
+    });
+
+    it('zählt ein Feature ohne Schätzung neben geschätzten Features als 0 (US-14)', async () => {
+      await show(
+        boardWith([card('f1', 'Portal', 13, ['a', 1]), card('f2', 'Login', undefined, ['a', 1])], {
+          'a|1': 13,
+        }),
+      );
+
+      expect(service.loadOf('a', 1)).toEqual({ planned: 13, available: 13, overloaded: false });
+    });
+
+    it('zählt eine Schätzung, die der Server als null liefert, als 0 (US-14)', async () => {
+      const login = { ...card('f2', 'Login', undefined, ['a', 1]), estimate: null } as never;
+      await show(boardWith([card('f1', 'Portal', 13, ['a', 1]), login], { 'a|1': 20 }));
+
+      expect(service.loadOf('a', 1)).toEqual({ planned: 13, available: 20, overloaded: false });
+    });
+
+    it('hat in der IP-Iteration keine Last (US-14)', async () => {
+      await show(boardWith([card('f1', 'Portal', 13, ['a', 1])], { 'a|1': 20 }));
+
+      expect(service.loadOf('a', IP)).toBeUndefined();
+      expect(service.loadOf('z', IP)).toBeUndefined();
+    });
+
+    it('hat ohne geladenes Board keine Last (US-14)', () => {
+      expect(service.loadOf('a', 1)).toBeUndefined();
+    });
+
+    it('folgt dem Verschieben sofort, ohne neu zu laden (US-14)', async () => {
+      const portal = card('f1', 'Portal', 8, ['a', 1]);
+      await show(boardWith([portal], { 'a|1': 10, 'a|2': 10 }));
+      const answer = pending<Feature>();
+      features.schedule.mockReturnValue(answer.promise);
+
+      const moving = service.schedule(portal, 'a', 2);
+      // Verhindert eine unbehandelte Ablehnung, falls die Prüfung davor scheitert; `await moving` meldet sie trotzdem.
+      moving.catch(() => undefined);
+
+      expect(service.loadOf('a', 1)).toEqual({ planned: 0, available: 10, overloaded: false });
+      expect(service.loadOf('a', 2)).toEqual({ planned: 8, available: 10, overloaded: false });
+      answer.resolve({ ...portal, teamId: 'a', iterationNumber: 2 });
+      await moving;
+      expect(service.loadOf('a', 1)).toEqual({ planned: 0, available: 10, overloaded: false });
+      expect(service.loadOf('a', 2)).toEqual({ planned: 8, available: 10, overloaded: false });
+      expect(repository.get).toHaveBeenCalledTimes(1);
+    });
+
+    it('zeigt in beiden Zellen wieder die Werte von vorher, wenn das Verschieben scheitert (US-14)', async () => {
+      const portal = card('f1', 'Portal', 8, ['a', 1]);
+      await show(boardWith([portal], { 'a|1': 10, 'a|2': 10 }));
+      const answer = pending<Feature>();
+      features.schedule.mockReturnValue(answer.promise);
+
+      const moving = service.schedule(portal, 'a', 2);
+      moving.catch(() => undefined);
+      expect(service.loadOf('a', 2)).toEqual({ planned: 8, available: 10, overloaded: false });
+      answer.reject(new HttpErrorResponse({ status: 500, error: 'boom' }));
+      await moving;
+
+      expect(service.loadOf('a', 1)).toEqual({ planned: 8, available: 10, overloaded: false });
+      expect(service.loadOf('a', 2)).toEqual({ planned: 0, available: 10, overloaded: false });
+      expect(repository.get).toHaveBeenCalledTimes(1);
+    });
+
+    it('wird überlastet, sobald ein Feature in eine fast volle Zelle verschoben wird (US-14)', async () => {
+      const portal = card('f1', 'Portal', 8, ['a', 2]);
+      const suche = card('f2', 'Suche', 5, ['a', 1]);
+      await show(boardWith([portal, suche], { 'a|1': 10, 'a|2': 10 }));
+      features.schedule.mockResolvedValue({ ...suche, teamId: 'a', iterationNumber: 2 });
+
+      await service.schedule(suche, 'a', 2);
+
+      expect(service.loadOf('a', 2)).toEqual({ planned: 13, available: 10, overloaded: true });
+      expect(service.loadOf('a', 1)).toEqual({ planned: 0, available: 10, overloaded: false });
+    });
+
+    it('steigt sofort, wenn ein Feature aus dem Backlog eingeplant wird (US-14)', async () => {
+      const portal = card('f1', 'Portal', 8);
+      await show(boardWith([], { 'z|3': 10 }, [portal]));
+      const answer = pending<Feature>();
+      features.schedule.mockReturnValue(answer.promise);
+
+      const scheduling = service.schedule(portal, 'z', 3);
+      scheduling.catch(() => undefined);
+
+      expect(service.loadOf('z', 3)).toEqual({ planned: 8, available: 10, overloaded: false });
+      answer.resolve({ ...portal, scheduled: true, teamId: 'z', iterationNumber: 3 });
+      await scheduling;
+      expect(repository.get).toHaveBeenCalledTimes(1);
+    });
+
+    it('sinkt sofort, wenn ein Feature zurück ins Backlog genommen wird (US-14)', async () => {
+      const portal = card('f1', 'Portal', 8, ['a', 1]);
+      const suche = card('f2', 'Suche', 5, ['a', 1]);
+      await show(boardWith([portal, suche], { 'a|1': 10 }));
+      const answer = pending<Feature>();
+      features.unschedule.mockReturnValue(answer.promise);
+
+      const unscheduling = service.unschedule(portal);
+      unscheduling.catch(() => undefined);
+
+      expect(service.loadOf('a', 1)).toEqual({ planned: 5, available: 10, overloaded: false });
+      answer.resolve(card('f1', 'Portal', 8));
+      await unscheduling;
+      expect(repository.get).toHaveBeenCalledTimes(1);
+    });
+
+    it('zeigt wieder die Werte von vorher, wenn das Zurücknehmen scheitert (US-14)', async () => {
+      const portal = card('f1', 'Portal', 8, ['a', 1]);
+      const suche = card('f2', 'Suche', 5, ['a', 1]);
+      await show(boardWith([portal, suche], { 'a|1': 10 }));
+      features.unschedule.mockRejectedValue(new Error('offline'));
+
+      await service.unschedule(portal);
+
+      expect(service.loadOf('a', 1)).toEqual({ planned: 13, available: 10, overloaded: true });
     });
   });
 
