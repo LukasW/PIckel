@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { inject, Injectable, signal } from '@angular/core';
-import { Board } from '../models/board.model';
+import { computed, inject, Injectable, signal } from '@angular/core';
+import { Board, CellLoad } from '../models/board.model';
 import { Feature } from '../models/feature.model';
 import { BoardRepository } from '../ports/board.repository';
 import { FeaturesRepository } from '../ports/features.repository';
@@ -20,6 +20,41 @@ export class BoardService {
   readonly error = signal<string | undefined>(undefined);
   /** Meldung, wenn das Einplanen oder Zurücknehmen scheitert (US-13); das Board steht dann wie vorher. */
   readonly actionError = signal<string | undefined>(undefined);
+
+  /**
+   * Last der Zelle Team × Iteration (US-14), abgeleitet aus den Karten im Board; `undefined` ohne Board und in der
+   * IP-Iteration, wo es keine Kapazität gibt.
+   */
+  loadOf(teamId: string, iterationNumber: number): CellLoad | undefined {
+    return this.loads().get(cellKey(teamId, iterationNumber));
+  }
+
+  // Aus demselben Signal, das das optimistische Einplanen ändert: Die Werte folgen jeder Karte sofort und kehren bei
+  // einem Fehler mit ihr zurück. Eine Map, damit das Template nicht pro Zelle über alle Karten filtert.
+  private readonly loads = computed(() => {
+    const board = this.current();
+    const loads = new Map<string, CellLoad>();
+    if (!board) {
+      return loads;
+    }
+    const planned = new Map<string, number>();
+    for (const feature of board.scheduled) {
+      const key = cellKey(feature.teamId ?? '', feature.iterationNumber ?? 0);
+      // Ohne Schätzung zählt ein Feature 0 (ADR 0006).
+      planned.set(key, (planned.get(key) ?? 0) + (feature.estimate ?? 0));
+    }
+    // Der Server liefert jede Entwicklungs-Zelle (ohne Eintrag 0) und keine für die IP-Iteration.
+    for (const capacity of board.capacities) {
+      const key = cellKey(capacity.teamId, capacity.iterationNumber);
+      const sum = planned.get(key) ?? 0;
+      loads.set(key, {
+        planned: sum,
+        available: capacity.points,
+        overloaded: sum > capacity.points,
+      });
+    }
+    return loads;
+  });
 
   /** Zählt die Ladeaufträge; nur die Antwort auf den letzten zählt. */
   private latestRequest = 0;
@@ -117,6 +152,10 @@ function insertByRank(features: readonly Feature[], added: Feature): readonly Fe
   return index === -1
     ? [...features, added]
     : [...features.slice(0, index), added, ...features.slice(index)];
+}
+
+function cellKey(teamId: string, iterationNumber: number): string {
+  return `${teamId}|${iterationNumber}`;
 }
 
 function toMessage(e: unknown): string {

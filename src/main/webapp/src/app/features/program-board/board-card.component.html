@@ -8,6 +8,9 @@
     }
     @if (feature().estimate != null) {
       <span class="ml-2">{{ feature().estimate }} SP</span>
+    } @else {
+      <!-- Zählt in der Zelle 0 (ADR 0006); der Hinweis zeigt, warum. -->
+      <span class="ml-2 italic">ohne Schätzung</span>
     }
   </p>
 </div>
