@@ -156,6 +156,14 @@ export class ProgramBoardComponent {
   }
 
   protected drop(event: CdkDragDrop<DropTarget>): void {
+    // Ausserhalb einer Ablage losgelassen: Das CDK meldet sonst die zuletzt überfahrene Liste als Ziel, und die Karte
+    // landete etwa neben der IP-Iteration. Sie bleibt am Ort; über der IP-Zelle mit der Meldung aus AK 3.
+    if (!event.isPointerOverContainer) {
+      if (isInnovationAndPlanningAt(event.dropPoint)) {
+        this.service.rejectInnovationAndPlanning();
+      }
+      return;
+    }
     if (event.previousContainer === event.container) {
       return;
     }
@@ -167,6 +175,11 @@ export class ProgramBoardComponent {
       void this.service.schedule(feature, target.teamId, target.iterationNumber);
     }
   }
+}
+
+/** Liegt der Punkt in einer Zelle der IP-Iteration? Die IP-Zellen sind keine Ablage und tragen deshalb ein Attribut. */
+function isInnovationAndPlanningAt(point: { x: number; y: number }): boolean {
+  return !!document.elementFromPoint(point.x, point.y)?.closest('[data-innovation-and-planning]');
 }
 
 /** Gleiche Messung → kein neues Signal, sonst rendert die Messung nach dem Rendern endlos. */

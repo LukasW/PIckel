@@ -111,3 +111,24 @@ Funktionalität: US-13 Feature einplanen
     Gegeben sei das Team "Adler"
     Wenn ich das Team "Adler" entfernen will
     Dann weist die Bestätigung darauf hin, dass seine eingeplanten Features in allen PIs zurück ins Backlog gehen
+
+  # Vitest: src/main/webapp/src/app/features/program-board/program-board.component.spec.ts → lässt eine Karte, die über der IP-Iteration losgelassen wird, an ihrem Ort und meldet die Sperre der IP (US-13)
+  # Vitest: src/main/webapp/src/app/features/program-board/program-board.component.spec.ts → meldet die Sperre der IP auch, wenn die Karte zuletzt nur über ihrer eigenen Zelle war (US-13)
+  # Vitest: src/main/webapp/src/app/features/program-board/program-board.component.spec.ts → erkennt die IP auch, wenn der Ablagepunkt auf einem Element in der IP-Zelle liegt (US-13)
+  # Vitest: src/main/webapp/src/app/core/services/board.service.spec.ts → meldet die Sperre der IP-Iteration, ohne den Server zu fragen und ohne das Board zu ändern (US-13)
+  @Unit
+  Szenario: Karte über der IP-Iteration losgelassen bleibt an ihrem Ort
+    Gegeben sei das Feature "Portal" bei "Adler" in "Iteration 2" eingeplant
+    Wenn ich "Portal" über die Zellen von "Adler" ziehe und über "IP" loslasse
+    Dann liegt "Portal" weiter bei "Adler" in "Iteration 2"
+    Und über dem Board steht "In der IP-Iteration wird keine Feature-Arbeit geplant."
+
+  # Vitest: src/main/webapp/src/app/features/program-board/program-board.component.spec.ts → lässt eine Karte, die neben dem Raster losgelassen wird, im Backlog, ohne Meldung (US-13)
+  # Vitest: src/main/webapp/src/app/features/program-board/program-board.component.spec.ts → nimmt eine eingeplante Karte nicht zurück, die zuletzt über dem Backlog war und ausserhalb einer Ablage losgelassen wird (US-13)
+  # Vitest: src/main/webapp/src/app/features/program-board/program-board.component.spec.ts → meldet nichts, wenn die Karte im Raster, aber nicht über der IP losgelassen wird (US-13)
+  @Unit
+  Szenario: Karte ausserhalb einer Ablage losgelassen bleibt an ihrem Ort
+    Gegeben sei das Feature "Portal" im Backlog des Boards
+    Wenn ich "Portal" über die Zelle von "Adler" in "Iteration 1" ziehe und neben dem Raster loslasse
+    Dann liegt "Portal" weiter im Backlog des Boards
+    Und über dem Board steht keine Meldung

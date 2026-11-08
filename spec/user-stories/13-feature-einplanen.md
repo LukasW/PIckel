@@ -21,6 +21,8 @@ zurück ins Backlog nehmen, damit die Planung so schnell geht wie mit Klebezette
 6. Wird ein Team entfernt, kommen seine eingeplanten Features in allen PIs zurück ins Backlog
 7. Die Bestätigung beim Entfernen eines Teams weist darauf hin, dass seine eingeplanten Features in allen PIs
    zurück ins Backlog gehen
+8. Wird eine Karte ausserhalb einer Ablage losgelassen, bleibt sie an ihrem bisherigen Ort; über der IP-Iteration
+   erscheint dazu die Meldung aus AK 3
 
 Die Einplanung ist ein Wert am Feature (Team und Iterationsnummer), ein Feature liegt in höchstens einer Zelle
 (ADR 0005, ADR 0006). Innerhalb einer Zelle gilt die Reihenfolge des Backlogs (WSJF-Rang). Nicht in dieser Story:
@@ -41,7 +43,9 @@ Siehe [`src/test/resources/features/program-increments/13-feature-einplanen.feat
 | 5 Rücknahme bei Fehler | `@Unit` «Gescheitertes Speichern nimmt die Karte zurück»; Vitest `board.service.spec.ts` → «nimmt das Einplanen bei einem Fehler zurück und zeigt die Meldung des Servers (US-13)», «springt beim Verschieben bei einem Fehler in die alte Zelle zurück (US-13)», «nimmt bei einem Fehler nur diese Karte zurück, nicht eine inzwischen gelungene Aktion (US-13)» |
 | 6 Team entfernen → Backlog | `TeamServiceTest` → `removeReturnsScheduledFeaturesOfTeamToBacklogBeforeDeletingTeam`; CucumberIT «Entferntes Team gibt seine Features ins Backlog zurück», «Entferntes Team gibt seine Features in allen PIs zurück»; Vitest `program-board.component.spec.ts` → «ruft nichts auf, wenn eine Karte in dieselbe Zelle oder ins Backlog zurückgelegt wird (US-13)» |
 | 7 Hinweis in der Bestätigung | `@Unit` «Bestätigung beim Entfernen eines Teams weist auf zurückgehende Features hin»; Vitest `teams.component.spec.ts` → «weist in der Bestätigung darauf hin, dass die eingeplanten Features in allen PIs ins Backlog zurückgehen (US-6)» |
+| 8 Ausserhalb einer Ablage losgelassen | `@Unit` «Karte über der IP-Iteration losgelassen bleibt an ihrem Ort», «Karte ausserhalb einer Ablage losgelassen bleibt an ihrem Ort»; Vitest `program-board.component.spec.ts` → «lässt eine Karte, die über der IP-Iteration losgelassen wird, an ihrem Ort und meldet die Sperre der IP (US-13)», «meldet die Sperre der IP auch, wenn die Karte zuletzt nur über ihrer eigenen Zelle war (US-13)», «erkennt die IP auch, wenn der Ablagepunkt auf einem Element in der IP-Zelle liegt (US-13)», «lässt eine Karte, die neben dem Raster losgelassen wird, im Backlog, ohne Meldung (US-13)», «nimmt eine eingeplante Karte nicht zurück, die zuletzt über dem Backlog war und ausserhalb einer Ablage losgelassen wird (US-13)», «meldet nichts, wenn die Karte im Raster, aber nicht über der IP losgelassen wird (US-13)»; `board.service.spec.ts` → «meldet die Sperre der IP-Iteration, ohne den Server zu fragen und ohne das Board zu ändern (US-13)», «ersetzt eine frühere Meldung durch die Sperre der IP-Iteration (US-13)» |
 
 ## Änderungen
 
 - #13: Feature einplanen — `spec/changes/13-feature-einplanen/delta.md`
+- #50: Nacharbeiten aus dem Playwright-Test — `spec/changes/50-nacharbeiten-playwright/delta.md`
