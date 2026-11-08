@@ -1,0 +1,96 @@
+<a
+  [routerLink]="['/program-increments', id()]"
+  class="mb-4 inline-block text-sm text-accent hover:underline"
+  >← Zum PI</a
+>
+
+<h1 class="mb-4 text-2xl font-semibold">Program Board</h1>
+
+@if (service.board(); as board) {
+  <div class="flex items-start gap-4">
+    <section
+      data-testid="board-backlog"
+      aria-labelledby="board-backlog-heading"
+      class="w-64 shrink-0 rounded-lg border border-border bg-surface p-3"
+    >
+      <h2 id="board-backlog-heading" class="mb-2 font-semibold">Backlog</h2>
+      <ul class="grid gap-2">
+        @for (feature of board.backlog; track feature.id) {
+          <li
+            data-testid="feature-card"
+            class="rounded border border-border bg-background p-2 text-sm"
+          >
+            <p class="font-medium">{{ feature.title }}</p>
+            <p class="text-muted">
+              @if (feature.wsjfRank != null) {
+                <span>WSJF {{ feature.wsjfRank }}</span>
+              }
+              @if (feature.estimate != null) {
+                <span class="ml-2">{{ feature.estimate }} SP</span>
+              }
+            </p>
+          </li>
+        }
+      </ul>
+    </section>
+
+    @if (board.teams.length > 0) {
+      <!-- Das Raster scrollt waagrecht in seinem eigenen Container; die Seite bleibt stehen. -->
+      <div class="min-w-0 flex-1 overflow-x-auto">
+        <table
+          data-testid="board-grid"
+          class="min-w-max rounded-lg border border-border bg-surface text-left"
+        >
+          <thead class="text-sm">
+            <tr>
+              <th scope="col" class="px-3 py-2 font-medium text-muted">
+                <span class="sr-only">Team</span>
+              </th>
+              @for (iteration of board.iterations; track iteration.number) {
+                <th
+                  scope="col"
+                  class="min-w-40 border-l border-border px-3 py-2 font-medium"
+                  [class.bg-background]="iteration.innovationAndPlanning"
+                >
+                  <span class="block">{{ iteration.name }}</span>
+                  <span class="block text-xs text-muted"
+                    >{{ iteration.startDate | date: 'dd.MM.' }} –
+                    {{ iteration.endDate | date: 'dd.MM.' }}</span
+                  >
+                  @if (iteration.innovationAndPlanning) {
+                    <span
+                      class="mt-1 inline-block rounded bg-accent px-1.5 py-0.5 text-xs text-accent-foreground"
+                      >IP-Iteration</span
+                    >
+                  }
+                </th>
+              }
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border">
+            @for (team of board.teams; track team.id) {
+              <tr>
+                <th scope="row" class="px-3 py-2 font-medium">{{ team.name }}</th>
+                @for (iteration of board.iterations; track iteration.number) {
+                  <td
+                    class="h-16 border-l border-border px-3 py-2"
+                    [class.bg-background]="iteration.innovationAndPlanning"
+                  ></td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    } @else {
+      <p class="flex-1 rounded-lg border border-border bg-surface p-4 text-muted">
+        Noch keine Teams. Erfasse zuerst die Teams des ART.
+        <a routerLink="/teams" class="ml-1 text-accent hover:underline">Zu den Teams</a>
+      </p>
+    }
+  </div>
+} @else if (service.error(); as error) {
+  <p role="alert" class="text-danger">{{ error }}</p>
+} @else {
+  <p class="text-muted">Lade …</p>
+}

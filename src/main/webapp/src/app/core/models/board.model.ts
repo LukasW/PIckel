@@ -1,0 +1,10 @@
+import { Feature } from './feature.model';
+import { Iteration } from './program-increment.model';
+import { Team } from './team.model';
+
+/** Das Program Board eines PI: Teams als Zeilen, Iterationen als Spalten, dazu das nicht eingeplante Backlog. */
+export interface Board {
+  readonly teams: readonly Team[];
+  readonly iterations: readonly Iteration[];
+  readonly backlog: readonly Feature[];
+}

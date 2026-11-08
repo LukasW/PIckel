@@ -18,6 +18,14 @@ export const routes: Routes = [
     title: 'Program Increment – PIkel',
   },
   {
+    path: 'program-increments/:id/board',
+    loadComponent: () =>
+      import('./features/program-board/program-board.component').then(
+        (m) => m.ProgramBoardComponent,
+      ),
+    title: 'Program Board – PIkel',
+  },
+  {
     path: 'teams',
     loadComponent: () => import('./features/teams/teams.component').then((m) => m.TeamsComponent),
     title: 'Teams – PIkel',

@@ -128,9 +128,14 @@ public class FeatureSteps {
                                 .toArray()));
     }
 
+    // Über den gemeinsamen Kontext: Auch das Board (US-12, BoardSteps) antwortet so auf ein unbekanntes PI.
     @Dann("antwortet der Server mit {int} und der Meldung {string}")
     public void antwortetDerServer(int status, String message) {
-        response.then().statusCode(status).contentType(ContentType.JSON).body("message", is(message));
+        context.lastResponse()
+                .then()
+                .statusCode(status)
+                .contentType(ContentType.JSON)
+                .body("message", is(message));
     }
 
     // --- US-10: Backlog bearbeiten ---
@@ -176,18 +181,21 @@ public class FeatureSteps {
         response = given().contentType(ContentType.JSON)
                 .body(Map.of("title", "Login"))
                 .put(featurePath(context.programIncrementId(pi), id));
+        context.response(response);
     }
 
     @Wenn("ich das Feature {string} lösche")
     public void ichDasFeatureLoesche(String title) {
         edited = title;
         response = given().delete(featurePath(piOf(title), idOf(title)));
+        context.response(response);
         deletion = response;
     }
 
     @Wenn("ich im PI {string} das Feature mit der ID {string} lösche")
     public void ichDasFeatureMitDerIdLoesche(String pi, String id) {
         response = given().delete(featurePath(context.programIncrementId(pi), id));
+        context.response(response);
     }
 
     @Wenn("ich das Feature {string} im PI {string} bearbeite")
@@ -197,11 +205,13 @@ public class FeatureSteps {
         response = given().contentType(ContentType.JSON)
                 .body(body)
                 .put(featurePath(context.programIncrementId(pi), idOf(title)));
+        context.response(response);
     }
 
     @Wenn("ich das Feature {string} im PI {string} lösche")
     public void ichDasFeatureImPiLoesche(String title, String pi) {
         response = given().delete(featurePath(context.programIncrementId(pi), idOf(title)));
+        context.response(response);
     }
 
     // Prüft die Antwort des PUT (200, dasselbe Feature) und den gespeicherten Stand im Backlog.
@@ -266,6 +276,7 @@ public class FeatureSteps {
     private void bearbeite(String title, Map<String, Object> body) {
         edited = title;
         response = given().contentType(ContentType.JSON).body(body).put(featurePath(piOf(title), idOf(title)));
+        context.response(response);
     }
 
     private String idOf(String title) {
