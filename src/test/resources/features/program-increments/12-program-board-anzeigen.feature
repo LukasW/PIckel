@@ -38,3 +38,11 @@ Funktionalität: US-12 Program Board anzeigen
     Und das Team "Adler"
     Wenn ich das Board von "PI 27.1" öffne
     Dann ist die Spalte "IP" als IP-Iteration markiert
+
+  # Vitest: app.spec.ts → nutzt auf dem Board die volle Fensterbreite für Kopfzeile und Inhalt (US-12)
+  @Unit
+  Szenario: Board nutzt die volle Fensterbreite
+    Gegeben sei ein PI
+    Wenn ich das Board des PI öffne
+    Dann sind Kopfzeile und Inhalt nicht auf die Lesebreite der übrigen Seiten begrenzt
+    Und auf der Liste der Program Increments sind sie es weiterhin

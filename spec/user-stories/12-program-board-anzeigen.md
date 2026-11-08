@@ -21,6 +21,10 @@ aufbauen.
    sortiert wie das Backlog
 4. Ohne Teams zeigt das Board einen Hinweis mit Link zur Teamseite statt eines leeren Rasters
 5. Das Board ist von der Detailseite des PI aus erreichbar
+6. Die Board-Seite ist nicht auf die Inhaltsbreite der übrigen Seiten begrenzt, sondern nutzt die Fensterbreite
+   abzüglich des Seitenrands
+7. Bei 1400 px Fensterbreite stehen Backlog-Spalte und ein PI mit drei Iterationen und einer IP-Iteration ohne
+   waagrechtes Scrollen nebeneinander (manuell belegt: Screenshot im PR)
 
 Nur Anzeige: Einplanen per Drag & Drop folgt mit #13. Das Raster scrollt waagrecht in seinem eigenen Container;
 Mobile ist für das Board kein Ziel in M1.
@@ -38,8 +42,11 @@ Siehe [`src/test/resources/features/program-increments/12-program-board-anzeigen
 | 3 Backlog-Spalte mit Karten in Backlog-Reihenfolge | `BoardServiceTest` → `backlogKeepsBacklogOrder`, `backlogLeavesOutScheduledFeaturesAndKeepsOrderOfTheRest`, `backlogIsEmptyWhenEveryFeatureIsScheduled`; CucumberIT «Board liefert Teams, Iterationen und Backlog»; Vitest → «zeigt das Backlog als Karten …», «übernimmt die Reihenfolge des Backlogs vom Server (US-12)», «zeigt die Backlog-Spalte links neben dem Raster (US-12)» |
 | 4 Ohne Teams Hinweis mit Link | `BoardServiceTest` → `boardWithoutTeamsHasNoRowsButColumnsAndBacklog`; Vitest → «zeigt ohne Teams einen Hinweis mit Link zur Teamseite statt eines Rasters (US-12)», «zeigt mit Teams keinen Hinweis, sondern das Raster (US-12)» |
 | 5 Von der Detailseite erreichbar | Vitest `program-increment-detail.component.spec.ts` → «verlinkt auf das Program Board des geöffneten PI (US-12)»; `program-board.component.spec.ts` → «öffnet das Board über die Route program-increments/:id/board (US-12)» |
+| 6 Board nutzt die Fensterbreite | Vitest `app.spec.ts` → «nutzt auf dem Board die volle Fensterbreite für Kopfzeile und Inhalt (US-12)», «begrenzt auf der PI-Liste Kopfzeile und Inhalt auf die Lesebreite (US-12)», «begrenzt nach dem Wechsel vom Board zurück wieder auf die Lesebreite (US-12)» |
+| 7 1400 px ohne waagrechtes Scrollen | manuell: Screenshot im PR zu #37 (jsdom misst kein Layout, E2E nicht eingerichtet) |
 | Unbekanntes PI → 404 | `BoardServiceTest` → `getRejectsUnknownProgramIncrement`; CucumberIT «Board eines unbekannten PI»; Vitest `board.service.spec.ts` |
 
 ## Änderungen
 
 - #12: Program Board eines PI anzeigen — `spec/changes/12-program-board-anzeigen/delta.md`
+- #37: Program Board nutzt die volle Fensterbreite — `spec/changes/37-board-volle-breite/delta.md`
