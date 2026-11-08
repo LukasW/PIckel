@@ -1,6 +1,6 @@
 # Fragment: Git-Provider
 
-PIkel liegt auf GitHub (`github.com/LukasW/PIkel`). Werkzeug ist `gh`; ein GitHub-MCP nur, wenn er konfiguriert
+PIckel liegt auf GitHub (`github.com/LukasW/PIkel`). Werkzeug ist `gh`; ein GitHub-MCP nur, wenn er konfiguriert
 ist. Owner und Repo aus `git remote get-url origin` ableiten, nie hart codieren. Fehlt der Remote oder `gh` ist
 nicht angemeldet: abbrechen und den Nutzer fragen.
 

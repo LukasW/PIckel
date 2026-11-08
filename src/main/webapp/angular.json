@@ -7,7 +7,7 @@
   },
   "newProjectRoot": "projects",
   "projects": {
-    "pikel": {
+    "pickel": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
@@ -44,9 +44,9 @@
         "serve": {
           "builder": "@angular/build:dev-server",
           "configurations": {
-            "production": { "buildTarget": "pikel:build:production" },
+            "production": { "buildTarget": "pickel:build:production" },
             "development": {
-              "buildTarget": "pikel:build:development",
+              "buildTarget": "pickel:build:development",
               "proxyConfig": "proxy.conf.json"
             }
           },

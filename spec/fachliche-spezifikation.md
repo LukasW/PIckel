@@ -1,4 +1,4 @@
-# Fachliche Spezifikation — PIkel
+# Fachliche Spezifikation — PIckel
 
 Fachlicher Gesamtstand: Begriffe, Datenmodell mit Regeln, API. Zweck und Stakeholder stehen in
 [`docs/arc42.md`](../docs/arc42.md) → Abschnitt 1, die einzelnen Änderungen mit Akzeptanzkriterien unter

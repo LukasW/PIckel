@@ -170,4 +170,4 @@ jobs:
 
       # Nur bauen, nicht veröffentlichen: Ein kaputtes Dockerfile soll im PR auffallen, nicht beim ersten Deployment.
       - name: Container-Image bauen
-        run: docker build -f src/main/docker/Dockerfile.jvm -t pikel-jvm:ci .
+        run: docker build -f src/main/docker/Dockerfile.jvm -t pickel-jvm:ci .

@@ -16,7 +16,7 @@ import { filter, map } from 'rxjs';
   template: `
     <header class="border-b border-border bg-surface">
       <nav class="mx-auto flex items-center gap-4 px-4 py-3" [class.max-w-4xl]="!fullWidth()">
-        <a routerLink="/" class="text-lg font-semibold">PIkel</a>
+        <a routerLink="/" class="text-lg font-semibold">PIckel</a>
         <span class="text-sm text-muted">PI Planning</span>
         <a routerLink="/" class="ml-auto text-sm text-accent hover:underline">Program Increments</a>
         <a routerLink="/teams" class="text-sm text-accent hover:underline">Teams</a>

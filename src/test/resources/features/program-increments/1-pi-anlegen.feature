@@ -74,6 +74,6 @@ Funktionalität: US-1 PI anlegen
   # Vitest: src/main/webapp/src/app/app.spec.ts → verlinkt in der Kopfzeile «Program Increments» auf die PI-Übersicht, neben «Teams» (US-1)
   @Unit
   Szenario: Kopfzeile führt zur PI-Übersicht
-    Gegeben sei eine beliebige Seite von PIkel
+    Gegeben sei eine beliebige Seite von PIckel
     Wenn ich in der Kopfzeile "Program Increments" wähle
     Dann sehe ich die Liste der PIs

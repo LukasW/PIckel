@@ -5,14 +5,14 @@ tools: Glob, Grep, Read, Write, Edit, Bash
 model: sonnet
 ---
 
-Du schreibst und prüfst Gherkin für PIkel. Die Features liegen unter `src/test/resources/features/<bereich>/`.
+Du schreibst und prüfst Gherkin für PIckel. Die Features liegen unter `src/test/resources/features/<bereich>/`.
 
 ## Tag-Routing
 
 | Tag | Runner | Wann |
 |-----|--------|------|
 | _kein Tag_ | `CucumberIT` (Java, REST-assured, Dev-Services-PostgreSQL) | über die REST-API testbar: CRUD, Validierung, Persistenz |
-| `@Unit` | keiner — JUnit oder Vitest deckt ab | reine Domänen-/Service-Logik oder Komponentenverhalten. Kommentar direkt darüber: `# JUnit: <Pfad>/<Klasse> → <methode>` (relativ zu `src/test/java/ch/grudligstrasse/pikel/`) oder `# Vitest: <spec> → <testname>` (relativ zu `src/main/webapp/src/app/`) |
+| `@Unit` | keiner — JUnit oder Vitest deckt ab | reine Domänen-/Service-Logik oder Komponentenverhalten. Kommentar direkt darüber: `# JUnit: <Pfad>/<Klasse> → <methode>` (relativ zu `src/test/java/ch/grudligstrasse/pickel/`) oder `# Vitest: <spec> → <testname>` (relativ zu `src/main/webapp/src/app/`) |
 | `@E2E` | Browser-Runner (noch nicht eingerichtet) | nur wenn ein Browser zwingend ist **und** mehrere Schichten zusammenwirken |
 | `@Pending` | keiner | spezifiziert, nicht umgesetzt — **kein Abschlusszustand** |
 

@@ -9,7 +9,7 @@ stories: spec/user-stories
 deltas: spec/changes
 ---
 
-# Ablauf für PIkel
+# Ablauf für PIckel
 
 Projektangaben für `/flow-task`, `/flow-plan`, `/flow-implement`, `/flow-ship`, `/flow-fast`, `/flow-grill-me`,
 `/flow-fix-build`, `/flow-night-batch` und die Agenten. Architektur, Testpyramide und Konventionen stehen in
@@ -57,7 +57,7 @@ an genau einem Ort; hier nur, was der Ablauf zusätzlich braucht.
 ## Build
 
 Ein Maven-Modul mit Backend und Frontend (Quinoa). Ausgabe immer in eine Datei, z. B.
-`> "${TMPDIR:-/tmp}/pikel-build.log" 2>&1; echo "exit $?"` — sonst füllt das Maven-Log den Kontext.
+`> "${TMPDIR:-/tmp}/pickel-build.log" 2>&1; echo "exit $?"` — sonst füllt das Maven-Log den Kontext.
 
 **Voraussetzung Frontend:** Node aus `.nvmrc` und npm 11 (`packageManager` in `package.json`). Nach einem frischen
 Klon einmal `cd src/main/webapp && npm ci`.
@@ -74,7 +74,7 @@ Klon einmal `cd src/main/webapp && npm ci`.
 - **Mutation allein:** `./mvnw test-compile -B -Pmutation`, Bericht unter `target/pit-reports/index.html`.
   Überlebende Mutanten heissen: Ein Test fehlt, nicht die Schwelle senken
 - **Ausgabe auswerten:**
-  `grep -E '\[ERROR\]|FAIL|Tests run:.*(Failures|Errors): [1-9]|Test Files|below threshold|Violation|BUILD' "${TMPDIR:-/tmp}/pikel-build.log" | head -60`
+  `grep -E '\[ERROR\]|FAIL|Tests run:.*(Failures|Errors): [1-9]|Test Files|below threshold|Violation|BUILD' "${TMPDIR:-/tmp}/pickel-build.log" | head -60`
 
 ## Ohne GitHub Actions
 
@@ -115,7 +115,7 @@ Ebenen und Tag-Routing: `CLAUDE.md` → «Testpyramide». Orte:
 
 ## Reviewer
 
-- Java unter `src/main/java/ch/grudligstrasse/pikel/**` → `hexagonal-reviewer`
+- Java unter `src/main/java/ch/grudligstrasse/pickel/**` → `hexagonal-reviewer`
 - Angular unter `src/main/webapp/src/app/**` → `angular-signals-reviewer`
 - `.feature`-Dateien → `bdd-cucumber-author`
 - Tests unter `src/test/**` oder `*.spec.ts` → `test-reviewer`

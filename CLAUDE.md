@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-PIkel — ein Werkzeug für das **PI Planning** (SAFe): Program Increments, Teams, Features, Abhängigkeiten und
+PIckel — ein Werkzeug für das **PI Planning** (SAFe): Program Increments, Teams, Features, Abhängigkeiten und
 PI-Ziele planen. Aktuell ein **Walking Skeleton**: ein Durchstich «Program Increment anlegen und auflisten» durch
 alle Schichten (Angular → REST → Use Case → Domain → Panache → PostgreSQL/Liquibase), mit Tests auf jeder Ebene und
 CI. Fachliche Breite kommt Story für Story.
@@ -37,7 +37,7 @@ Sprachspezifische Konventionen laden bei Bedarf aus `.claude/rules/java.md` und 
 ### Backend (Java)
 
 ```
-ch.grudligstrasse.pikel/
+ch.grudligstrasse.pickel/
 ├── domain/                    # Innerer Hexagon — reine Fachlogik, keine Framework-Imports
 │   ├── model/                 # Records + fachliche Exceptions (Validierung im Compact Constructor)
 │   └── port/

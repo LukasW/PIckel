@@ -1,7 +1,7 @@
 ---
 name: flow-plan
 description: Analysiert ein Issue gegen Spezifikation und Code und schreibt plan.md und das Delta in den Change-Ordner, ohne Code zu ändern. Einsetzen vor grösseren Features oder wenn die Umsetzung Abwägungen braucht.
-compatibility: Claude Code oder Copilot CLI (in einem vertrauten Ordner, ADR 0007) im Repository PIkel. Braucht git, gh (GitHub) und den Maven Wrapper; Projektangaben in .claude/flow.md.
+compatibility: Claude Code oder Copilot CLI (in einem vertrauten Ordner, ADR 0007) im Repository PIckel. Braucht git, gh (GitHub) und den Maven Wrapper; Projektangaben in .claude/flow.md.
 argument-hint: <issue-nummer>
 disable-model-invocation: true
 model: opus
@@ -27,7 +27,7 @@ aufnehmen, nicht still übernehmen (`shared/project.md` → «Das Repository fü
 - Architektur-Doku und ADRs (`flow.md` → «Spezifikation»): Welche Bausteine, Abläufe und Konzepte sind betroffen?
   Widerspricht das Issue einem Nicht-Ziel? Grosse Dateien nie ganz lesen: Kapitel mit Grep (`^#+ `) finden und
   nur diese Abschnitte mit `offset`/`limit` lesen
-- Die User Story zum Issue, falls vorhanden (Ort laut `flow.md` → «User Stories»; in PIkel ist die Story-Nummer
+- Die User Story zum Issue, falls vorhanden (Ort laut `flow.md` → «User Stories»; in PIckel ist die Story-Nummer
   die Issue-Nummer), und thematisch nahe Stories
 - Verlangt der Auftrag eine Änderung an der bestehenden Spezifikation (Architektur-Doku, ADR, Story), gehört sie
   als Aufgabe in den Plan bzw. ins Delta — nach Rückfrage, nie still aus dem Issue übernommen

@@ -1,7 +1,7 @@
 ---
 name: flow-fast
 description: Führt /flow-task, /flow-plan und /flow-implement in einem Durchlauf aus, mit Duplikat-Prüfung und Plan-Vorlage nur bei heiklen Änderungen. Einsetzen für kleine, klar umrissene Änderungen.
-compatibility: Claude Code im Repository PIkel (startet Subagenten unter .claude/agents, ADR 0007). Braucht git, gh (GitHub) und den Maven Wrapper; Projektangaben in .claude/flow.md.
+compatibility: Claude Code im Repository PIckel (startet Subagenten unter .claude/agents, ADR 0007). Braucht git, gh (GitHub) und den Maven Wrapper; Projektangaben in .claude/flow.md.
 argument-hint: <beschreibung>
 disable-model-invocation: true
 model: sonnet

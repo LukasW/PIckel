@@ -1,4 +1,4 @@
-# Architekturdokumentation PIkel (arc42)
+# Architekturdokumentation PIckel (arc42)
 
 **Stand:** 2026-11-07 · Walking Skeleton (US-1)
 
@@ -17,11 +17,11 @@ jede Regel hat genau einen Ort:
 
 ### Aufgabenstellung
 
-PIkel unterstützt das **PI Planning** nach SAFe: Ein Agile Release Train (ART) plant für ein Program Increment (PI)
+PIckel unterstützt das **PI Planning** nach SAFe: Ein Agile Release Train (ART) plant für ein Program Increment (PI)
 Features, verteilt sie auf Teams und Iterationen, macht Abhängigkeiten sichtbar und hält PI Objectives fest.
 
 Das MVP ersetzt die Klebezettel-Wand im Planning-Raum: Program Board, Abhängigkeiten, Risiken, Objectives und
-Confidence Vote. Was Issue-Tracker wie Jira schon gut können, etwa die Planung auf Story-Ebene, macht PIkel bewusst
+Confidence Vote. Was Issue-Tracker wie Jira schon gut können, etwa die Planung auf Story-Ebene, macht PIckel bewusst
 nicht. Bereiche, Releases und Nicht-Ziele stehen in
 [`spec/fachliche-spezifikation.md`](../spec/fachliche-spezifikation.md) → «MVP-Umfang».
 
@@ -30,7 +30,7 @@ Heute umgesetzt ist ein Durchstich durch alle Schichten: **Program Increment anl
 
 ### Qualitätsziele
 
-| Prio | Qualitätsziel | Bedeutung für PIkel |
+| Prio | Qualitätsziel | Bedeutung für PIckel |
 |------|---------------|---------------------|
 | 1 | Änderbarkeit | Neue Fachlichkeit kommt Story für Story dazu, ohne bestehende Schichten umzubauen |
 | 2 | Testbarkeit | Fachlogik ohne Quarkus und ohne Datenbank testbar; jede Regel durch einen Test belegt |
@@ -67,13 +67,13 @@ Spezifikation und Tests vor dem Code, Qualitäts-Gate vor jedem Push, Sprache de
 
 ```mermaid
 flowchart LR
-    rte([RTE]) --> pikel[PIkel]
-    po([Product Owner]) --> pikel
-    team([Agile Teams]) --> pikel
-    bo([Business Owner]) --> pikel
-    tracker[(Issue-Tracker\nz. B. Jira)] -. "CSV: Features" .-> pikel
-    pikel -. "CSV: Features mit Team und Iteration" .-> tracker
-    pikel -. "PDF/PNG: Program Board" .-> wiki[(Confluence)]
+    rte([RTE]) --> pickel[PIckel]
+    po([Product Owner]) --> pickel
+    team([Agile Teams]) --> pickel
+    bo([Business Owner]) --> pickel
+    tracker[(Issue-Tracker\nz. B. Jira)] -. "CSV: Features" .-> pickel
+    pickel -. "CSV: Features mit Team und Iteration" .-> tracker
+    pickel -. "PDF/PNG: Program Board" .-> wiki[(Confluence)]
 ```
 
 | Nachbar | Austausch |
@@ -88,7 +88,7 @@ Heute ist noch kein Umsystem angebunden. Die Anmeldung über OIDC ist als eigene
 
 ```mermaid
 flowchart LR
-    browser[Browser] -- "HTTPS: SPA, /api/v1/** JSON" --> app[PIkel JAR\nQuarkus :8080]
+    browser[Browser] -- "HTTPS: SPA, /api/v1/** JSON" --> app[PIckel JAR\nQuarkus :8080]
     app -- JDBC --> db[(PostgreSQL)]
     ops[Betrieb / Orchestrierung] -- "/q/health" --> app
 ```
@@ -117,9 +117,9 @@ flowchart LR
 
 ```mermaid
 flowchart TB
-    subgraph JAR[PIkel JAR]
+    subgraph JAR[PIckel JAR]
         spa[Angular-SPA\nsrc/main/webapp]
-        subgraph backend[Quarkus-Backend\nch.grudligstrasse.pikel]
+        subgraph backend[Quarkus-Backend\nch.grudligstrasse.pickel]
             rest[adapter/in/rest]
             app[application/service]
             domain[domain\nmodel + port]
@@ -227,7 +227,7 @@ Business-Kontext, PI Objectives des ART und Links gehören zum Aggregat PI ([ADR
 Stand samt Links (Tabelle `pi_link`, Reihenfolge über `position`). Ein Link lässt nur `http` und `https` zu, damit
 ein Link auf der Detailseite kein Skript ausführt; die Oberfläche öffnet ihn mit `rel="noopener noreferrer"`.
 
-Abgeleitetes wird berechnet, nicht gespeichert: Von den Iterationen eines PI speichert PIkel nur die Länge, die
+Abgeleitetes wird berechnet, nicht gespeichert: Von den Iterationen eines PI speichert PIckel nur die Länge, die
 Domain berechnet daraus die Iterationen ([ADR 0006](adr/0006-kapazitaet-story-points.md)). Andere Objekte
 verweisen auf eine Iteration über PI und Nummer; das trägt, solange Länge und Zeitraum eines PI unveränderlich sind.
 Wird beides änderbar, braucht es eine Migration der Verweise.
@@ -252,7 +252,7 @@ leitet `BoardService` als `computed` aus dem Board-Signal ab; die REST-API liefe
 
 ### Sicherheit
 
-Noch **keine** Anmeldung: Die API ist ungeschützt, PIkel darf bis zur Auth-Story nicht öffentlich betrieben werden.
+Noch **keine** Anmeldung: Die API ist ungeschützt, PIckel darf bis zur Auth-Story nicht öffentlich betrieben werden.
 Geplant wie in Brainy: OIDC (Keycloak) mit BFF und Session-Cookies, kein JWT im Browser. Secrets nur über
 Umgebungsvariablen, CI prüft mit Gitleaks.
 

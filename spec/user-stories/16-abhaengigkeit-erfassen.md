@@ -19,7 +19,7 @@ beider Features, es gibt kein eigenes Datum. Die Linie auf dem Board beschreibt
 
 1. Für ein Feature lässt sich festhalten, dass es ein anderes Feature desselben PI braucht
 2. Ein Feature kann sich nicht selbst brauchen; doppelte und direkt umgekehrte Abhängigkeiten werden abgelehnt
-   (längere Zyklen erkennt PIkel in M1 nicht)
+   (längere Zyklen erkennt PIckel in M1 nicht)
 3. Beim Feature sind die Abhängigkeiten in beide Richtungen sichtbar («braucht» und «wird gebraucht von»)
 4. Eine Abhängigkeit lässt sich entfernen
 5. Wird ein Feature gelöscht, verschwinden auch seine Abhängigkeiten

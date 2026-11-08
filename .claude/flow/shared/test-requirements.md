@@ -39,7 +39,7 @@ der obersten Ebene. Die Ebenen des Projekts nach `flow.md` → «Tests».
 ## User-Story-Akzeptanz
 
 Jedes Akzeptanzkriterium hat mindestens einen Test, dessen Name auf die Story verweist (Kennzeichnung laut
-`flow.md` → «User Stories», in PIkel gleich der Issue-Nummer). Die Szenarien der Story-Datei stehen in der
+`flow.md` → «User Stories», in PIckel gleich der Issue-Nummer). Die Szenarien der Story-Datei stehen in der
 Form Gegeben sei / Wenn / Dann; unter «Tests» in der Datei steht, welche Testklasse sie belegt.
 
 ## BDD mit Gherkin
