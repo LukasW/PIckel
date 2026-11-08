@@ -51,4 +51,13 @@ public interface FeatureUseCase {
      * @throws ch.grudligstrasse.pikel.domain.model.FeatureNotFoundException wenn es das Feature im PI nicht gibt
      */
     void remove(UUID programIncrementId, UUID featureId);
+
+    /**
+     * Importiert die Features einer CSV-Datei ans Ende des Backlogs (kein Abgleich mit bestehenden); alles oder nichts.
+     *
+     * @return die importierten Features in Dateireihenfolge
+     * @throws ch.grudligstrasse.pikel.domain.model.ProgramIncrementNotFoundException wenn es das PI nicht gibt
+     * @throws ch.grudligstrasse.pikel.domain.model.InvalidFeatureException wenn die Datei oder eine Zeile ungültig ist
+     */
+    List<Feature> importCsv(UUID programIncrementId, String csv);
 }

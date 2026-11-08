@@ -4,8 +4,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -23,6 +25,7 @@ import java.util.OptionalInt;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -387,5 +390,82 @@ class FeatureServiceTest {
 
         assertEquals(FEATURE_NOT_FOUND, exception.getMessage());
         verify(features, never()).remove(any());
+    }
+
+    // --- US-11: CSV-Import (AK 1 und 3, Entscheide «Alles oder nichts» und «Anhängen») ---
+
+    @Test
+    void importCsvSavesEveryFeatureInFileOrder() {
+        programIncrementExists();
+
+        List<Feature> imported =
+                service.importCsv(PI_27_1.id(), "Titel;WSJF-Rang;Owner\nSuche;2;Beat\nPortal;1;Anna\n");
+
+        assertEquals(
+                List.of("Suche", "Portal"),
+                imported.stream().map(Feature::title).toList());
+        assertEquals(OptionalInt.of(2), imported.get(0).wsjfRank());
+        assertEquals("Anna", imported.get(1).owner());
+        for (Feature feature : imported) {
+            assertEquals(PI_27_1.id(), feature.programIncrementId());
+        }
+        InOrder saving = inOrder(features);
+        saving.verify(features).save(imported.get(0));
+        saving.verify(features).save(imported.get(1));
+        verify(features, times(2)).save(any());
+    }
+
+    // Anhängen ohne Abgleich: Das bestehende Backlog wird weder gelesen noch geändert.
+    @Test
+    void importCsvDoesNotRemoveExistingFeatures() {
+        programIncrementExists();
+
+        service.importCsv(PI_27_1.id(), "Titel\nPortal");
+
+        verify(features, never()).remove(any());
+    }
+
+    // Szenario «Ungültige Zeile verhindert den ganzen Import»: auch die gültige Zeile 2 wird nicht gespeichert.
+    @Test
+    void importCsvSavesNothingWhenARowIsInvalid() {
+        programIncrementExists();
+
+        InvalidFeatureException exception = assertThrows(
+                InvalidFeatureException.class,
+                () -> service.importCsv(PI_27_1.id(), "Titel;WSJF-Rang\nPortal;1\nSuche;null"));
+
+        assertEquals("Zeile 3: Der WSJF-Rang muss eine ganze Zahl ab 1 sein.", exception.getMessage());
+        verify(features, never()).save(any());
+    }
+
+    @Test
+    void importCsvSavesNothingWithoutTitleColumn() {
+        programIncrementExists();
+
+        InvalidFeatureException exception = assertThrows(
+                InvalidFeatureException.class, () -> service.importCsv(PI_27_1.id(), "Name;Owner\nPortal;Anna"));
+
+        assertEquals("Die Kopfzeile braucht die Spalte «Titel».", exception.getMessage());
+        verify(features, never()).save(any());
+    }
+
+    @Test
+    void importCsvRejectsUnknownProgramIncrement() {
+        UUID unknown = unknownProgramIncrement();
+
+        ProgramIncrementNotFoundException exception = assertThrows(
+                ProgramIncrementNotFoundException.class, () -> service.importCsv(unknown, "Titel\nPortal"));
+
+        assertEquals(PI_NOT_FOUND, exception.getMessage());
+        verify(features, never()).save(any());
+    }
+
+    // Wie beim Erfassen: erst das PI, dann die Datei; unbekanntes PI ist 404, nicht 400.
+    @Test
+    void importCsvIntoUnknownProgramIncrementIsNotFoundEvenWithInvalidFile() {
+        UUID unknown = unknownProgramIncrement();
+
+        assertThrows(ProgramIncrementNotFoundException.class, () -> service.importCsv(unknown, "Name\nPortal"));
+        verify(features, never()).save(any());
     }
 }

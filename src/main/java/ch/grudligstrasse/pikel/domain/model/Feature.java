@@ -20,6 +20,8 @@ public record Feature(
     public static final int MAX_TITLE_LENGTH = 200;
     public static final int MAX_DESCRIPTION_LENGTH = 5000;
     public static final int MAX_OWNER_LENGTH = 100;
+    public static final String INVALID_WSJF_RANK = "Der WSJF-Rang muss eine ganze Zahl ab 1 sein.";
+    public static final String INVALID_ESTIMATE = "Die Schätzung muss eine ganze Zahl ab 0 sein.";
 
     public Feature {
         Objects.requireNonNull(id, "id");
@@ -33,10 +35,10 @@ public record Feature(
         description = stripWithin(description, MAX_DESCRIPTION_LENGTH, "Die Beschreibung");
         owner = stripWithin(owner, MAX_OWNER_LENGTH, "Der Owner");
         if (wsjfRank.isPresent() && wsjfRank.getAsInt() < 1) {
-            throw new InvalidFeatureException("Der WSJF-Rang muss eine ganze Zahl ab 1 sein.");
+            throw new InvalidFeatureException(INVALID_WSJF_RANK);
         }
         if (estimate.isPresent() && estimate.getAsInt() < 0) {
-            throw new InvalidFeatureException("Die Schätzung muss eine ganze Zahl ab 0 sein.");
+            throw new InvalidFeatureException(INVALID_ESTIMATE);
         }
     }
 

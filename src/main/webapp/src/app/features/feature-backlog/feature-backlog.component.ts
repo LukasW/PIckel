@@ -117,6 +117,19 @@ export class FeatureBacklogComponent implements OnInit {
     }
   }
 
+  /** Liest die gewählte CSV-Datei und importiert sie (US-11); die Regeln prüft der Server. */
+  protected async importFile(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) {
+      return;
+    }
+    const csv = await file.text();
+    // Zurücksetzen, damit dieselbe Datei nach einer Korrektur nochmals gewählt werden kann.
+    input.value = '';
+    await this.service.importCsv(this.programIncrementId(), csv);
+  }
+
   private resetForm(): void {
     this.form.reset();
     this.submitted.set(false);

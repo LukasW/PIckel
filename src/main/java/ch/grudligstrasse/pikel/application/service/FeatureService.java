@@ -1,6 +1,7 @@
 package ch.grudligstrasse.pikel.application.service;
 
 import ch.grudligstrasse.pikel.domain.model.Feature;
+import ch.grudligstrasse.pikel.domain.model.FeatureCsv;
 import ch.grudligstrasse.pikel.domain.model.FeatureNotFoundException;
 import ch.grudligstrasse.pikel.domain.model.ProgramIncrementNotFoundException;
 import ch.grudligstrasse.pikel.domain.port.in.FeatureUseCase;
@@ -72,6 +73,16 @@ public class FeatureService implements FeatureUseCase {
     public void remove(UUID programIncrementId, UUID featureId) {
         findInProgramIncrement(programIncrementId, featureId);
         features.remove(featureId);
+    }
+
+    @Override
+    @Transactional
+    public List<Feature> importCsv(UUID programIncrementId, String csv) {
+        ensureProgramIncrementExists(programIncrementId);
+        // Alles oder nichts: Erst die ganze Datei prüfen, dann speichern.
+        List<Feature> imported = FeatureCsv.parse(programIncrementId, csv);
+        imported.forEach(features::save);
+        return imported;
     }
 
     // Ein Feature eines anderen PI ist unter dieser Adresse unbekannt, sonst liesse es sich über jedes PI ändern.

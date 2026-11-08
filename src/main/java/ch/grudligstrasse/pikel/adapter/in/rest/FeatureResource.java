@@ -75,6 +75,20 @@ public class FeatureResource {
         return Response.noContent().build();
     }
 
+    /**
+     * Importiert eine CSV-Datei (UTF-8) ins Backlog: 201 mit der Anzahl; 400 mit Zeile und Grund, dann wurde nichts
+     * importiert; 404, wenn es das PI nicht gibt.
+     */
+    @POST
+    @Path("/import")
+    @Consumes("text/csv")
+    public Response importCsv(@PathParam("piId") String piId, @NotNull String csv) {
+        int imported = useCase.importCsv(toUuid(piId), csv).size();
+        return Response.status(Response.Status.CREATED)
+                .entity(new FeatureImportDto(imported))
+                .build();
+    }
+
     private static UUID toFeatureUuid(String id) {
         try {
             return UUID.fromString(id);

@@ -39,6 +39,7 @@ describe('FeatureBacklogComponent', () => {
     add: ReturnType<typeof vi.fn>;
     update: ReturnType<typeof vi.fn>;
     remove: ReturnType<typeof vi.fn>;
+    importCsv: ReturnType<typeof vi.fn>;
   };
 
   /** Rendert das Backlog des PI; `lists` sind die Antworten des Servers auf das erste, zweite, … Laden. */
@@ -48,7 +49,7 @@ describe('FeatureBacklogComponent', () => {
       list.mockResolvedValueOnce(answer);
     }
     list.mockResolvedValue(lists.at(-1) ?? []);
-    repository = { list, add: vi.fn(), update: vi.fn(), remove: vi.fn() };
+    repository = { list, add: vi.fn(), update: vi.fn(), remove: vi.fn(), importCsv: vi.fn() };
     TestBed.configureTestingModule({
       imports: [FeatureBacklogComponent],
       providers: [{ provide: FeaturesRepository, useValue: repository }],
@@ -678,5 +679,160 @@ describe('FeatureBacklogComponent', () => {
     expect(repository.remove).toHaveBeenCalledWith(PI_ID, 'l');
     expect(el.querySelector('[role="alert"]')?.textContent).toContain('Das Feature gibt es nicht.');
     expect(rows(el).map((r) => r.textContent)).toEqual([expect.stringContaining('Login')]);
+  });
+
+  // --- US-11: Features per CSV importieren ---
+
+  const CSV = 'Titel;WSJF-Rang;Owner;Schätzung\nPortal;1;Anna;21\nSuche;2;Beat;13\n';
+  const IMPORTED_PORTAL = feature('ip', 'Portal', { wsjfRank: 1, owner: 'Anna', estimate: 21 });
+  const IMPORTED_SUCHE = feature('is', 'Suche', { wsjfRank: 2, owner: 'Beat', estimate: 13 });
+  const ROW_ERROR = 'Zeile 3: Der WSJF-Rang muss eine ganze Zahl ab 1 sein.';
+
+  /** Das Datei-Feld zur Beschriftung «CSV importieren», verschachtelt oder über `for` verknüpft. */
+  function csvInput(el: HTMLElement): HTMLInputElement {
+    const l = Array.from(el.querySelectorAll('label')).find((x) =>
+      x.textContent!.trim().startsWith('CSV importieren'),
+    );
+    expect(l, 'Beschriftung «CSV importieren»').toBeDefined();
+    const input =
+      l!.querySelector<HTMLInputElement>('input[type="file"]') ??
+      (l!.htmlFor ? el.querySelector<HTMLInputElement>(`#${CSS.escape(l!.htmlFor)}`) : null);
+    expect(input, 'Datei-Feld «CSV importieren»').not.toBeNull();
+    expect(input!.type).toBe('file');
+    return input!;
+  }
+
+  /**
+   * Wählt die Dateien im Feld, wie es der Browser tut. jsdom kennt kein `DataTransfer`, darum wird `files`
+   * direkt gesetzt. Das Lesen der Datei (`file.text()`) verfolgt Angular nicht; darum mehrere Runden warten.
+   */
+  async function choose(
+    fixture: ComponentFixture<FeatureBacklogComponent>,
+    ...files: File[]
+  ): Promise<void> {
+    const input = csvInput(fixture.nativeElement as HTMLElement);
+    // Wie eine FileList: Index, `length` und `item()`.
+    const fileList = Object.assign([...files], { item: (i: number) => files[i] ?? null });
+    Object.defineProperty(input, 'files', { value: fileList, configurable: true });
+    input.dispatchEvent(new Event('change'));
+    for (let i = 0; i < 10; i++) {
+      await new Promise((resolve) => setTimeout(resolve));
+      await fixture.whenStable();
+    }
+  }
+
+  function csvFile(content: string, name = 'backlog.csv'): File {
+    return new File([content], name, { type: 'text/csv' });
+  }
+
+  function statusText(el: HTMLElement): string {
+    return Array.from(el.querySelectorAll('[role="status"]'))
+      .map((s) => s.textContent!.replace(/\s+/g, ' ').trim())
+      .join(' | ');
+  }
+
+  it('bietet ein Datei-Feld «CSV importieren» an, das CSV-Dateien anbietet (US-11)', async () => {
+    const el = (await render([])).nativeElement as HTMLElement;
+
+    const input = csvInput(el);
+    const accepted = input.accept.split(',').map((a) => a.trim());
+    expect(accepted).toContain('.csv');
+  });
+
+  it('sendet den Inhalt der gewählten Datei ans gewählte PI (US-11)', async () => {
+    const fixture = await render([], [IMPORTED_PORTAL, IMPORTED_SUCHE]);
+    repository.importCsv.mockResolvedValue(2);
+
+    await choose(fixture, csvFile(CSV));
+
+    // Der Inhalt unverändert, Umlaute eingeschlossen; das Parsen ist Sache des Servers.
+    expect(repository.importCsv).toHaveBeenCalledTimes(1);
+    expect(repository.importCsv).toHaveBeenCalledWith(PI_ID, CSV);
+  });
+
+  it('meldet nach dem Import die Anzahl und zeigt die Features im Backlog (US-11)', async () => {
+    const fixture = await render([], [IMPORTED_PORTAL, IMPORTED_SUCHE]);
+    repository.importCsv.mockResolvedValue(2);
+
+    await choose(fixture, csvFile(CSV));
+
+    const el = fixture.nativeElement as HTMLElement;
+    expect(statusText(el)).toContain('2 Features importiert.');
+    expect(rows(el).map((r) => r.textContent)).toEqual([
+      expect.stringContaining('Portal'),
+      expect.stringContaining('Suche'),
+    ]);
+    expect(el.querySelector('[role="alert"]')).toBeNull();
+  });
+
+  it('meldet einen einzelnen Import in der Einzahl (US-11)', async () => {
+    const fixture = await render([], [IMPORTED_PORTAL]);
+    repository.importCsv.mockResolvedValue(1);
+
+    await choose(fixture, csvFile('Titel\nPortal\n'));
+
+    const text = statusText(fixture.nativeElement as HTMLElement);
+    expect(text).toContain('1 Feature importiert.');
+    expect(text).not.toContain('Features importiert');
+  });
+
+  it('zeigt die Anzahl des Servers, nicht die Zeilen der Datei (US-11)', async () => {
+    // Drei Datenzeilen, der Server meldet 5: die Komponente darf nicht selbst zählen.
+    const fixture = await render([], [IMPORTED_PORTAL]);
+    repository.importCsv.mockResolvedValue(5);
+
+    await choose(fixture, csvFile('Titel\nA\nB\nC\n'));
+
+    expect(statusText(fixture.nativeElement as HTMLElement)).toContain('5 Features importiert.');
+  });
+
+  it('zeigt vor dem ersten Import keine Erfolgsmeldung (US-11)', async () => {
+    const el = (await render([LOGIN])).nativeElement as HTMLElement;
+
+    expect(statusText(el)).not.toContain('importiert');
+  });
+
+  it('zeigt die Meldung des Servers als Alarm und keine Anzahl, wenn er den Import ablehnt (US-11)', async () => {
+    const fixture = await render([LOGIN]);
+    repository.importCsv.mockRejectedValue(
+      new HttpErrorResponse({ status: 400, error: { message: ROW_ERROR } }),
+    );
+
+    await choose(fixture, csvFile('Titel;WSJF-Rang\nPortal;1\nSuche;null\n'));
+
+    const el = fixture.nativeElement as HTMLElement;
+    expect(repository.importCsv).toHaveBeenCalledTimes(1);
+    expect(el.querySelector('[role="alert"]')?.textContent).toContain(ROW_ERROR);
+    expect(statusText(el)).not.toContain('importiert');
+    expect(rows(el).map((r) => r.textContent)).toEqual([expect.stringContaining('Login')]);
+  });
+
+  it('ersetzt die Anzahl eines früheren Imports durch die Meldung, wenn ein neuer Import scheitert (US-11)', async () => {
+    const fixture = await render([], [IMPORTED_PORTAL, IMPORTED_SUCHE]);
+    repository.importCsv.mockResolvedValueOnce(2).mockRejectedValueOnce(
+      new HttpErrorResponse({
+        status: 400,
+        error: { message: 'Die Kopfzeile braucht die Spalte «Titel».' },
+      }),
+    );
+    await choose(fixture, csvFile(CSV));
+
+    await choose(fixture, csvFile('Name;Owner\nPortal;Anna\n', 'falsch.csv'));
+
+    const el = fixture.nativeElement as HTMLElement;
+    expect(repository.importCsv).toHaveBeenCalledTimes(2);
+    expect(statusText(el)).not.toContain('importiert');
+    expect(el.querySelector('[role="alert"]')?.textContent).toContain(
+      'Die Kopfzeile braucht die Spalte «Titel».',
+    );
+  });
+
+  it('importiert nichts, wenn die Dateiauswahl ohne Datei endet (US-11)', async () => {
+    const fixture = await render([]);
+
+    await choose(fixture);
+
+    expect(repository.importCsv).not.toHaveBeenCalled();
+    expect(statusText(fixture.nativeElement as HTMLElement)).not.toContain('importiert');
   });
 });

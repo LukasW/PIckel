@@ -29,11 +29,18 @@ describe('FeaturesService', () => {
     add: ReturnType<typeof vi.fn>;
     update: ReturnType<typeof vi.fn>;
     remove: ReturnType<typeof vi.fn>;
+    importCsv: ReturnType<typeof vi.fn>;
   };
   let service: FeaturesService;
 
   beforeEach(() => {
-    repository = { list: vi.fn(), add: vi.fn(), update: vi.fn(), remove: vi.fn() };
+    repository = {
+      list: vi.fn(),
+      add: vi.fn(),
+      update: vi.fn(),
+      remove: vi.fn(),
+      importCsv: vi.fn(),
+    };
     TestBed.configureTestingModule({
       providers: [{ provide: FeaturesRepository, useValue: repository }],
     });
@@ -233,5 +240,90 @@ describe('FeaturesService', () => {
 
     expect(ok).toBe(false);
     expect(service.error()).toBe(GENERIC_ERROR);
+  });
+
+  // --- US-11: Features per CSV importieren ---
+
+  const CSV = 'Titel;WSJF-Rang;Owner;Schätzung\nPortal;1;Anna;21\nSuche;2;Beat;13\n';
+  const SUCHE = feature('s', 'Suche', { wsjfRank: 2, owner: 'Beat', estimate: 13 });
+  const ROW_ERROR = 'Zeile 3: Der WSJF-Rang muss eine ganze Zahl ab 1 sein.';
+
+  it('importiert die CSV ins gewählte PI, merkt sich die Anzahl und lädt das Backlog neu (US-11)', async () => {
+    repository.list.mockResolvedValueOnce([LOGIN]).mockResolvedValueOnce([LOGIN, PORTAL, SUCHE]);
+    repository.importCsv.mockResolvedValue(2);
+    await service.load(PI_ID);
+
+    const ok = await service.importCsv(PI_ID, CSV);
+
+    expect(ok).toBe(true);
+    expect(repository.importCsv).toHaveBeenCalledWith(PI_ID, CSV);
+    expect(service.imported()).toBe(2);
+    expect(repository.list).toHaveBeenCalledTimes(2);
+    expect(repository.list).toHaveBeenLastCalledWith(PI_ID);
+    expect(service.features()).toEqual([LOGIN, PORTAL, SUCHE]);
+    expect(service.error()).toBeUndefined();
+  });
+
+  it('übernimmt die Anzahl des Servers, nicht die Zeilen der Datei (US-11)', async () => {
+    // Der Server überspringt leere Zeilen; nur er weiss, wie viele Features es wurden.
+    repository.list.mockResolvedValue([]);
+    repository.importCsv.mockResolvedValue(1);
+
+    await service.importCsv(PI_ID, 'Titel\nPortal\n\nSuche\n');
+
+    expect(service.imported()).toBe(1);
+  });
+
+  it('zeigt die Meldung des Servers mit Zeilennummer, wenn er den Import ablehnt (US-11)', async () => {
+    repository.importCsv.mockRejectedValue(
+      new HttpErrorResponse({ status: 400, error: { message: ROW_ERROR } }),
+    );
+
+    const ok = await service.importCsv(PI_ID, 'Titel;WSJF-Rang\nPortal;1\nSuche;null\n');
+
+    expect(ok).toBe(false);
+    expect(service.error()).toBe(ROW_ERROR);
+    expect(service.imported()).toBeUndefined();
+    expect(repository.list).not.toHaveBeenCalled();
+  });
+
+  it('zeigt die allgemeine Meldung, wenn der Import ohne Meldung scheitert (US-11)', async () => {
+    repository.importCsv.mockRejectedValue(new Error('offline'));
+
+    const ok = await service.importCsv(PI_ID, CSV);
+
+    expect(ok).toBe(false);
+    expect(service.error()).toBe(GENERIC_ERROR);
+  });
+
+  it('vergisst die Anzahl eines früheren Imports, wenn ein neuer Import scheitert (US-11)', async () => {
+    repository.list.mockResolvedValue([PORTAL, SUCHE]);
+    repository.importCsv.mockResolvedValueOnce(2).mockRejectedValueOnce(
+      new HttpErrorResponse({
+        status: 400,
+        error: { message: 'Die Kopfzeile braucht die Spalte «Titel».' },
+      }),
+    );
+    await service.importCsv(PI_ID, CSV);
+
+    const ok = await service.importCsv(PI_ID, 'Name;Owner\nPortal;Anna\n');
+
+    expect(ok).toBe(false);
+    expect(service.imported()).toBeUndefined();
+    expect(service.error()).toBe('Die Kopfzeile braucht die Spalte «Titel».');
+  });
+
+  it('vergisst eine alte Meldung, sobald ein Import gelingt (US-11)', async () => {
+    repository.list.mockResolvedValue([PORTAL]);
+    repository.importCsv
+      .mockRejectedValueOnce(new HttpErrorResponse({ status: 400, error: { message: ROW_ERROR } }))
+      .mockResolvedValueOnce(1);
+    await service.importCsv(PI_ID, CSV);
+
+    const ok = await service.importCsv(PI_ID, 'Titel\nPortal\n');
+
+    expect(ok).toBe(true);
+    expect(service.error()).toBeUndefined();
+    expect(service.imported()).toBe(1);
   });
 });
