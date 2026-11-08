@@ -24,6 +24,8 @@ export const routes: Routes = [
         (m) => m.ProgramBoardComponent,
       ),
     title: 'Program Board – PIkel',
+    // Das Board braucht alle Iterationen nebeneinander, App lässt dafür die Lesebreite weg (US-12).
+    data: { fullWidth: true },
   },
   {
     path: 'teams',
