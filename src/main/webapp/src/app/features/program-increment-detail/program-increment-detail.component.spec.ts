@@ -165,6 +165,17 @@ describe('ProgramIncrementDetailComponent', () => {
     expect(listFeatures).toHaveBeenCalledWith('42');
   });
 
+  it('verlinkt auf das Program Board des geöffneten PI (US-12)', async () => {
+    get.mockResolvedValue({ ...PI_27_1, id: '42' });
+
+    const el = await open('/program-increments/42');
+
+    expect(
+      el.querySelector('a[href="/program-increments/42/board"]'),
+      'Link zum Board',
+    ).not.toBeNull();
+  });
+
   it('lädt das PI mit der ID aus der URL (US-5)', async () => {
     get.mockResolvedValue({ ...PI_27_1, id: '42' });
 

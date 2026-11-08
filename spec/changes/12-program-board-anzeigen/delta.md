@@ -1,6 +1,6 @@
 # Delta US-12 — Program Board eines PI anzeigen (Issue #12)
 
-Story: `spec/user-stories/12-program-board-anzeigen.md` (neu) · Status: entwurf
+Story: `spec/user-stories/12-program-board-anzeigen.md` (neu) · Status: eingepflegt
 
 ## Warum
 
