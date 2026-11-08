@@ -1,7 +1,7 @@
 # US-16: Abhängigkeit zwischen Features erfassen
 
 **ID:** US-16
-**Issue:** [#16](https://github.com/LukasW/PIkel/issues/16)
+**Issue:** [#16](https://github.com/LukasW/PIckel/issues/16)
 **Status:** Umgesetzt
 **Priorität:** Hoch
 **Schätzung:** 5

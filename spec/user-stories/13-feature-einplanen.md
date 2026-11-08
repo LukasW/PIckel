@@ -1,7 +1,7 @@
 # US-13: Feature auf dem Board einplanen
 
 **ID:** US-13
-**Issue:** [#13](https://github.com/LukasW/PIkel/issues/13)
+**Issue:** [#13](https://github.com/LukasW/PIckel/issues/13)
 **Status:** Umgesetzt
 **Priorität:** Hoch
 **Schätzung:** 8

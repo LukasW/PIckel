@@ -18,7 +18,7 @@ an genau einem Ort; hier nur, was der Ablauf zusätzlich braucht.
 
 ## Repository
 
-- Issues und PRs: GitHub (`github.com/LukasW/PIkel`) über `gh`. Workflows unter `.github/workflows/`
+- Issues und PRs: GitHub (`github.com/LukasW/PIckel`) über `gh`. Workflows unter `.github/workflows/`
 - Label `spec-unchanged` setzt nur ein Mensch: übersteuert den CI-Job «Spec-Drift» (der Agent nie)
 - Label `needs-human-review` setzt CI bei Risiko-Pfaden (Migrationen, `.github/`, `.claude/`, `CLAUDE.md`,
   Abhängigkeiten); solche PRs merged `/flow-ship` nur nach ausdrücklicher Freigabe, der Nachtlauf nie

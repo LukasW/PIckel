@@ -1,7 +1,7 @@
 # US-14: Kapazität pro Zelle mit Überlast anzeigen
 
 **ID:** US-14
-**Issue:** [#14](https://github.com/LukasW/PIkel/issues/14)
+**Issue:** [#14](https://github.com/LukasW/PIckel/issues/14)
 **Status:** Umgesetzt
 **Priorität:** Hoch
 **Schätzung:** 5
