@@ -10,24 +10,24 @@ eingeplant», und eine Liste «Konflikte» nennt alles im Klartext. Weil alles a
 und #17, stimmt es sofort nach dem Einplanen und kehrt bei einem Fehler zurück. Kein Backend, keine Migration.
 
 ## Zu erstellende Dateien
-- [ ] `spec/user-stories/18-konflikt-hinweis.md` — Story (aus dem Delta eingepflegt)
-- [ ] `src/test/resources/features/program-increments/18-konflikt-hinweis.feature` — fünf `@Unit` mit
+- [x] `spec/user-stories/18-konflikt-hinweis.md` — Story (aus dem Delta eingepflegt)
+- [x] `src/test/resources/features/program-increments/18-konflikt-hinweis.feature` — fünf `@Unit` mit
   `# Vitest:`-Verweisen
 
 ## Zu ändernde Dateien
-- [ ] `src/main/webapp/src/app/core/models/board.model.ts` — Typ `DependencyIssue` (`kind: 'conflict' |
+- [x] `src/main/webapp/src/app/core/models/board.model.ts` — Typ `DependencyIssue` (`kind: 'conflict' |
   'unscheduledDelivery'`, `needingFeatureId`, `neededFeatureId`, Titel und Iterationsnamen für den Text);
   `DependencyLink` um `conflict: boolean`
-- [ ] `src/main/webapp/src/app/core/services/board.service.ts` — `computed` `dependencyIssues`, Konfliktflag an
+- [x] `src/main/webapp/src/app/core/services/board.service.ts` — `computed` `dependencyIssues`, Konfliktflag an
   `dependencyLinks`, Methode `lacksDelivery(featureId)`
-- [ ] `src/main/webapp/src/app/core/services/board.service.spec.ts` — Tests zur Regel
-- [ ] `src/main/webapp/src/app/features/program-board/program-board.component.html` / `.ts` — Konfliktlinie
+- [x] `src/main/webapp/src/app/core/services/board.service.spec.ts` — Tests zur Regel
+- [x] `src/main/webapp/src/app/features/program-board/program-board.component.html` / `.ts` — Konfliktlinie
   (`text-danger`, `stroke-dasharray`, eigener roter Pfeil-Marker), Abschnitt «Konflikte» mit Liste bzw. «Keine
   Konflikte»
-- [ ] `src/main/webapp/src/app/features/program-board/program-board.component.spec.ts` — Tests dazu
-- [ ] `src/main/webapp/src/app/features/program-board/board-card.component.ts` / `.html` — Input `lacksDelivery`,
+- [x] `src/main/webapp/src/app/features/program-board/program-board.component.spec.ts` — Tests dazu
+- [x] `src/main/webapp/src/app/features/program-board/board-card.component.ts` / `.html` — Input `lacksDelivery`,
   Hinweis «Lieferung nicht eingeplant» (`text-danger`, mit Text, nicht nur Farbe)
-- [ ] `src/main/webapp/src/app/features/program-board/board-card.component.spec.ts` — Tests dazu
+- [x] `src/main/webapp/src/app/features/program-board/board-card.component.spec.ts` — Tests dazu
 
 ## Delta
 `spec/changes/18-konflikt-hinweis/delta.md` — Neu: 5 AK, 5 Szenarien (alle `@Unit`). Gegenüber dem Entwurf:
@@ -55,20 +55,20 @@ ergänzt. Geändert: keine. Entfernt: keine.
 - Keine neue ADR
 
 ## Aufgaben
-- [ ] 1. `DependencyIssue` und `BoardService.dependencyIssues` / `lacksDelivery` / Konfliktflag am Link — erledigt,
+- [x] 1. `DependencyIssue` und `BoardService.dependencyIssues` / `lacksDelivery` / Konfliktflag am Link — erledigt,
   wenn die Regel-Tests in `board.service.spec.ts` grün sind
-- [ ] 2. Hinweis «Lieferung nicht eingeplant» auf der Karte — erledigt, wenn die Tests in
+- [x] 2. Hinweis «Lieferung nicht eingeplant» auf der Karte — erledigt, wenn die Tests in
   `board-card.component.spec.ts` grün sind
-- [ ] 3. Konfliktlinie rot und gestrichelt — erledigt, wenn der Test in `program-board.component.spec.ts` grün ist
-- [ ] 4. Liste «Konflikte» mit Klartext und «Keine Konflikte» — erledigt, wenn die Tests in
+- [x] 3. Konfliktlinie rot und gestrichelt — erledigt, wenn der Test in `program-board.component.spec.ts` grün ist
+- [x] 4. Liste «Konflikte» mit Klartext und «Keine Konflikte» — erledigt, wenn die Tests in
   `program-board.component.spec.ts` grün sind
-- [ ] 5. Feature-Datei mit `@Unit`-Verweisen; Story anlegen, Delta einpflegen — erledigt, wenn
+- [x] 5. Feature-Datei mit `@Unit`-Verweisen; Story anlegen, Delta einpflegen — erledigt, wenn
   `check-story-drift.sh` nichts meldet; `scripts/gate.sh` grün; Screenshot für den PR
-- [ ] 6. `docs/arc42.md` → «Frontend-State» um den Satz zu Board-Regeln als `computed` ergänzen — erledigt, wenn der
+- [x] 6. `docs/arc42.md` → «Frontend-State» um den Satz zu Board-Regeln als `computed` ergänzen — erledigt, wenn der
   Satz dort steht
 
 ## Test-Strategie
-- [ ] Unit (Vitest, `BoardService`), mit Iterationsnummern:
+- [x] Unit (Vitest, `BoardService`), mit Iterationsnummern:
   - Bedarf 2, Lieferung 4 → ein `conflict`, Link `conflict: true`
   - Bedarf 2, Lieferung 2 → nichts, Link `conflict: false` (Grenzfall gleich)
   - Bedarf 3, Lieferung 1 → nichts
@@ -79,12 +79,12 @@ ergänzt. Geändert: keine. Entfernt: keine.
   - `schedule("Login", Iteration 1)` löst den Konflikt ohne zweiten `get`-Aufruf am Repository; `unschedule("Login")`
     macht daraus `unscheduledDelivery`
   - scheitert das Speichern, gilt wieder der Konflikt
-- [ ] Unit (Vitest, Board): Text «Login wird in Iteration 4 geliefert, Portal braucht es in Iteration 2.» bzw.
+- [x] Unit (Vitest, Board): Text «Login wird in Iteration 4 geliefert, Portal braucht es in Iteration 2.» bzw.
   «Login ist nicht eingeplant, Portal braucht es in Iteration 2.» in der Liste; ohne Befund «Keine Konflikte»;
   Konfliktlinie trägt `data-conflict` und `stroke-dasharray`, eine Linie ohne Konflikt nicht; nach Einplanen per
   Aktion «Keine Konflikte»; bei Fehler des Repositorys wieder der Konflikttext
-- [ ] Unit (Vitest, Karte): mit `lacksDelivery` der Text «Lieferung nicht eingeplant», ohne nicht
-- [ ] Bestehende Tests: keine Änderung erwartet; die Tests aus #17 zu `dependencyLinks` vergleichen ganze Objekte
+- [x] Unit (Vitest, Karte): mit `lacksDelivery` der Text «Lieferung nicht eingeplant», ohne nicht
+- [x] Bestehende Tests: keine Änderung erwartet; die Tests aus #17 zu `dependencyLinks` vergleichen ganze Objekte
   vermutlich mit `toEqual` und brauchen dann das Feld `conflict: false`. Grund: Delta US-18 → AK 3
 - [ ] Von Hand: Screenshot im PR mit roter gestrichelter Linie, Hinweis an der Karte und Liste (Farbe und Strich
   misst jsdom nicht)

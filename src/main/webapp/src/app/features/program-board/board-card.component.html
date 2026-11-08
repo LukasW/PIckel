@@ -19,6 +19,12 @@
       {{ unlinkedDependencies() === 1 ? 'Abhängigkeit' : 'Abhängigkeiten' }}
     </p>
   }
+  @if (lacksDelivery()) {
+    <!-- Nicht nur Farbe: Der Hinweis steht als Text da (US-18). -->
+    <p data-testid="lacks-delivery" class="text-xs font-semibold text-danger">
+      Lieferung nicht eingeplant
+    </p>
+  }
 </div>
 
 @if (open()) {

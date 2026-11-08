@@ -1,6 +1,6 @@
 # Delta US-18 — Hinweis bei Konflikt einer Abhängigkeit (Issue #18)
 
-Story: `spec/user-stories/18-konflikt-hinweis.md` (neu) · Status: bestätigt
+Story: `spec/user-stories/18-konflikt-hinweis.md` (neu) · Status: eingepflegt
 
 ## Warum
 

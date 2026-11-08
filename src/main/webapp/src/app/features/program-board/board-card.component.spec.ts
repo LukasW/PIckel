@@ -280,4 +280,51 @@ describe('BoardCardComponent', () => {
     expect(text(el)).toContain('0 SP');
     expect(text(el)).not.toContain('ohne Schätzung');
   });
+
+  // --- US-18: Hinweis «Lieferung nicht eingeplant» ---
+
+  const DELIVERY_MISSING = 'Lieferung nicht eingeplant';
+
+  async function renderLackingDelivery(lacksDelivery: boolean): Promise<HTMLElement> {
+    const el = await render(PORTAL_SCHEDULED);
+    fixture.componentRef.setInput('lacksDelivery', lacksDelivery);
+    await fixture.whenStable();
+    return el;
+  }
+
+  /** Das innerste Element, dessen Text den Hinweis enthält. */
+  function hintElement(el: HTMLElement): Element | undefined {
+    return Array.from(el.querySelectorAll('*'))
+      .filter((e) => text(e as HTMLElement).includes(DELIVERY_MISSING))
+      .pop();
+  }
+
+  it('trägt den Hinweis «Lieferung nicht eingeplant», wenn dem Feature eine Lieferung fehlt (US-18)', async () => {
+    const el = await renderLackingDelivery(true);
+
+    expect(text(el)).toContain(DELIVERY_MISSING);
+    expect(text(el)).toContain('Portal');
+  });
+
+  // Plan: nicht nur Farbe, sondern Text, und rot über das Token `text-danger`.
+  it('zeigt den Hinweis rot mit dem Token text-danger (US-18)', async () => {
+    const el = await renderLackingDelivery(true);
+
+    const hint = hintElement(el);
+    expect(hint, 'Element mit dem Hinweis').toBeDefined();
+    expect(hint!.closest('.text-danger'), 'text-danger am Hinweis').not.toBeNull();
+  });
+
+  it('trägt den Hinweis nicht, wenn keine Lieferung fehlt (US-18)', async () => {
+    const el = await renderLackingDelivery(false);
+
+    expect(text(el)).not.toContain(DELIVERY_MISSING);
+    expect(text(el)).toContain('Portal');
+  });
+
+  it('trägt den Hinweis ohne Angabe nicht (US-18)', async () => {
+    const el = await render(PORTAL_SCHEDULED);
+
+    expect(text(el)).not.toContain(DELIVERY_MISSING);
+  });
 });

@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { computed, inject, Injectable, signal } from '@angular/core';
-import { Board, CellLoad, DependencyLink } from '../models/board.model';
+import { Board, CellLoad, DependencyIssue, DependencyLink } from '../models/board.model';
 import { Feature } from '../models/feature.model';
 import { BoardRepository } from '../ports/board.repository';
 import { FeaturesRepository } from '../ports/features.repository';
@@ -22,11 +22,85 @@ export class BoardService {
     if (!board) {
       return [];
     }
-    const scheduled = new Set(board.scheduled.map((f) => f.id));
-    return board.dependencies
-      .filter((d) => scheduled.has(d.neededFeatureId) && scheduled.has(d.needingFeatureId))
-      .map(({ neededFeatureId, needingFeatureId }) => ({ neededFeatureId, needingFeatureId }));
+    const scheduled = new Map(board.scheduled.map((f) => [f.id, f]));
+    return board.dependencies.flatMap(({ neededFeatureId, needingFeatureId }) => {
+      const needed = scheduled.get(neededFeatureId);
+      const needing = scheduled.get(needingFeatureId);
+      return needed && needing
+        ? [{ neededFeatureId, needingFeatureId, conflict: isLate(needed, needing) }]
+        : [];
+    });
   });
+
+  /**
+   * Konflikte und nicht eingeplante Lieferungen (US-18), nach Iteration des Bedarfs, dann Titel des Bedarfs, dann
+   * Titel der Lieferung. Aus dem Board-Signal wie die Kapazität (US-14): Sie folgen dem optimistischen Einplanen.
+   */
+  readonly dependencyIssues = computed<readonly DependencyIssue[]>(() => {
+    const board = this.current();
+    if (!board) {
+      return [];
+    }
+    const scheduled = new Map(board.scheduled.map((f) => [f.id, f]));
+    const backlog = new Map(board.backlog.map((f) => [f.id, f]));
+    const issues: { issue: DependencyIssue; iteration: number }[] = [];
+    for (const d of board.dependencies) {
+      // Ist der Bedarf nicht eingeplant, gibt es weder Konflikt noch Hinweis (Delta US-18).
+      const needing = scheduled.get(d.needingFeatureId);
+      if (!needing) {
+        continue;
+      }
+      const base = {
+        needingFeatureId: d.needingFeatureId,
+        neededFeatureId: d.neededFeatureId,
+        needingTitle: needing.title,
+        needingIterationName: iterationName(board, needing.iterationNumber),
+      };
+      const needed = scheduled.get(d.neededFeatureId);
+      const iteration = needing.iterationNumber ?? 0;
+      if (!needed) {
+        const unscheduled = backlog.get(d.neededFeatureId);
+        if (unscheduled) {
+          issues.push({
+            iteration,
+            issue: { ...base, kind: 'unscheduledDelivery', neededTitle: unscheduled.title },
+          });
+        }
+      } else if (isLate(needed, needing)) {
+        issues.push({
+          iteration,
+          issue: {
+            ...base,
+            kind: 'conflict',
+            neededTitle: needed.title,
+            neededIterationName: iterationName(board, needed.iterationNumber),
+          },
+        });
+      }
+    }
+    return issues
+      .sort(
+        (a, b) =>
+          a.iteration - b.iteration ||
+          compareTitles(a.issue.needingTitle, b.issue.needingTitle) ||
+          compareTitles(a.issue.neededTitle, b.issue.neededTitle),
+      )
+      .map(({ issue }) => issue);
+  });
+
+  private readonly lackingDelivery = computed(
+    () =>
+      new Set(
+        this.dependencyIssues()
+          .filter((i) => i.kind === 'unscheduledDelivery')
+          .map((i) => i.needingFeatureId),
+      ),
+  );
+
+  /** Ist das Feature eingeplant und eine seiner Lieferungen nicht? (US-18) */
+  lacksDelivery(featureId: string): boolean {
+    return this.lackingDelivery().has(featureId);
+  }
 
   /** Je Feature die Anzahl Abhängigkeiten ohne Linie, in beide Richtungen; abgeleitet wie die Linien. */
   private readonly unlinkedCounts = computed(() => {
@@ -187,6 +261,22 @@ function insertByRank(features: readonly Feature[], added: Feature): readonly Fe
   return index === -1
     ? [...features, added]
     : [...features.slice(0, index), added, ...features.slice(index)];
+}
+
+/** Konflikt (US-18): Die Lieferung ist in einer späteren Iteration eingeplant als der Bedarf; gleich ist keiner. */
+function isLate(needed: Feature, needing: Feature): boolean {
+  return (needed.iterationNumber ?? 0) > (needing.iterationNumber ?? 0);
+}
+
+/** Der Name kommt aus dem Board; fehlt die Iteration dort, steht die Nummer da. */
+function iterationName(board: Board, iterationNumber: number | undefined): string {
+  return (
+    board.iterations.find((i) => i.number === iterationNumber)?.name ?? String(iterationNumber)
+  );
+}
+
+function compareTitles(a: string, b: string): number {
+  return a.localeCompare(b, undefined, { sensitivity: 'base' });
 }
 
 function cellKey(teamId: string, iterationNumber: number): string {

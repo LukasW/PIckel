@@ -24,6 +24,8 @@ export class BoardCardComponent {
   readonly iterations = input.required<readonly Iteration[]>();
   /** Abhängigkeiten dieser Karte ohne Linie (US-17); bei 0 zeigt die Karte nichts. */
   readonly unlinkedDependencies = input(0);
+  /** Der Bedarf ist eingeplant, eine Lieferung nicht (US-18): Die Karte zeigt den Hinweis. */
+  readonly lacksDelivery = input(false);
 
   readonly schedule = output<SchedulingChoice>();
   readonly unschedule = output<void>();

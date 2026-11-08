@@ -689,7 +689,8 @@ describe('BoardService', () => {
     const PORTAL_NEEDS_LOGIN = { needingFeatureId: 'f1', neededFeatureId: 'f2' };
     const SUCHE_NEEDS_LOGIN = { needingFeatureId: 'f3', neededFeatureId: 'f2' };
     const KASSE_NEEDS_PORTAL = { needingFeatureId: 'f4', neededFeatureId: 'f1' };
-    const LOGIN_TO_PORTAL = { neededFeatureId: 'f2', needingFeatureId: 'f1' };
+    // Login (Iteration 2) kommt vor Portal (Iteration 3 oder 4): kein Konflikt (Delta US-18 → AK 3).
+    const LOGIN_TO_PORTAL = { neededFeatureId: 'f2', needingFeatureId: 'f1', conflict: false };
 
     function boardWith(
       backlog: Feature[],
@@ -738,8 +739,9 @@ describe('BoardService', () => {
         ),
       );
 
+      // Portal (Iteration 3) wird später geliefert, als Kasse (Iteration 1) es braucht: Konflikt (Delta US-18 → AK 1).
       expect(service.dependencyLinks()).toEqual([
-        { neededFeatureId: 'f1', needingFeatureId: 'f4' },
+        { neededFeatureId: 'f1', needingFeatureId: 'f4', conflict: true },
       ]);
     });
 
@@ -841,6 +843,333 @@ describe('BoardService', () => {
 
       expect(service.dependencyLinks()).toEqual([LOGIN_TO_PORTAL]);
       expect(counts('f1', 'f2')).toEqual({ f1: 0, f2: 0 });
+    });
+  });
+
+  // --- US-18: Konflikt einer Abhängigkeit ---
+
+  describe('Konflikte (US-18)', () => {
+    const PI = 'pi-27-1';
+
+    function card(id: string, title: string, wsjfRank: number, cell?: [string, number]): Feature {
+      return {
+        id,
+        programIncrementId: PI,
+        title,
+        description: '',
+        owner: '',
+        wsjfRank,
+        scheduled: cell !== undefined,
+        ...(cell ? { teamId: cell[0], iterationNumber: cell[1] } : {}),
+      };
+    }
+
+    /** PI 27.1 mit Iteration 1–5 und der IP als Nummer 6; Teams Adler (a) und Zebra (z). */
+    const ITERATIONS: Board['iterations'] = [
+      ['Iteration 1', '2027-01-04', '2027-01-17'],
+      ['Iteration 2', '2027-01-18', '2027-01-31'],
+      ['Iteration 3', '2027-02-01', '2027-02-14'],
+      ['Iteration 4', '2027-02-15', '2027-02-28'],
+      ['Iteration 5', '2027-03-01', '2027-03-14'],
+      ['IP', '2027-03-15', '2027-03-26'],
+    ].map(([name, startDate, endDate], i) => ({
+      number: i + 1,
+      name,
+      startDate,
+      endDate,
+      innovationAndPlanning: name === 'IP',
+    }));
+
+    // Szenarien: Portal bei Adler, Login bei Zebra; «Portal braucht Login».
+    const portalIn = (iteration: number): Feature => card('f1', 'Portal', 1, ['a', iteration]);
+    const loginIn = (iteration: number): Feature => card('f2', 'Login', 2, ['z', iteration]);
+    const PORTAL_BACKLOG = card('f1', 'Portal', 1);
+    const LOGIN_BACKLOG = card('f2', 'Login', 2);
+    const PORTAL_NEEDS_LOGIN = { needingFeatureId: 'f1', neededFeatureId: 'f2' };
+
+    const LOGIN_LATE_FOR_PORTAL = {
+      kind: 'conflict',
+      needingFeatureId: 'f1',
+      neededFeatureId: 'f2',
+      needingTitle: 'Portal',
+      neededTitle: 'Login',
+      needingIterationName: 'Iteration 2',
+      neededIterationName: 'Iteration 4',
+    };
+    const LOGIN_MISSING_FOR_PORTAL = {
+      kind: 'unscheduledDelivery',
+      needingFeatureId: 'f1',
+      neededFeatureId: 'f2',
+      needingTitle: 'Portal',
+      neededTitle: 'Login',
+      needingIterationName: 'Iteration 2',
+    };
+
+    function boardWith(
+      backlog: Feature[],
+      scheduled: Feature[],
+      dependencies: Board['dependencies'] = [PORTAL_NEEDS_LOGIN],
+    ): Board {
+      return {
+        teams: [
+          { id: 'a', name: 'Adler' },
+          { id: 'z', name: 'Zebra' },
+        ],
+        iterations: ITERATIONS,
+        backlog,
+        scheduled,
+        milestones: [],
+        capacities: [],
+        dependencies,
+      };
+    }
+
+    async function loaded(board: Board): Promise<void> {
+      repository.get.mockResolvedValue(board);
+      await service.load(PI);
+    }
+
+    function pending<T>(): {
+      promise: Promise<T>;
+      resolve: (v: T) => void;
+      reject: (e: unknown) => void;
+    } {
+      let resolve: (v: T) => void = () => undefined;
+      let reject: (e: unknown) => void = () => undefined;
+      const promise = new Promise<T>((res, rej) => {
+        resolve = res;
+        reject = rej;
+      });
+      return { promise, resolve, reject };
+    }
+
+    // Szenario «Lieferung nach dem Bedarf ist ein Konflikt»
+    it('meldet einen Konflikt, wenn Login in Iteration 4 geliefert wird und Portal es in Iteration 2 braucht (US-18)', async () => {
+      await loaded(boardWith([], [portalIn(2), loginIn(4)]));
+
+      expect(service.dependencyIssues()).toEqual([LOGIN_LATE_FOR_PORTAL]);
+      expect(service.lacksDelivery('f1')).toBe(false);
+    });
+
+    it('markiert die Linie von Login zu Portal als Konflikt, wenn Login später kommt (US-18)', async () => {
+      await loaded(boardWith([], [portalIn(2), loginIn(4)]));
+
+      expect(service.dependencyLinks()).toEqual([
+        { neededFeatureId: 'f2', needingFeatureId: 'f1', conflict: true },
+      ]);
+    });
+
+    // Szenario «Lieferung in derselben Iteration ist kein Konflikt» (Grenzfall gleich)
+    it('meldet keinen Konflikt, wenn Login in derselben Iteration geliefert wird, wie Portal es braucht (US-18)', async () => {
+      await loaded(boardWith([], [portalIn(2), loginIn(2)]));
+
+      expect(service.dependencyIssues()).toEqual([]);
+      expect(service.dependencyLinks()).toEqual([
+        { neededFeatureId: 'f2', needingFeatureId: 'f1', conflict: false },
+      ]);
+    });
+
+    it('meldet keinen Konflikt, wenn Login früher geliefert wird, als Portal es braucht (US-18)', async () => {
+      await loaded(boardWith([], [portalIn(3), loginIn(1)]));
+
+      expect(service.dependencyIssues()).toEqual([]);
+      expect(service.dependencyLinks()).toEqual([
+        { neededFeatureId: 'f2', needingFeatureId: 'f1', conflict: false },
+      ]);
+    });
+
+    // Plan, Regel: «Das Team spielt keine Rolle.»
+    it('meldet den Konflikt auch, wenn beide Features beim selben Team liegen (US-18)', async () => {
+      const loginAtAdler = card('f2', 'Login', 2, ['a', 4]);
+      await loaded(boardWith([], [portalIn(2), loginAtAdler]));
+
+      expect(service.dependencyIssues()).toEqual([LOGIN_LATE_FOR_PORTAL]);
+    });
+
+    // Szenario «Nicht eingeplante Lieferung wird gemeldet»
+    it('meldet «Lieferung nicht eingeplant», wenn Portal in Iteration 2 eingeplant ist und Login im Backlog liegt (US-18)', async () => {
+      await loaded(boardWith([LOGIN_BACKLOG], [portalIn(2)]));
+
+      expect(service.dependencyIssues()).toEqual([LOGIN_MISSING_FOR_PORTAL]);
+      expect(service.lacksDelivery('f1')).toBe(true);
+      expect(service.lacksDelivery('f2')).toBe(false);
+    });
+
+    it('meldet nichts, wenn Portal im Backlog liegt und Login eingeplant ist (US-18)', async () => {
+      await loaded(boardWith([PORTAL_BACKLOG], [loginIn(4)]));
+
+      expect(service.dependencyIssues()).toEqual([]);
+      expect(service.lacksDelivery('f1')).toBe(false);
+    });
+
+    it('meldet nichts, wenn Portal und Login beide im Backlog liegen (US-18)', async () => {
+      await loaded(boardWith([PORTAL_BACKLOG, LOGIN_BACKLOG], []));
+
+      expect(service.dependencyIssues()).toEqual([]);
+      expect(service.lacksDelivery('f1')).toBe(false);
+    });
+
+    it('fehlt an Portal eine Lieferung, wenn nur eine von zwei Lieferungen nicht eingeplant ist (US-18)', async () => {
+      const suche = card('f3', 'Suche', 3);
+      await loaded(
+        boardWith(
+          [suche],
+          [portalIn(2), loginIn(1)],
+          [PORTAL_NEEDS_LOGIN, { needingFeatureId: 'f1', neededFeatureId: 'f3' }],
+        ),
+      );
+
+      expect(service.lacksDelivery('f1')).toBe(true);
+      expect(service.dependencyIssues()).toEqual([
+        {
+          kind: 'unscheduledDelivery',
+          needingFeatureId: 'f1',
+          neededFeatureId: 'f3',
+          needingTitle: 'Portal',
+          neededTitle: 'Suche',
+          needingIterationName: 'Iteration 2',
+        },
+      ]);
+    });
+
+    it('meldet ohne geladenes Board nichts (US-18)', () => {
+      expect(service.dependencyIssues()).toEqual([]);
+      expect(service.lacksDelivery('f1')).toBe(false);
+    });
+
+    // Plan, Reihenfolge: nach Iteration des Bedarfs, unabhängig von der Reihenfolge im JSON.
+    it('ordnet die Befunde nach der Iteration des Bedarfs, früheste zuerst (US-18)', async () => {
+      const kasse = card('f4', 'Kasse', 4, ['a', 3]);
+      const suche = card('f3', 'Suche', 3, ['z', 5]);
+      const archiv = card('f5', 'Archiv', 5);
+      await loaded(
+        boardWith(
+          [archiv],
+          [portalIn(1), loginIn(2), kasse, suche, card('f6', 'Bericht', 6, ['z', 2])],
+          [
+            { needingFeatureId: 'f4', neededFeatureId: 'f3' }, // Kasse (3) braucht Suche (5)
+            { needingFeatureId: 'f6', neededFeatureId: 'f5' }, // Bericht (2) braucht Archiv (Backlog)
+            PORTAL_NEEDS_LOGIN, // Portal (1) braucht Login (2)
+          ],
+        ),
+      );
+
+      expect(
+        service.dependencyIssues().map((i) => `${i.needingTitle}<-${i.neededTitle}:${i.kind}`),
+      ).toEqual([
+        'Portal<-Login:conflict',
+        'Bericht<-Archiv:unscheduledDelivery',
+        'Kasse<-Suche:conflict',
+      ]);
+    });
+
+    it('ordnet bei gleicher Iteration nach Titel des Bedarfs, dann nach Titel der Lieferung (US-18)', async () => {
+      const kasse = card('f4', 'Kasse', 4, ['z', 2]);
+      const suche = card('f3', 'Suche', 3, ['z', 4]);
+      const archiv = card('f5', 'Archiv', 5, ['a', 5]);
+      await loaded(
+        boardWith(
+          [],
+          [portalIn(2), loginIn(4), kasse, suche, archiv],
+          [
+            PORTAL_NEEDS_LOGIN, // Portal braucht Login
+            { needingFeatureId: 'f4', neededFeatureId: 'f3' }, // Kasse braucht Suche
+            { needingFeatureId: 'f1', neededFeatureId: 'f5' }, // Portal braucht Archiv
+          ],
+        ),
+      );
+
+      expect(service.dependencyIssues().map((i) => `${i.needingTitle}<-${i.neededTitle}`)).toEqual([
+        'Kasse<-Suche',
+        'Portal<-Archiv',
+        'Portal<-Login',
+      ]);
+    });
+
+    // Szenario «Verschieben löst den Konflikt» (AK 5)
+    it('löst den Konflikt sofort, wenn Login in Iteration 1 verschoben wird, ohne das Board neu zu laden (US-18)', async () => {
+      const login = loginIn(4);
+      await loaded(boardWith([], [portalIn(2), login]));
+      const answer = pending<Feature>();
+      features.schedule.mockReturnValue(answer.promise);
+
+      const moving = service.schedule(login, 'z', 1);
+      // Verhindert eine unbehandelte Ablehnung, falls die Prüfung davor scheitert; `await moving` meldet sie trotzdem.
+      moving.catch(() => undefined);
+
+      expect(service.dependencyIssues()).toEqual([]);
+      expect(service.dependencyLinks()).toEqual([
+        { neededFeatureId: 'f2', needingFeatureId: 'f1', conflict: false },
+      ]);
+      answer.resolve(loginIn(1));
+      await moving;
+      expect(service.dependencyIssues()).toEqual([]);
+      expect(repository.get).toHaveBeenCalledTimes(1);
+    });
+
+    it('meldet den Konflikt sofort, wenn Login aus dem Backlog in eine spätere Iteration eingeplant wird (US-18)', async () => {
+      await loaded(boardWith([LOGIN_BACKLOG], [portalIn(2)]));
+      features.schedule.mockResolvedValue(loginIn(4));
+
+      await service.schedule(LOGIN_BACKLOG, 'z', 4);
+
+      expect(service.dependencyIssues()).toEqual([LOGIN_LATE_FOR_PORTAL]);
+      expect(service.lacksDelivery('f1')).toBe(false);
+      expect(repository.get).toHaveBeenCalledTimes(1);
+    });
+
+    it('macht aus dem Konflikt eine nicht eingeplante Lieferung, wenn Login zurück ins Backlog geht (US-18)', async () => {
+      const login = loginIn(4);
+      await loaded(boardWith([], [portalIn(2), login]));
+      features.unschedule.mockResolvedValue(LOGIN_BACKLOG);
+
+      await service.unschedule(login);
+
+      expect(service.dependencyIssues()).toEqual([LOGIN_MISSING_FOR_PORTAL]);
+      expect(service.lacksDelivery('f1')).toBe(true);
+      expect(repository.get).toHaveBeenCalledTimes(1);
+    });
+
+    it('meldet nichts mehr, wenn Portal zurück ins Backlog geht (US-18)', async () => {
+      const portal = portalIn(2);
+      await loaded(boardWith([LOGIN_BACKLOG], [portal]));
+      features.unschedule.mockResolvedValue(PORTAL_BACKLOG);
+
+      await service.unschedule(portal);
+
+      expect(service.dependencyIssues()).toEqual([]);
+      expect(service.lacksDelivery('f1')).toBe(false);
+    });
+
+    // Szenario «Gescheitertes Speichern stellt den Konflikt wieder her» (AK 5)
+    it('stellt den Konflikt wieder her, wenn das Verschieben von Login scheitert (US-18)', async () => {
+      const login = loginIn(4);
+      await loaded(boardWith([], [portalIn(2), login]));
+      const answer = pending<Feature>();
+      features.schedule.mockReturnValue(answer.promise);
+
+      const moving = service.schedule(login, 'z', 1);
+      moving.catch(() => undefined);
+      expect(service.dependencyIssues()).toEqual([]);
+      answer.reject(new HttpErrorResponse({ status: 500, error: 'boom' }));
+      await moving;
+
+      expect(service.dependencyIssues()).toEqual([LOGIN_LATE_FOR_PORTAL]);
+      expect(service.dependencyLinks()).toEqual([
+        { neededFeatureId: 'f2', needingFeatureId: 'f1', conflict: true },
+      ]);
+      expect(repository.get).toHaveBeenCalledTimes(1);
+    });
+
+    it('meldet wieder den Konflikt statt der fehlenden Lieferung, wenn das Zurücknehmen von Login scheitert (US-18)', async () => {
+      const login = loginIn(4);
+      await loaded(boardWith([], [portalIn(2), login]));
+      features.unschedule.mockRejectedValue(new Error('offline'));
+
+      await service.unschedule(login);
+
+      expect(service.dependencyIssues()).toEqual([LOGIN_LATE_FOR_PORTAL]);
+      expect(service.lacksDelivery('f1')).toBe(false);
     });
   });
 });

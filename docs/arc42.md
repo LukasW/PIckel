@@ -247,6 +247,9 @@ Fachliche Fehler → 400 mit Meldung in Du-Form; ein Mapping für technische Feh
 Services in `core/services` halten State als Signals; Regeln für Komponenten und Design-Tokens:
 [`.claude/rules/angular.md`](../.claude/rules/angular.md).
 
+Regeln, die dem optimistischen Einplanen sofort folgen müssen (Kapazität je Zelle, Konflikte von Abhängigkeiten),
+leitet `BoardService` als `computed` aus dem Board-Signal ab; die REST-API liefert sie nicht.
+
 ### Sicherheit
 
 Noch **keine** Anmeldung: Die API ist ungeschützt, PIkel darf bis zur Auth-Story nicht öffentlich betrieben werden.
