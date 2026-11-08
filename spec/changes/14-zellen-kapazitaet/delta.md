@@ -1,6 +1,6 @@
 # Delta US-14 — Kapazität pro Zelle mit Überlast anzeigen (Issue #14)
 
-Story: `spec/user-stories/14-zellen-kapazitaet.md` (neu) · Status: entwurf
+Story: `spec/user-stories/14-zellen-kapazitaet.md` (neu) · Status: bestätigt
 
 ## Warum
 
@@ -10,10 +10,12 @@ An der Wand rechnet jedes Team im Kopf, ob es sich überplant. Das Board zeigt e
 
 - **Last einer Zelle** = Summe der Schätzungen ihrer Features; ein Feature ohne Schätzung zählt 0 (ADR 0006)
 - **Überlast** heisst geplant grösser als verfügbar; gleich viel ist keine Überlast
-- **Berechnung in der Domain**, das Board liefert pro Zelle geplant und verfügbar mit, damit die Regel an einem Ort
-  steht und ohne Browser testbar ist
+- **Ort der Berechnung:** Das Board liefert pro Zelle die verfügbare Kapazität (ohne Eintrag 0). Das Frontend leitet
+  geplant und Überlast aus den Karten auf dem Board ab, damit die Werte nach dem optimistischen Einplanen aus #13
+  sofort stimmen und bei einem Fehler mit der Karte zurückkehren (Quelle: `entscheide.md`)
 - **Nicht nur Farbe:** Überlast zeigt die Zelle rot und mit Text, damit sie auch ohne Farbsehen erkennbar ist
 - **IP-Iteration** zeigt keine Kapazität (dort wird nicht geplant)
+- **Nur anzeigen:** Einplanen über die Kapazität bleibt erlaubt (Quelle: `spec/changes/13-feature-einplanen/entscheide.md`)
 
 ## Neu
 
@@ -27,36 +29,53 @@ An der Wand rechnet jedes Team im Kopf, ob es sich überplant. Das Board zeigt e
 
 ### AK: Feature-Karten ohne Schätzung tragen den Hinweis «ohne Schätzung»
 
-### Szenario: Zelle zeigt geplant gegenüber verfügbar
+### Szenario: Board liefert die Kapazität pro Zelle
 - **Gegeben sei** das PI "PI 27.1" vom "2027-01-04" bis "2027-03-26" mit Iterationen zu 2 Wochen
 - **Und** das Team "Adler" mit der Kapazität 20 in "Iteration 1" von "PI 27.1"
-- **Und** im PI "PI 27.1" das Feature "Portal" mit Schätzung 13 bei "Adler" in "Iteration 1" eingeplant
 - **Wenn** ich das Board von "PI 27.1" abrufe
-- **Dann** zeigt die Zelle "Adler" × "Iteration 1" geplant 13 und verfügbar 20
-- **Und** ist die Zelle "Adler" × "Iteration 1" nicht überlastet
+- **Dann** liefert das Board für "Adler" in "Iteration 1" die Kapazität 20
+- **Und** liefert das Board für "Adler" in "Iteration 2" die Kapazität 0
+- **Und** liefert das Board für die IP-Iteration keine Kapazität
+
+### Szenario: Zelle zeigt geplant gegenüber verfügbar
+`@Unit` (Vitest)
+- **Gegeben sei** das Team "Adler" mit der Kapazität 20 in "Iteration 1" auf dem Board
+- **Und** das Feature "Portal" mit Schätzung 13 bei "Adler" in "Iteration 1"
+- **Wenn** ich das Board öffne
+- **Dann** zeigt die Zelle "Adler" × "Iteration 1" «13 / 20 SP»
+- **Und** ist die Zelle "Adler" × "Iteration 1" nicht als Überlast markiert
+- **Und** zeigt die IP-Iteration keine Kapazität
 
 ### Szenario: Zelle über der Kapazität ist überlastet
-- **Gegeben sei** das PI "PI 27.1" vom "2027-01-04" bis "2027-03-26" mit Iterationen zu 2 Wochen
-- **Und** das Team "Adler" mit der Kapazität 20 in "Iteration 1" von "PI 27.1"
-- **Und** im PI "PI 27.1" das Feature "Portal" mit Schätzung 13 bei "Adler" in "Iteration 1" eingeplant
-- **Und** im PI "PI 27.1" das Feature "Suche" mit Schätzung 8 bei "Adler" in "Iteration 1" eingeplant
-- **Wenn** ich das Board von "PI 27.1" abrufe
-- **Dann** zeigt die Zelle "Adler" × "Iteration 1" geplant 21 und verfügbar 20
-- **Und** ist die Zelle "Adler" × "Iteration 1" überlastet
+`@Unit` (Vitest)
+- **Gegeben sei** das Team "Adler" mit der Kapazität 20 in "Iteration 1" auf dem Board
+- **Und** die Features "Portal" mit Schätzung 13 und "Suche" mit Schätzung 8 bei "Adler" in "Iteration 1"
+- **Wenn** ich das Board öffne
+- **Dann** zeigt die Zelle "Adler" × "Iteration 1" «21 / 20 SP»
+- **Und** ist die Zelle rot hervorgehoben und mit «Überlast» beschriftet
 
 ### Szenario: Genau ausgelastete Zelle ist nicht überlastet
-- **Gegeben sei** das PI "PI 27.1" vom "2027-01-04" bis "2027-03-26" mit Iterationen zu 2 Wochen
-- **Und** das Team "Adler" mit der Kapazität 13 in "Iteration 1" von "PI 27.1"
-- **Und** im PI "PI 27.1" das Feature "Portal" mit Schätzung 13 bei "Adler" in "Iteration 1" eingeplant
-- **Wenn** ich das Board von "PI 27.1" abrufe
-- **Dann** ist die Zelle "Adler" × "Iteration 1" nicht überlastet
+`@Unit` (Vitest)
+- **Gegeben sei** das Team "Adler" mit der Kapazität 13 in "Iteration 1" auf dem Board
+- **Und** das Feature "Portal" mit Schätzung 13 bei "Adler" in "Iteration 1"
+- **Wenn** ich das Board öffne
+- **Dann** ist die Zelle "Adler" × "Iteration 1" nicht als Überlast markiert
 
 ### Szenario: Feature ohne Schätzung zählt 0
-- **Gegeben sei** das PI "PI 27.1" vom "2027-01-04" bis "2027-03-26" mit Iterationen zu 2 Wochen
-- **Und** das Team "Adler"
-- **Und** im PI "PI 27.1" das Feature "Login" ohne Schätzung bei "Adler" in "Iteration 1" eingeplant
-- **Wenn** ich das Board von "PI 27.1" abrufe
-- **Dann** zeigt die Zelle "Adler" × "Iteration 1" geplant 0 und verfügbar 0
+`@Unit` (Vitest)
+- **Gegeben sei** das Team "Adler" ohne Kapazität auf dem Board
+- **Und** das Feature "Login" ohne Schätzung bei "Adler" in "Iteration 1"
+- **Wenn** ich das Board öffne
+- **Dann** zeigt die Zelle "Adler" × "Iteration 1" «0 / 0 SP»
+- **Und** trägt die Karte "Login" den Hinweis «ohne Schätzung»
+
+### Szenario: Werte folgen dem Einplanen ohne Neuladen
+`@Unit` (Vitest)
+- **Gegeben sei** das Team "Adler" mit der Kapazität 10 in "Iteration 1" und in "Iteration 2" auf dem Board
+- **Und** das Feature "Portal" mit Schätzung 8 bei "Adler" in "Iteration 1"
+- **Wenn** ich "Portal" nach "Adler" × "Iteration 2" verschiebe
+- **Dann** zeigt die Zelle "Adler" × "Iteration 1" «0 / 10 SP» und die Zelle "Adler" × "Iteration 2" «8 / 10 SP»
+- **Und** schlägt das Speichern fehl, zeigen beide Zellen wieder die Werte von vorher
 
 ## Geändert
 
