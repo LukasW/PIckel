@@ -84,7 +84,7 @@ als Commit-Status mit denselben Namen (ADR 0004):
 
 | Pflicht-Check | lokal |
 |---|---|
-| Secret-Scan (Gitleaks) | `gitleaks git` über die Commits des Branches (`brew install gitleaks`) |
+| Secret-Scan (Gitleaks) | `scripts/gitleaks.sh git` über die Commits des Branches (lädt das Binary über `gh`) |
 | Spec-Drift | `check-story-drift.sh`, ausser der PR trägt das Übersteuer-Label |
 | Unit Tests, Integration + Smoke | `scripts/gate.sh` (braucht Podman oder Docker) |
 
