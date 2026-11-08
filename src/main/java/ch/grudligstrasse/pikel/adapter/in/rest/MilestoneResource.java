@@ -26,7 +26,7 @@ import java.util.UUID;
  *
  * <p>Noch ohne Anmeldung: Auth (OIDC) kommt mit einer eigenen Story, danach gilt {@code @Authenticated}.
  */
-@Path("/api/v1/program-increments/{id}/milestones")
+@Path("/v1/program-increments/{id}/milestones")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class MilestoneResource {

@@ -21,7 +21,7 @@ import java.util.UUID;
  *
  * <p>Noch ohne Anmeldung: Auth (OIDC) kommt mit einer eigenen Story, danach gilt {@code @Authenticated}.
  */
-@Path("/api/v1/teams")
+@Path("/v1/teams")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class TeamResource {
