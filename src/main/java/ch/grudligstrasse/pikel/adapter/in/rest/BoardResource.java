@@ -14,7 +14,7 @@ import java.util.UUID;
  *
  * <p>Noch ohne Anmeldung: Auth (OIDC) kommt mit einer eigenen Story, danach gilt {@code @Authenticated}.
  */
-@Path("/api/v1/program-increments/{piId}/board")
+@Path("/v1/program-increments/{piId}/board")
 @Produces(MediaType.APPLICATION_JSON)
 public class BoardResource {
 
