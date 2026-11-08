@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Prüft guard-push.sh gegen bekannte Umgehungen (Projekt-Review 2026-11-07): je Fall erwarteter Exit-Code und Befehl.
-# Läuft in scripts/gate.sh und CI. Läuft auf einem Feature-Branch; der Fall «ohne Refspec auf main» braucht main als
-# aktuellen Zweig und wird über ein temporäres Repository geprüft.
+# Läuft in scripts/gate.sh und CI, auf jedem Zweig: Fälle, deren Ergebnis vom aktuellen Zweig abhängt (Push ohne
+# Refspec, HEAD), laufen in temporären Repositorys mit festgelegtem Zweig.
 set -u
 # Laufen die Tests unter Copilot, ginge dessen Projektordner den gesetzten Wurzeln vor (flow_root)
 unset COPILOT_PROJECT_DIR
@@ -58,7 +58,6 @@ t 2 'git push origin :main'
 t 2 'git fetch origin && git push origin HEAD:main'
 t 2 'git -C . push origin main'
 t 0 'git push -u origin feature/42-pi-anlegen'
-t 0 'git push origin HEAD'
 
 # Sicherheits-Review: Ein geerbtes CLAUDE_PROJECT_DIR eines anderen Projekts darf den Guard unter Copilot nicht
 # ausschalten; COPILOT_PROJECT_DIR (von Copilot für die laufende Session gesetzt) geht vor
@@ -69,7 +68,6 @@ got=$?
 if [ "$got" = 2 ]; then echo "ok   2 COPILOT_PROJECT_DIR geht einem fremden CLAUDE_PROJECT_DIR vor"
 else echo "FAIL $got (erwartet 2) COPILOT_PROJECT_DIR geht einem fremden CLAUDE_PROJECT_DIR vor"; fails=$((fails+1)); fi
 rm -rf "$stale"
-t 0 'git push'
 t 0 'git status'
 t 0 'echo "git pushen ist morgen"'
 
@@ -95,6 +93,10 @@ git -C "$tmp" init -q -b main && mkdir -p "$tmp/.claude" && cp "$root/.claude/fl
 t 2 'git push' "$tmp"
 t 2 'git push origin HEAD' "$tmp"
 t 0 'git push origin feature/x' "$tmp"
+# Dasselbe auf einem Feature-Zweig: Push ohne Refspec und HEAD sind erlaubt
+git -C "$tmp" symbolic-ref HEAD refs/heads/feature/x
+t 0 'git push' "$tmp"
+t 0 'git push origin HEAD' "$tmp"
 rm -rf "$tmp"
 
 # --- Issue #26: Umgehungen über die Schreibweise (Plan «Test-Strategie») --------------------------------------------
