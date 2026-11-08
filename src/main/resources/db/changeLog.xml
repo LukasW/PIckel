@@ -5,39 +5,39 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                             http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
 
-    <changeSet id="1" author="pikel">
+    <changeSet id="1" author="pickel">
         <sqlFile path="db/migration/V1__create_program_increments.sql"/>
     </changeSet>
 
-    <changeSet id="2" author="pikel">
+    <changeSet id="2" author="pickel">
         <sqlFile path="db/migration/V2__add_iteration_length.sql"/>
     </changeSet>
 
-    <changeSet id="3" author="pikel">
+    <changeSet id="3" author="pickel">
         <sqlFile path="db/migration/V3__create_teams.sql"/>
     </changeSet>
 
-    <changeSet id="4" author="pikel">
+    <changeSet id="4" author="pickel">
         <sqlFile path="db/migration/V4__add_business_context.sql"/>
     </changeSet>
 
-    <changeSet id="5" author="pikel">
+    <changeSet id="5" author="pickel">
         <sqlFile path="db/migration/V5__create_features.sql"/>
     </changeSet>
 
-    <changeSet id="6" author="pikel">
+    <changeSet id="6" author="pickel">
         <sqlFile path="db/migration/V6__create_capacity.sql"/>
     </changeSet>
 
-    <changeSet id="7" author="pikel">
+    <changeSet id="7" author="pickel">
         <sqlFile path="db/migration/V7__create_feature_dependency.sql"/>
     </changeSet>
 
-    <changeSet id="8" author="pikel">
+    <changeSet id="8" author="pickel">
         <sqlFile path="db/migration/V8__create_milestones.sql"/>
     </changeSet>
 
-    <changeSet id="9" author="pikel">
+    <changeSet id="9" author="pickel">
         <sqlFile path="db/migration/V9__add_feature_scheduling.sql"/>
     </changeSet>
 

@@ -10,8 +10,13 @@ Delta: keines — nur der Name ändert sich (Oberfläche, Java-Paket, Build, Dok
 - [x] GitHub-URLs auf `LukasW/PIckel` nach der Umbenennung des Repositorys
 - [x] Story-Dateien, abgeschlossene Change-Ordner und ADRs — nur Name und Links, keine fachliche Änderung
 
-## Bewusst unverändert
+- [x] Liquibase-Autor `pickel` in `changeLog.xml` — bewusste Ausnahme von «bestehende Migrationen nie ändern»,
+  weil noch keine dauerhafte Datenbank existiert (Dev Services und Tests starten leer)
+- [x] Devcontainer-Volumes `pickel-*`
 
-- `author="pikel"` in `changeLog.xml` — der Autor gehört zur Identität eines ChangeSets; ein neuer Autor liesse
-  Liquibase alle ChangeSets erneut ausführen
-- Devcontainer-Volumes `pikel-*` — neue Namen wären leer (Claude-Konfiguration, gh-Anmeldung, `node_modules`)
+## Folgen für bestehende Umgebungen
+
+- Eine dauerhafte Datenbank (falls es doch eine gibt) vor dem ersten Start mit der neuen Version nachführen, sonst
+  führt Liquibase alle ChangeSets erneut aus. Die Prüfsumme hängt nicht am Autor:
+  `UPDATE databasechangelog SET author = 'pickel' WHERE author = 'pikel';`
+- Die Volumes `pickel-*` sind beim nächsten Rebuild leer; Inhalt vorher von `pikel-*` kopieren.

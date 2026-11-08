@@ -33,12 +33,12 @@
   },
   "forwardPorts": [8080, 4200],
   "mounts": [
-    "source=pikel-node-modules,target=${containerWorkspaceFolder}/src/main/webapp/node_modules,type=volume",
+    "source=pickel-node-modules,target=${containerWorkspaceFolder}/src/main/webapp/node_modules,type=volume",
     // Quinoa lädt Node plattformabhängig nach .quinoa/node; das macOS-Binary vom Host läuft hier nicht
-    "source=pikel-quinoa,target=${containerWorkspaceFolder}/.quinoa,type=volume",
+    "source=pickel-quinoa,target=${containerWorkspaceFolder}/.quinoa,type=volume",
     // Logins von Claude Code und gh überleben Neustart und Rebuild
-    "source=pikel-claude-config,target=/home/vscode/.claude,type=volume",
-    "source=pikel-gh-config,target=/home/vscode/.config/gh,type=volume"
+    "source=pickel-claude-config,target=/home/vscode/.claude,type=volume",
+    "source=pickel-gh-config,target=/home/vscode/.config/gh,type=volume"
   ],
   "containerEnv": {
     "WORKSPACE": "${containerWorkspaceFolder}",
