@@ -1,7 +1,12 @@
-# Präsentation: Harness Engineering und Spec Driven Development
+# Präsentationen für die AI Champions
 
-Einführung für AI Champions am Beispiel von PIckel, im Erscheinungsbild der CSS Versicherung. Eine einzige
-HTML-Datei ohne externe Abhängigkeiten: `index.html` im Browser öffnen.
+Zwei Präsentationen im Erscheinungsbild der CSS Versicherung, jede eine einzige HTML-Datei ohne externe
+Abhängigkeiten; im Browser öffnen.
+
+| Datei | Inhalt |
+|-------|--------|
+| `index.html` | «AI Champions: Wohin wir gehen» — Zukunft (Spec Driven, Dark Factory), Schritt 1, Üben, Rolle der Champions, Abgrenzung zur AI Factory |
+| `flow.html` | «Harness Engineering und Spec Driven Development» — Vertiefung: der Flow-Prozess und seine Elemente (Hooks, Skills, Agents, Leitplanken) am Beispiel von PIckel |
 
 ## Bedienung
 
@@ -14,15 +19,16 @@ HTML-Datei ohne externe Abhängigkeiten: `index.html` im Browser öffnen.
 | F | Vollbild |
 | P | Drucken; als PDF speichern ergibt eine Seite pro Folie |
 
-Die Adresse merkt sich die Folie (`index.html#12`), ein Neuladen bleibt also auf derselben Seite.
+Die Adresse merkt sich die Folie (`flow.html#12`), ein Neuladen bleibt also auf derselben Seite.
 
 ## Pflege
 
 - Jede Folie ist ein `<section class="slide">`, die Sprechernotizen stehen im `<aside class="notes">` darin.
   Fusszeile und Seitenzahl setzt das Script am Ende der Datei
-- Die Fakten stammen aus `CLAUDE.md`, `claude-guide.md`, `.claude/flow.md`, `.claude/settings.json`, `.devcontainer/`,
+- Die Fakten in `flow.html` stammen aus `CLAUDE.md`, `claude-guide.md`, `.claude/flow.md`, `.claude/settings.json`, `.devcontainer/`,
   `spec/fachliche-spezifikation.md`, `spec/user-stories/` (Stand der Releases), `docs/adr/` und
   `.agents/skills/flow-implement/SKILL.md`. Ändert sich der Ablauf oder der fachliche Stand dort, die Folien
   nachführen
 - Farben, Raster und Logo folgen der CSS-Präsentationsvorlage: Navy `#00327D`, Cyan `#00A4E0`, Markenverlauf nur
   auf Titel-, Kapitel- und Statementfolien, eckige Flächen ohne Rahmen, Arial
+- Beide Dateien tragen dieselben Styles und dasselbe Script; wer dort etwas ändert, ändert es in beiden
