@@ -18,7 +18,7 @@ INSERT INTO program_increment (id, name, start_date, end_date, iteration_length_
 ON CONFLICT DO NOTHING;
 
 INSERT INTO pi_link (id, program_increment_id, position, title, url) VALUES
-    ('00000000-0000-4000-8000-0000000000c1', '00000000-0000-4000-8000-0000000000b1', 1, 'Roadmap', 'https://example.com/roadmap')
+    ('00000000-0000-4000-8000-0000000000c1', '00000000-0000-4000-8000-0000000000b1', 0, 'Roadmap', 'https://example.com/roadmap')
 ON CONFLICT DO NOTHING;
 
 INSERT INTO capacity (program_increment_id, team_id, iteration_number, points) VALUES
