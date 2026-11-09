@@ -5,8 +5,8 @@ Abhängigkeiten; im Browser öffnen.
 
 | Datei | Inhalt |
 |-------|--------|
-| `index.html` | «AI Champions: Wohin wir gehen» — Zukunft (Spec Driven, Dark Factory), Schritt 1, Üben, Rolle der Champions, Abgrenzung zur AI Factory |
-| `flow.html` | «Harness Engineering und Spec Driven Development» — Vertiefung: der Flow-Prozess und seine Elemente (Hooks, Skills, Agents, Leitplanken) am Beispiel von PIckel |
+| `index.html` | «AI Champions: Wohin wir gehen» — Zukunft (Spec Driven, Dark Factory), Schritt 1: Spec Driven, Zum Üben (eigenes Harness, PIckel, Einrichtung), Rolle der Champions, Abgrenzung zur AI Factory |
+| `flow.html` | «Der Flow-Prozess und seine Elemente» — Vertiefung: Elemente (Bausteine, Kontext, Hooks, Leitplanken, Testpyramide), Ablauf vom Issue bis zum PR, Alltag (Demo, Gewohnheiten, Stolpersteine) |
 
 ## Bedienung
 
@@ -25,7 +25,7 @@ Die Adresse merkt sich die Folie (`flow.html#12`), ein Neuladen bleibt also auf 
 
 - Jede Folie ist ein `<section class="slide">`, die Sprechernotizen stehen im `<aside class="notes">` darin.
   Fusszeile und Seitenzahl setzt das Script am Ende der Datei
-- Die Fakten in `flow.html` stammen aus `CLAUDE.md`, `claude-guide.md`, `.claude/flow.md`, `.claude/settings.json`, `.devcontainer/`,
+- Die Fakten stammen aus `CLAUDE.md`, `claude-guide.md`, `.claude/flow.md`, `.claude/settings.json`, `.devcontainer/`,
   `spec/fachliche-spezifikation.md`, `spec/user-stories/` (Stand der Releases), `docs/adr/` und
   `.agents/skills/flow-implement/SKILL.md`. Ändert sich der Ablauf oder der fachliche Stand dort, die Folien
   nachführen

@@ -228,7 +228,19 @@
   <aside class="notes">Ein kurzer Vortrag über die Richtung: wohin sich die Softwareentwicklung mit KI-Agenten bewegt, was der erste Schritt ist und welche Rolle ihr als AI Champions dabei habt. Wie der Ablauf im Detail funktioniert, zeigt eine separate Präsentation.</aside>
 </section>
 
-<!-- 2 Zukunft -->
+<!-- 2 Agenda -->
+<section class="slide">
+  <h2>Agenda</h2>
+  <div class="body agenda" style="top:150px">
+    <div class="row"><span class="n">01</span><div><div class="t">Wie ich die Zukunft sehe</div><div class="d">Spec Driven, Dark Factory mit Human in the Loop</div></div><span class="p">S. 03</span></div>
+    <div class="row"><span class="n">02</span><div><div class="t">Schritt 1: Spec Driven</div><div class="d">Spezifikation im Repository, Change-Ordner, Gherkin</div></div><span class="p">S. 04</span></div>
+    <div class="row"><span class="n">03</span><div><div class="t">Zum Üben</div><div class="d">Eigenes Harness, PIckel als Möglichkeit, Einrichtung</div></div><span class="p">S. 10</span></div>
+    <div class="row"><span class="n">04</span><div><div class="t">AI Champions</div><div class="d">Eure Rolle, Abgrenzung zur AI Factory</div></div><span class="p">S. 17</span></div>
+  </div>
+  <aside class="notes">Erst meine Sicht auf die Zukunft, dann der erste Schritt dorthin. Danach, wie ihr selbst üben könnt, und zum Schluss eure Rolle als Champions. Wie der Flow-Prozess im Detail funktioniert, zeigt eine separate Präsentation.</aside>
+</section>
+
+<!-- 3 Zukunft -->
 <section class="slide">
   <h2>Wie ich die Zukunft sehe</h2>
   <p class="sub">Zwei Entwicklungen, die zusammengehören</p>
@@ -254,9 +266,18 @@
   <aside class="notes">Zum Einstieg meine Sicht, wohin sich unsere Arbeit bewegt. Erstens Spec Driven: Was wir als Menschen schreiben, verschiebt sich vom Code zur Spezifikation. Code wird zum Erzeugnis, die Spezifikation zum eigentlichen Artefakt. Zweitens die Dark Factory, angelehnt an Fabriken, die ohne Licht laufen, weil niemand mehr drinsteht: Agenten setzen um, prüfen sich gegenseitig und liefern ab. Wichtig ist der Zusatz Human in the Loop: Der Mensch verschwindet nicht, er sitzt an den Stellen, an denen entschieden wird, also bei der Spezifikation und bei der Freigabe.</aside>
 </section>
 
-<!-- 3 Schritt 1 -->
-<section class="slide">
+<!-- 4 Kapitel Spec Driven -->
+<section class="slide chapter">
+  <div class="band"></div>
+  <div class="no">02</div>
   <h2>Schritt 1: Spec Driven</h2>
+  <p class="sub">Die Spezifikation führt, Tests und Code folgen</p>
+  <aside class="notes">Der erste Schritt Richtung Dark Factory: Was heisst Spec Driven konkret, und wie sieht es im Repository aus?</aside>
+</section>
+
+<!-- 5 Schritt 1 -->
+<section class="slide">
+  <h2>Was Spec Driven heisst</h2>
   <p class="sub">Bevor das Licht ausgeht, muss die Spezifikation führen</p>
   <div class="body fz grid" style="grid-template-columns:repeat(3,1fr)">
     <div class="card" style="padding:26px 28px">
@@ -276,10 +297,86 @@
   <aside class="notes">Die Dark Factory ist das Ziel, aber nicht der Anfang. Ohne verlässliche Spezifikation weiss ein Agent nicht, wogegen er arbeitet, und niemand kann sein Ergebnis beurteilen. Darum ist Spec Driven der erste Schritt: Die Spezifikation liegt im Repository, Tests entstehen daraus vor dem Code, und Werkzeuge halten beides zusammen. Das lohnt sich schon heute, auch ohne jeden Nachtlauf.</aside>
 </section>
 
-<!-- 4 Zum Üben -->
+<!-- 6 Begriffe -->
 <section class="slide">
+  <h2>Zwei Begriffe für dasselbe Ziel</h2>
+  <p class="sub">Verlässliche Ergebnisse eines KI-Agenten</p>
+  <div class="body fz grid" style="grid-template-columns:1fr 1fr">
+    <div class="card" style="padding:28px 30px">
+      <div class="t" style="font-size:24px">Harness Engineering</div>
+      <div class="d" style="font-size:19px">Alles rund um das Modell: Kontext, Werkzeuge, Rechte, Hooks und automatische Prüfungen. Der Harness bestimmt, was der Agent weiss, was er darf und woran er scheitert.</div>
+    </div>
+    <div class="card" style="padding:28px 30px">
+      <div class="t" style="font-size:24px">Spec Driven Development</div>
+      <div class="d" style="font-size:19px">Die Spezifikation steht im Repository und führt: Story, Delta, Gherkin. Tests entstehen daraus vor dem Code, Abweichungen brechen den Build.</div>
+    </div>
+  </div>
+  <div class="fazit">In PIckel sorgt der Harness dafür, dass die Spezifikation führt.</div>
+  <aside class="notes">Harness ist das Geschirr, in das man das Modell einspannt. Spec Driven Development beantwortet, wogegen der Agent arbeitet. Ohne Spezifikation prüft der Harness nur die Form; ohne Harness bleibt die Spezifikation eine Empfehlung. Erst zusammen entsteht ein Ablauf, dem man Aufgaben über Nacht überlassen kann.</aside>
+</section>
+
+<!-- 7 Repository führt -->
+<section class="slide">
+  <h2>Das Repository führt, das Issue verweist</h2>
+  <p class="sub">Widerspricht das Issue dem Repository, gilt das Repository</p>
+  <div class="body grid flow">
+    <div class="card dark"><div class="t">Issue</div><div class="d">Auftrag und Link auf den Change-Ordner, nie Spezifikation</div></div>
+    <div class="arrow">→</div>
+    <div class="card"><div class="t">delta.md</div><div class="d">Was sich an der Story ändert: neu, geändert, entfernt, mit Grund. Vor dem Code bestätigt</div></div>
+    <div class="arrow">→</div>
+    <div class="card"><div class="t">Story und .feature</div><div class="d">Delta im selben PR eingepflegt; die Story beschreibt danach den neuen Stand</div></div>
+    <div class="arrow">→</div>
+    <div class="card"><div class="t">Tests und Code</div><div class="d">Folgen der Spezifikation. Der CI-Job Spec-Drift ist rot, solange etwas auseinanderläuft</div></div>
+  </div>
+  <aside class="notes">Der Kern von Spec Driven Development in PIckel. Ein Issue ist nicht versioniert, und Kommentare darin können sogar Anweisungen an den Agenten einschmuggeln. Deshalb steht alles, was zählt, im Repository. Eine Änderung wird zuerst als Delta beschrieben, vom Menschen bestätigt und erst dann umgesetzt. Übersteuern kann den CI-Job Spec-Drift nur ein Mensch mit dem Label spec-unchanged.</aside>
+</section>
+
+<!-- 8 Change-Ordner -->
+<section class="slide">
+  <h2>Ein Change-Ordner je Issue</h2>
+  <p class="sub mono">spec/changes/&lt;nr&gt;-&lt;slug&gt;/</p>
+  <div class="body numlist">
+    <div class="lead">Der Ordner überlebt /clear und kommt mit dem Code in denselben PR.</div>
+    <div class="it"><div class="n">01</div><div class="t">delta.md · /flow-task, /flow-plan</div><div class="d">Neue, geänderte und entfernte Akzeptanzkriterien und Szenarien, mit Grund. Im Zweifel «Geändert».</div></div>
+    <div class="it"><div class="n">02</div><div class="t">entscheide.md · /flow-grill-me</div><div class="d">Geklärte Entscheide, Non-Goals und Annahmen aus dem Interview.</div></div>
+    <div class="it"><div class="n">03</div><div class="t">plan.md · /flow-plan</div><div class="d">Aufgaben, Architektur-Entscheide, Teststrategie. Ohne fachliche Änderung: «Delta: keines – &lt;Grund&gt;».</div></div>
+    <div class="it"><div class="n">04</div><div class="t">notes.md · /flow-implement</div><div class="d">Überraschungen und Annahmen während der Umsetzung, laufend geschrieben.</div></div>
+  </div>
+  <aside class="notes">Der Change-Ordner ist das Gedächtnis einer Änderung. Weil er im Repository liegt, kann man nach jedem Schritt /clear machen: Die nächste Session liest Plan und Delta und weiss, wo es weitergeht. Beispiel mit allen vier Dateien: spec/changes/13-feature-einplanen. «Im Zweifel Geändert» ist bewusst gewählt: Ein Eintrag zu viel kostet eine Freigabe, einer zu wenig eine unbemerkte Verhaltensänderung.</aside>
+</section>
+
+<!-- 9 Gherkin -->
+<section class="slide">
+  <h2>Gherkin ist die Spezifikation</h2>
+  <p class="sub">src/test/resources/features/, auf Deutsch, gleichlautend mit der Story</p>
+  <div class="body grid split">
+    <div class="panel">
+      <div class="claim">Jedes Szenario wird belegt, ein Tag sagt wo.</div>
+      <div class="d">Beispiel US-1: «Enddatum vor Startdatum wird abgelehnt» läuft als CucumberIT gegen PostgreSQL.</div>
+    </div>
+    <div class="items">
+      <div><div class="t">ohne Tag</div><div class="d">CucumberIT: REST-assured gegen Dev-Services-PostgreSQL</div></div>
+      <div><div class="t">@Unit</div><div class="d">JUnit oder Vitest, Kommentar <span class="mono"># JUnit: &lt;Pfad&gt;/&lt;Klasse&gt; → &lt;methode&gt;</span></div></div>
+      <div><div class="t">@E2E</div><div class="d">Echter Browser, erst wenn eine Story ihn zwingend braucht</div></div>
+      <div><div class="t">@Pending</div><div class="d">Nicht umgesetzt, nie ein Abschlusszustand</div></div>
+    </div>
+  </div>
+  <aside class="notes">Ausschnitt aus src/test/resources/features/program-increments/1-pi-anlegen.feature. Die Szenarien sind auf Deutsch und gleichlautend mit der Story. Jedes Szenario wird belegt: direkt als Integrationstest über CucumberIT oder als @Unit mit einem Kommentar, der auf die Testmethode zeigt. Ein Szenario mit @Pending verhindert die Definition of Done.</aside>
+</section>
+
+<!-- 10 Kapitel Üben -->
+<section class="slide chapter mid">
+  <div class="band"></div>
+  <div class="no">03</div>
   <h2>Zum Üben</h2>
-  <p class="sub">Zwei Wege, um selbst Erfahrung zu sammeln</p>
+  <p class="sub">Eigenes Harness aufbauen oder mit PIckel einsteigen</p>
+  <aside class="notes">Wie sammelt ihr selbst Erfahrung? Entweder im eigenen Projekt oder mit PIckel, wo alles schon eingerichtet ist.</aside>
+</section>
+
+<!-- 11 Zum Üben -->
+<section class="slide">
+  <h2>Zwei Wege zum Üben</h2>
+  <p class="sub">Selbst Erfahrung sammeln, bevor ihr es ins Team tragt</p>
   <div class="body grid duo">
     <div class="card light">
       <div class="t" style="font-size:22px;margin-bottom:10px">Eigenes Harness</div>
@@ -305,7 +402,146 @@
   <aside class="notes">Üben geht auf zwei Arten. Wer ein passendes Projekt hat, baut dort einen eigenen Harness auf, Schritt für Schritt: zuerst Kontext und Gates, dann die Spezifikation im Repository. Wer erst sehen will, wie es sich anfühlt, nimmt PIckel: Dort ist alles eingerichtet, und man kann mit einer eigenen Idee den ganzen Ablauf durchspielen. PIckel ist eine Vorlage zum Abschauen, kein Paket zum Kopieren.</aside>
 </section>
 
-<!-- 5 Champions -->
+<!-- 12 Umgebung -->
+<section class="slide">
+  <h2>Der Unterschied liegt in der Umgebung</h2>
+  <p class="sub">Agent ohne und mit Harness, gleiches Modell</p>
+  <div class="body grid duo">
+    <div class="card light">
+      <div class="t" style="font-size:22px;margin-bottom:10px">Ohne Harness</div>
+      <ul class="b">
+        <li>Regeln stehen im Chat und sind nach /clear weg</li>
+        <li>Tests werden aus dem Code abgeleitet und bestätigen dessen Fehler</li>
+        <li>«Fertig» heisst: kompiliert bei mir</li>
+        <li>Derselbe Kontext prüft sich selbst</li>
+        <li>«Bitte nicht auf main pushen» steht im Prompt</li>
+      </ul>
+    </div>
+    <div class="card dark">
+      <div class="t" style="font-size:22px;margin-bottom:10px">Mit Harness (PIckel)</div>
+      <ul class="b">
+        <li>CLAUDE.md, Regeln und Change-Ordner liegen im Repository</li>
+        <li>Tests entstehen aus der Spezifikation, vor dem Code</li>
+        <li>scripts/gate.sh grün und Definition of Done erfüllt</li>
+        <li>Spezialisten prüfen in frischem Kontext</li>
+        <li>deny-Regeln und Hooks verhindern den Push technisch</li>
+      </ul>
+    </div>
+  </div>
+  <aside class="notes">Das Modell ist in beiden Spalten dasselbe. Links verlassen wir uns darauf, dass der Agent sich an Bitten erinnert; rechts sind die Regeln Dateien, Prüfungen und Rechte. Wer bessere Ergebnisse will, investiert zuerst in die Umgebung, nicht in längere Prompts.</aside>
+</section>
+
+<!-- 13 Vier Stufen -->
+<section class="slide">
+  <h2>Im eigenen Team in vier Stufen einführen</h2>
+  <p class="sub">Klein anfangen, an echten Fehlern wachsen</p>
+  <div class="body fz zz">
+    <div class="it l"><div class="box"><div class="t">Kontext</div><div class="d">Kurze CLAUDE.md mit wenigen Regeln, jede mit Begründung.</div></div><div class="n">01<span></span></div><div></div></div>
+    <div class="it"><div></div><div class="n"><span></span>02</div><div class="box"><div class="t">Gates</div><div class="d">Ein gate.sh mit denselben Prüfungen wie CI: Formatierer, Architekturtests.</div></div></div>
+    <div class="it l"><div class="box"><div class="t">Spezifikation</div><div class="d">Stories und Gherkin im Repository, ein Delta je Änderung.</div></div><div class="n">03<span></span></div><div></div></div>
+    <div class="it"><div></div><div class="n"><span></span>04</div><div class="box"><div class="t">Agenten</div><div class="d">Reviewer, Test-Guard und Hooks. Der Nachtlauf kommt zuletzt.</div></div></div>
+  </div>
+  <div class="fazit">Jede Stufe zahlt sich einzeln aus; PIckel ist Vorlage zum Abschauen, kein Paket zum Kopieren.</div>
+  <aside class="notes">Der häufigste Fehler beim Einführen ist, alles auf einmal kopieren zu wollen. Mit Kontext und Gates beginnen, das wirkt sofort. Spezifikation im Repository braucht die Bereitschaft des Teams, Stories dort zu pflegen. Agenten lohnen sich, sobald man die Fehlermuster kennt, gegen die ein Reviewer oder Hook schützen soll.</aside>
+</section>
+
+<!-- 14 PIckel -->
+<section class="slide">
+  <h2>Darf ich vorstellen: PIckel</h2>
+  <p class="sub">Das PI Planning ohne Klebezettel-Wand</p>
+  <div class="body grid intro">
+    <div class="mascot">
+      <svg viewBox="0 0 260 290" role="img" aria-label="Maskottchen: ein platzender Pickel, aus dem das Wort Increment spritzt">
+        <defs>
+          <radialGradient id="pk-rot" cx="50%" cy="40%" r="60%"><stop offset="0" stop-color="#F0766C"/><stop offset="1" stop-color="#C9423A"/></radialGradient>
+          <path id="pk-bahn" d="M118 196 C100 130, 130 70, 238 46"/>
+        </defs>
+        <path d="M0 290 V246 C60 236, 90 222, 130 222 S200 236, 260 246 V290 Z" fill="#F6C9A8"/>
+        <path d="M0 246 C60 236, 90 222, 130 222 S200 236, 260 246" fill="none" stroke="#E0A584" stroke-width="3"/>
+        <ellipse cx="130" cy="238" rx="74" ry="20" fill="#F2A38F" opacity=".55"/>
+        <path d="M78 236 C82 196, 106 180, 130 180 S178 196, 182 236 Z" fill="url(#pk-rot)" stroke="#A8352E" stroke-width="3"/>
+        <ellipse cx="108" cy="208" rx="9" ry="5" fill="#FFFFFF" opacity=".35" transform="rotate(-30 108 208)"/>
+        <path d="M112 186 C114 174, 146 172, 148 186 C140 192, 120 192, 112 186 Z" fill="#FFF4D6" stroke="#D9C38A" stroke-width="2.5"/>
+        <path d="M122 182 l6 4 l5 -5 l6 5" fill="none" stroke="#C9A85A" stroke-width="2"/>
+        <g stroke="#C9423A" stroke-width="3.5" stroke-linecap="round">
+          <path d="M90 176 l-14 -12"/><path d="M80 194 l-18 -4"/><path d="M168 172 l12 -14"/><path d="M178 192 l18 -6"/>
+        </g>
+        <use href="#pk-bahn" fill="none" stroke="#FFF4D6" stroke-width="40" stroke-linecap="round"/>
+        <use href="#pk-bahn" fill="none" stroke="#FFFBEF" stroke-width="30" stroke-linecap="round"/>
+        <text font-family="Arial, sans-serif" font-weight="700" font-size="30" fill="#00327D" letter-spacing="0.5" dy="10">
+          <textPath href="#pk-bahn" startOffset="8%">Increment</textPath>
+        </text>
+        <g fill="#FFF4D6" stroke="#D9C38A" stroke-width="2">
+          <circle cx="246" cy="22" r="7"/><circle cx="226" cy="14" r="4.5"/><circle cx="256" cy="66" r="5"/>
+          <circle cx="210" cy="28" r="3"/><circle cx="84" cy="128" r="5"/><circle cx="160" cy="118" r="4"/>
+          <path d="M60 150 q6 -12 12 0 q-6 8 -12 0 z"/>
+        </g>
+        <path d="M96 204 l12 6 l-12 6 M164 204 l-12 6 l12 6" stroke="#5A2A22" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M116 228 q14 -9 28 0" stroke="#5A2A22" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div class="facts">
+      <div class="it"><div class="t">Wofür</div><div class="d">Werkzeug für das PI Planning nach SAFe: Program Increments, Teams, Features, Abhängigkeiten und PI Objectives an einem Ort.</div></div>
+      <div class="it"><div class="t">Was das MVP abdeckt</div><div class="d">Was im Planning-Raum wehtut: das Program Board Teams × Iterationen, die Abhängigkeiten als «Red String» und den Confidence Vote.</div></div>
+      <div class="it"><div class="t">Was bewusst draussen bleibt</div><div class="d">Was Jira schon gut kann: Story-Planung, Burndowns, Zeiterfassung, zweiseitige Synchronisation.</div></div>
+      <div class="it now"><div class="t">Stand heute</div><div class="d">M1 «Klebezettel-Wand ersetzt» ist umgesetzt: 15 Stories von PI-Setup bis zu Abhängigkeiten auf dem Board. Als Nächstes M2.</div></div>
+    </div>
+  </div>
+  <aside class="notes">Kurz vorstellen, worum es fachlich geht, damit die folgenden Beispiele greifbar sind. Im PI Planning stehen heute oft Klebezettel an der Wand und rote Wollfäden für Abhängigkeiten; PIckel soll genau das ersetzen. M1 «Klebezettel-Wand ersetzt» bringt PI-Setup, Backlog, Board und Abhängigkeiten, M2 die Planning-Rituale mit Risiken, Objectives und Confidence Vote, M3 den Export. M1 ist fertig: Begonnen hat PIckel als Walking Skeleton «PI anlegen und auflisten», die übrigen 14 Stories kamen eine nach der anderen durch denselben Ablauf. Fachlich bleibt es überschaubar, deshalb sieht man den Harness so gut. Zum Maskottchen: PIckel klingt nach Pickel, und wenn der platzt, kommt ein Increment heraus. Das ist das Ziel jedes Plannings.</aside>
+</section>
+
+<!-- 15 Einrichtung -->
+<section class="slide">
+  <h2>Einrichtung einmal pro Klon</h2>
+  <p class="sub">Agenten, Hooks und Skills lädt Claude Code direkt aus .claude/</p>
+  <div class="body grid check">
+    <div class="col"><div class="h">Einrichten</div><div class="m"><ul class="b">
+      <li>git config core.hooksPath .githooks</li>
+      <li>brew install gitleaks jq</li>
+      <li>gh auth login</li>
+      <li>cd src/main/webapp &amp;&amp; npm ci</li>
+      <li class="plain">Podman oder Docker für die Dev Services</li>
+    </ul></div></div>
+    <div class="col"><div class="h grey">Prüfen und loslegen</div><div class="m"><ul class="b">
+      <li>scripts/gate.sh --fast</li>
+      <li>./mvnw quarkus:dev</li>
+      <li>claude, dann /flow-task &lt;idee&gt;</li>
+      <li class="plain">Ohne lokale Installation: Devcontainer, nächste Folie</li>
+    </ul></div></div>
+  </div>
+  <aside class="notes">Erst mit core.hooksPath läuft der pre-commit-Hook mit Gitleaks, Prettier und Spotless. Die Claude-Hooks brauchen jq und halten ohne es an, statt still durchzulassen. Node kommt aus .nvmrc, npm in Version 11. Die App läuft danach auf localhost:8080, Swagger UI unter /q/swagger-ui. Vor jedem Push läuft scripts/gate.sh ohne Flag.</aside>
+</section>
+
+<!-- 16 Devcontainer -->
+<section class="slide">
+  <h2>Devcontainer: dieselbe Umgebung für alle</h2>
+  <p class="sub mono">.devcontainer/devcontainer.json und post-create.sh</p>
+  <div class="body fz grid split">
+    <div class="panel">
+      <div class="claim">Ordner öffnen, «Reopen in Container», loslegen.</div>
+      <div class="d">Java, Node, gh und Claude Code in festen Versionen. Der Agent arbeitet in einem Linux-Container statt direkt auf dem Laptop.</div>
+    </div>
+    <div class="items">
+      <div><div class="t">Image und Features</div><div class="d">Debian bookworm, Java 25 (Temurin), Node 24.19, GitHub CLI, Claude Code; VS-Code-Erweiterungen für Java, Quarkus, Angular, Prettier und Claude</div></div>
+      <div><div class="t">docker-outside-of-docker</div><div class="d">Die Dev Services starten PostgreSQL über Docker oder Podman des Hosts, erreichbar über host.docker.internal; Ports 8080 und 4200 werden weitergeleitet</div></div>
+      <div><div class="t">node_modules als Volume</div><div class="d">Keine macOS-Binaries im Linux-Container, und npm ci bleibt schnell</div></div>
+      <div><div class="t">post-create.sh</div><div class="d">jq für die Hooks, core.hooksPath, npm 11 und npm ci, claude install für Updates ohne sudo</div></div>
+    </div>
+  </div>
+  <div class="fazit">Danach einmal gh auth login und claude anmelden. Gitleaks fehlt im Container; der Secret-Scan läuft dann nur in CI.</div>
+  <aside class="notes">Der Devcontainer beantwortet zwei Fragen. Erstens: Bei mir läuft es nicht. Alle haben dieselben Versionen von Java, Node und npm, ohne Homebrew und ohne nvm. Zweitens: Wo darf der Agent arbeiten? Im Container sieht er den Workspace und die Werkzeuge darin, nicht das Home-Verzeichnis des Laptops. Das ist eine zusätzliche Leitplanke, aber keine harte Sandbox: Über docker-outside-of-docker erreicht der Container den Docker des Hosts, und die Anmeldungen bei gh und Claude liegen im Container. Die deny-Regeln und Hooks gelten unverändert. VS Code, JetBrains und GitHub Codespaces lesen dieselbe devcontainer.json; auf der Kommandozeile geht es mit devcontainer up. Gitleaks installiert post-create.sh nicht; der pre-commit-Hook meldet das und lässt den Commit durch, CI prüft trotzdem.</aside>
+</section>
+
+<!-- 17 Kapitel Champions -->
+<section class="slide chapter green">
+  <div class="band"></div>
+  <div class="no">04</div>
+  <h2>AI Champions</h2>
+  <p class="sub" style="color:#E6F5EF">Eure Rolle und die Abgrenzung zur AI Factory</p>
+  <aside class="notes">Zum Schluss: Was erwarte ich von euch als Champions, und wie grenzt sich das von der AI Factory ab?</aside>
+</section>
+
+<!-- 18 Champions -->
 <section class="slide">
   <h2>Wie ich die Champions sehe</h2>
   <p class="sub">Eure Rolle zwischen den Teams und dem neuen Prozess</p>
@@ -318,7 +554,7 @@
   <aside class="notes">Ihr seid nicht Zuschauer, sondern das Bindeglied. Erstens bringt ihr das Wissen in eure Teams. Zweitens treibt ihr den neuen Prozess dort voran, auch gegen den ersten Widerstand, denn am Anfang kostet ein Harness Zeit. Drittens kommt von euch der Input: Was in den Teams nicht funktioniert, fliesst zurück in den Prozess, und ihr helft aktiv mit, ihn zu verbessern.</aside>
 </section>
 
-<!-- 6 AI Factory -->
+<!-- 19 AI Factory -->
 <section class="slide">
   <h2>Abgrenzung zur AI Factory</h2>
   <p class="sub">Zwei Wege zum selben Ziel</p>
@@ -342,7 +578,7 @@
   <aside class="notes">Die AI Factory und die Champions ergänzen sich. Die AI Factory schafft die Grundlage: Sie baut die Infrastruktur auf und zeigt an ersten Applikationen, dass der neue Prozess von Anfang bis Ende trägt. Die Champions arbeiten in den bestehenden Teams und an bestehenden Systemen. Dort entscheidet sich, ob der Prozess in der Breite ankommt.</aside>
 </section>
 
-<!-- 7 Schluss -->
+<!-- 20 Schluss -->
 <section class="slide closing nofooter">
   <div class="band"></div>
   <h2>Fragen?<br>Jetzt ausprobieren.</h2>
