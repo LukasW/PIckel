@@ -3,9 +3,10 @@
 ## Project Overview
 
 PIckel — ein Werkzeug für das **PI Planning** (SAFe): Program Increments, Teams, Features, Abhängigkeiten und
-PI-Ziele planen. Aktuell ein **Walking Skeleton**: ein Durchstich «Program Increment anlegen und auflisten» durch
-alle Schichten (Angular → REST → Use Case → Domain → Panache → PostgreSQL/Liquibase), mit Tests auf jeder Ebene und
-CI. Fachliche Breite kommt Story für Story.
+PI-Ziele planen. Begonnen als Walking Skeleton «Program Increment anlegen und auflisten» durch alle Schichten
+(Angular → REST → Use Case → Domain → Panache → PostgreSQL/Liquibase); Release M1 «Klebezettel-Wand ersetzt» ist
+umgesetzt (PI-Setup, Backlog, Program Board, Abhängigkeiten). Fachliche Breite kommt weiter Story für Story, als
+Nächstes M2 (`spec/fachliche-spezifikation.md` → «Releases»).
 
 Ein Maven-Modul: Quarkus-Backend und Angular-SPA (über Quinoa) in einem deploybaren JAR.
 

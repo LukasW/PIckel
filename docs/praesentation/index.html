@@ -225,7 +225,7 @@
   <h1>Harness Engineering und<br>Spec Driven Development</h1>
   <p class="meta">AI Champions · Einführung am Beispiel von PIckel<br>Luzern, 07.11.2026<br>Lukas Weibel<br><br>Intern</p>
   <img class="logo" src="logo-css.png" alt="CSS">
-  <aside class="notes">Ziel: An einem echten, kleinen Projekt sehen, wie man einen KI-Agenten so einrahmt, dass er verlässlich arbeitet. Zwei Begriffe tragen den Vortrag: Harness Engineering, also alles rund um das Modell, und Spec Driven Development, bei dem die Spezifikation führt. PIckel ist fachlich bewusst klein, damit der Rahmen sichtbar wird.</aside>
+  <aside class="notes">Ziel: An einem echten, kleinen Projekt sehen, wie man einen KI-Agenten so einrahmt, dass er verlässlich arbeitet. Zwei Begriffe tragen den Vortrag: Harness Engineering, also alles rund um das Modell, und Spec Driven Development, bei dem die Spezifikation führt. PIckel ist fachlich überschaubar, damit der Rahmen sichtbar bleibt.</aside>
 </section>
 
 <!-- 2 Agenda -->
@@ -235,8 +235,8 @@
     <div class="row"><span class="n">01</span><div><div class="t">Warum ein Harness</div><div class="d">Begriffe, Ausgangslage, PIckel als Demo-Projekt</div></div><span class="p">S. 03</span></div>
     <div class="row"><span class="n">02</span><div><div class="t">Aufbau</div><div class="d">Kontext, Ablauf, Spezialisten, Leitplanken</div></div><span class="p">S. 08</span></div>
     <div class="row"><span class="n">03</span><div><div class="t">Spezifikation</div><div class="d">Story, Delta, Gherkin, Testpyramide</div></div><span class="p">S. 14</span></div>
-    <div class="row"><span class="n">04</span><div><div class="t">Ablauf</div><div class="d">Von der Idee zum PR, Modelle, Nachtlauf</div></div><span class="p">S. 19</span></div>
-    <div class="row"><span class="n">05</span><div><div class="t">Praxis</div><div class="d">Demo, Einrichtung, Devcontainer, Tipps, Einführung im Team</div></div><span class="p">S. 24</span></div>
+    <div class="row"><span class="n">04</span><div><div class="t">Ablauf</div><div class="d">Von der Idee zum PR, Modelle, Copilot, Nachtlauf</div></div><span class="p">S. 19</span></div>
+    <div class="row"><span class="n">05</span><div><div class="t">Praxis</div><div class="d">Demo, Einrichtung, Devcontainer, Tipps, Einführung im Team</div></div><span class="p">S. 25</span></div>
   </div>
   <aside class="notes">Teile 1 bis 3 erklären, was im Repository steckt und warum. Teil 4 zeigt den Arbeitsablauf. Teil 5 ist für euch als Champions: demonstrieren, einrichten und ins eigene Team bringen.</aside>
 </section>
@@ -336,23 +336,23 @@
       <div class="it"><div class="t">Wofür</div><div class="d">Werkzeug für das PI Planning nach SAFe: Program Increments, Teams, Features, Abhängigkeiten und PI Objectives an einem Ort.</div></div>
       <div class="it"><div class="t">Was das MVP abdeckt</div><div class="d">Was im Planning-Raum wehtut: das Program Board Teams × Iterationen, die Abhängigkeiten als «Red String» und den Confidence Vote.</div></div>
       <div class="it"><div class="t">Was bewusst draussen bleibt</div><div class="d">Was Jira schon gut kann: Story-Planung, Burndowns, Zeiterfassung, zweiseitige Synchronisation.</div></div>
-      <div class="it now"><div class="t">Stand heute</div><div class="d">Walking Skeleton «PI anlegen und auflisten». Fachliche Breite kommt Story für Story, über die Releases M1 bis M3.</div></div>
+      <div class="it now"><div class="t">Stand heute</div><div class="d">M1 «Klebezettel-Wand ersetzt» ist umgesetzt: 15 Stories von PI-Setup bis zu Abhängigkeiten auf dem Board. Als Nächstes M2.</div></div>
     </div>
   </div>
-  <aside class="notes">Kurz vorstellen, worum es fachlich geht, damit die folgenden Beispiele greifbar sind. Im PI Planning stehen heute oft Klebezettel an der Wand und rote Wollfäden für Abhängigkeiten; PIckel soll genau das ersetzen. M1 «Klebezettel-Wand ersetzt» bringt PI-Setup, Backlog, Board und Abhängigkeiten, M2 die Planning-Rituale mit Risiken, Objectives und Confidence Vote, M3 den Export. Wichtig für den Vortrag: Fachlich ist PIckel noch fast leer. Gerade deshalb sieht man den Harness so gut. Zum Maskottchen: PIckel klingt nach Pickel, und wenn der platzt, kommt ein Increment heraus. Das ist das Ziel jedes Plannings.</aside>
+  <aside class="notes">Kurz vorstellen, worum es fachlich geht, damit die folgenden Beispiele greifbar sind. Im PI Planning stehen heute oft Klebezettel an der Wand und rote Wollfäden für Abhängigkeiten; PIckel soll genau das ersetzen. M1 «Klebezettel-Wand ersetzt» bringt PI-Setup, Backlog, Board und Abhängigkeiten, M2 die Planning-Rituale mit Risiken, Objectives und Confidence Vote, M3 den Export. M1 ist fertig: Begonnen hat PIckel als Walking Skeleton «PI anlegen und auflisten», die übrigen 14 Stories kamen eine nach der anderen durch denselben Ablauf. Fachlich bleibt es überschaubar, deshalb sieht man den Harness so gut. Zum Maskottchen: PIckel klingt nach Pickel, und wenn der platzt, kommt ein Increment heraus. Das ist das Ziel jedes Plannings.</aside>
 </section>
 
 <!-- 7 PIckel-Technik -->
 <section class="slide">
-  <h2>PIckel ist absichtlich klein</h2>
-  <p class="sub">Walking Skeleton «PI anlegen und auflisten» durch alle Schichten</p>
+  <h2>PIckel bleibt technisch schlicht</h2>
+  <p class="sub">Ein Maven-Modul, hexagonal durch alle Schichten</p>
   <div class="body grid layers">
     <div class="layer dark"><div class="t">Angular 22</div><div class="d">Standalone, Signals, zoneless, Tailwind mit Design-Tokens; über Quinoa im selben JAR</div></div>
     <div class="layer"><div class="t">REST und Use Case</div><div class="d">JAX-RS-Resources delegieren an Use-Case-Ports, ohne eigene Fachlogik</div></div>
     <div class="layer"><div class="t">Domain</div><div class="d">Records mit Validierung, framework-frei; ArchUnit bricht den Build bei einem Verstoss</div></div>
     <div class="layer"><div class="t">Persistenz</div><div class="d">Hibernate Panache im Adapter, PostgreSQL, Schema nur über neue Liquibase-Migrationen</div></div>
   </div>
-  <aside class="notes">PIckel ist ein Werkzeug für das PI Planning nach SAFe. Technik: Java 25 mit Quarkus 3.40, Angular 22 über Quinoa im selben Maven-Modul. Hexagonal: Abhängigkeiten zeigen nur nach innen, die Domain kennt kein Framework. Das ist eine Leitplanke für den Agenten, denn ArchUnit bricht den Build, wenn Fachlogik in die falsche Schicht rutscht. Fachliche Breite kommt Story für Story.</aside>
+  <aside class="notes">PIckel ist ein Werkzeug für das PI Planning nach SAFe. Technik: Java 25 mit Quarkus 3.40, Angular 22 über Quinoa im selben Maven-Modul. Hexagonal: Abhängigkeiten zeigen nur nach innen, die Domain kennt kein Framework. Das ist eine Leitplanke für den Agenten, denn ArchUnit bricht den Build, wenn Fachlogik in die falsche Schicht rutscht. Angefangen hat es als Walking Skeleton durch alle Schichten; die M1-Stories kamen dazu, ohne dass sich an diesem Schnitt etwas geändert hat.</aside>
 </section>
 
 <!-- 7 Kapitel 2 -->
@@ -394,7 +394,7 @@
       <div class="d mono" style="font-size:14px;color:var(--navy)">settings.json<br>Hooks, gate.sh<br>CI-Jobs</div>
     </div>
   </div>
-  <p class="d" style="position:absolute;left:var(--L);top:600px;width:var(--W);font-size:18px">Agenten, Hooks und Skills lädt Claude Code direkt aus dem Repository. Die Skills folgen dem offenen Standard agentskills.io (ADR 0002).</p>
+  <p class="d" style="position:absolute;left:var(--L);top:600px;width:var(--W);font-size:18px">Agenten, Hooks und Skills lädt Claude Code direkt aus dem Repository. Die Skills folgen dem offenen Standard agentskills.io (ADR 0002); darum liest sie auch die Copilot CLI (ADR 0007).</p>
   <aside class="notes">Das ist die Landkarte für das ganze Kapitel. Kontext sagt dem Agenten, was gilt. Ablauf sagt ihm, in welcher Reihenfolge er arbeitet. Spezialisten prüfen seine Arbeit mit eigenem, frischem Kontext. Leitplanken erzwingen, was nicht verhandelbar ist. Nichts davon ist eine persönliche Einstellung auf einem Laptop: Es liegt im Repository, geht durch das Code-Review und gilt für alle gleich.</aside>
 </section>
 
@@ -410,7 +410,7 @@
       <tr><td class="mono">.claude/flow.md</td><td>Projektangaben für Skills und Agenten: Build, Reviewer, Definition of Done</td></tr>
       <tr><td class="mono">.agents/skills/flow-*/</td><td>Die Slash-Commands /flow-task bis /flow-ship</td></tr>
       <tr><td class="mono">.claude/agents/</td><td>test-author, spec-reviewer und vier Spezialisten</td></tr>
-      <tr><td class="mono">.claude/flow/scripts/</td><td>Hooks und Prüfskripte in Bash, ohne jq halten sie an</td></tr>
+      <tr><td class="mono">.claude/flow/scripts/</td><td>Hooks und Prüfskripte in Bash, auch für Copilot; ohne jq halten sie an</td></tr>
       <tr><td class="mono">.claude/settings.json</td><td>Permissions allow/deny und Hook-Verdrahtung</td></tr>
       <tr><td class="mono">spec/user-stories/</td><td>Was das System heute tut</td></tr>
       <tr><td class="mono">spec/changes/&lt;nr&gt;-&lt;slug&gt;/</td><td>Delta, Entscheide, Plan und Notizen je Issue</td></tr>
@@ -442,7 +442,7 @@
       <tr><th style="width:54%">Prüfung</th><th>Fängt ab</th></tr>
       <tr class="grp"><td colspan="2">Claude-Hooks</td></tr>
       <tr><td>guard-env, guard-push, guard-labels (vor dem Befehl)</td><td>.env lesen, Push auf main, Labels setzen</td></tr>
-      <tr><td>check-spelling, check-test-edit, reviewer-reminder (nach dem Edit)</td><td>Eszett, abgeschwächte Tests, vergessene Reviews</td></tr>
+      <tr><td>check-spelling, check-test-edit, reviewer-reminder, adr-index (nach dem Edit)</td><td>Eszett, abgeschwächte Tests, vergessene Reviews, veralteter ADR-Index</td></tr>
       <tr class="grp"><td colspan="2">Rechte und Build</td></tr>
       <tr><td>deny in .claude/settings.json</td><td>Force-Push, Admin-Merge, Secrets, Löschen über die API</td></tr>
       <tr><td>ArchUnit, PIT ab 80 %, Spotless, Prettier</td><td>Schichtverstösse, schwache Tests, Formatierung</td></tr>
@@ -498,7 +498,7 @@
     <div class="it"><div class="n">03</div><div class="t">plan.md · /flow-plan</div><div class="d">Aufgaben, Architektur-Entscheide, Teststrategie. Ohne fachliche Änderung: «Delta: keines – &lt;Grund&gt;».</div></div>
     <div class="it"><div class="n">04</div><div class="t">notes.md · /flow-implement</div><div class="d">Überraschungen und Annahmen während der Umsetzung, laufend geschrieben.</div></div>
   </div>
-  <aside class="notes">Der Change-Ordner ist das Gedächtnis einer Änderung. Weil er im Repository liegt, kann man nach jedem Schritt /clear machen: Die nächste Session liest Plan und Delta und weiss, wo es weitergeht. Beispiel im Repository: spec/changes/chore-review-massnahmen. «Im Zweifel Geändert» ist bewusst gewählt: Ein Eintrag zu viel kostet eine Freigabe, einer zu wenig eine unbemerkte Verhaltensänderung.</aside>
+  <aside class="notes">Der Change-Ordner ist das Gedächtnis einer Änderung. Weil er im Repository liegt, kann man nach jedem Schritt /clear machen: Die nächste Session liest Plan und Delta und weiss, wo es weitergeht. Beispiel mit allen vier Dateien: spec/changes/13-feature-einplanen. «Im Zweifel Geändert» ist bewusst gewählt: Ein Eintrag zu viel kostet eine Freigabe, einer zu wenig eine unbemerkte Verhaltensänderung.</aside>
 </section>
 
 <!-- 16 Gherkin -->
@@ -551,14 +551,14 @@
     <div class="card"><div class="n">02</div><div class="t">/flow-grill-me</div><div class="d">Optional: Interview, wenn das Issue unscharf ist</div></div>
     <div class="card"><div class="n">03</div><div class="t">/flow-plan</div><div class="d">plan.md schreiben, Delta bestätigen lassen</div></div>
     <div class="card"><div class="n">04</div><div class="t">/flow-implement</div><div class="d">Tests zuerst, Code, Reviews, PR</div></div>
-    <div class="card"><div class="n">05</div><div class="t">/flow-ship</div><div class="d">Merge, aufräumen, Gelerntes festhalten</div></div>
+    <div class="card"><div class="n">05</div><div class="t">/flow-ship</div><div class="d">Merge, Kosten ans Issue, Gelerntes festhalten</div></div>
   </div>
   <div style="position:absolute;left:var(--L);width:var(--W);top:575px;display:grid;grid-template-columns:repeat(3,1fr);gap:14px;border-top:1px solid var(--line);padding-top:16px">
     <div class="d"><b class="mono" style="color:var(--navy)">/flow-fast</b> · kleine Änderung in einem Zug</div>
     <div class="d"><b class="mono" style="color:var(--navy)">/flow-fix-build</b> · der Build ist rot</div>
     <div class="d"><b class="mono" style="color:var(--navy)">/flow-night-batch</b> · ein Epic über Nacht</div>
   </div>
-  <aside class="notes">Faustregel: eine Session pro Issue. Nach /flow-plan und nach /flow-ship macht man /clear, denn alles Nötige steht im Change-Ordner. /flow-fast legt trotzdem einen Plan vor, sobald es mehr als drei Akzeptanzkriterien, mehrere Schichten, eine Migration, Security oder einen Breaking Change gibt. Opus spezifiziert und plant, Sonnet setzt um.</aside>
+  <aside class="notes">Faustregel: eine Session pro Issue. Nach /flow-plan und nach /flow-ship macht man /clear, denn alles Nötige steht im Change-Ordner. /flow-fast legt trotzdem einen Plan vor, sobald es mehr als drei Akzeptanzkriterien, mehrere Schichten, eine Migration, Security oder einen Breaking Change gibt. Opus spezifiziert und plant, Sonnet setzt um. /flow-ship schreibt zum Schluss die geschätzten Kosten der Umsetzung als Kommentar ans Issue (issue-cost.sh, aus den lokalen Transkripten); so sieht man mit der Zeit, was eine Story den Agenten kostet.</aside>
 </section>
 
 <!-- 20 flow-implement -->
@@ -593,6 +593,19 @@
   <aside class="notes">Die Modellwahl steht im Frontmatter der Skills und Agenten. Das stärkste Modell gehört dorthin, wo Fehler sich fortpflanzen: Spezifikation, Plan und Tests. Die Reviewer laufen parallel: hexagonal-reviewer für Java, angular-signals-reviewer für das Frontend, test-reviewer für Tests, bdd-cucumber-author für Feature-Dateien und spec-reviewer für jede Story. Ein Reviewer, der die Sicht des Implementierers kennt, bestätigt sie eher. Befunde werden geprüft, nicht blind übernommen; nach zwei Runden ohne Einigung entscheidet der Mensch.</aside>
 </section>
 
+<!-- 21b Copilot -->
+<section class="slide">
+  <h2>Zweiter Agent: Copilot CLI</h2>
+  <p class="sub">Gewechselt wird zwischen zwei Schritten, nie mittendrin (ADR 0007)</p>
+  <div class="body grid matrix">
+    <div class="card"><div class="t">Was geteilt wird</div><div class="d">CLAUDE.md, .claude/rules/ und .agents/skills/ liest Copilot selbst. Der Zustand liegt in Issue, Change-Ordner und Branch.</div></div>
+    <div class="card"><div class="t">Was Copilot übernimmt</div><div class="d">/flow-task, /flow-grill-me, /flow-plan, /flow-ship und /flow-fix-build.</div></div>
+    <div class="card"><div class="t">Was bei Claude Code bleibt</div><div class="d">/flow-implement und /flow-fast, weil sie Subagenten brauchen, und der Nachtlauf.</div></div>
+    <div class="card dark"><div class="t">Schutz</div><div class="d">Dieselben Hook-Skripte über <span class="mono">.github/hooks/flow.json</span>. Vor dem ersten Schreiben prüfen, dass guard-push einen Push auf main ablehnt.</div></div>
+  </div>
+  <aside class="notes">Copilot ist eine Option neben Claude Code, kein Ersatz; Claude Code bleibt die Referenz. Weil der Zustand im Repository liegt und nicht im Werkzeug, kann man zwischen zwei Schritten wechseln, etwa mit Copilot planen und mit Claude Code umsetzen. Ob Copilot die permissions aus settings.json beachtet, ist nicht gemessen; als Schutz zählen dort nur die Hooks. Darum sperrt guard-env die Geheimnis-Datei auch bei Lese- und Suchwerkzeugen. Die Tabelle, welcher Skill mit welchem Agenten läuft, steht in .claude/flow.md unter «Agent wechseln».</aside>
+</section>
+
 <!-- 22 Nachtlauf -->
 <section class="slide">
   <h2>Nachtlauf: Vorschläge, keine Merges</h2>
@@ -620,14 +633,14 @@
   <h2>Drehbuch für die Live-Demo</h2>
   <p class="sub">Rund 40 Minuten; den fertigen Branch als Rückfallebene bereithalten</p>
   <div class="body tl">
-    <div class="st"><div class="when">5 Min.</div><div class="dot"></div><div><div class="t" style="font-size:17px">Rundgang</div><div class="d">CLAUDE.md, claude-guide.md und .claude/ im Editor zeigen</div></div></div>
+    <div class="st"><div class="when">5 Min.</div><div class="dot"></div><div><div class="t" style="font-size:17px">Rundgang</div><div class="d">Board mit Testdaten, dann CLAUDE.md, claude-guide.md und .claude/</div></div></div>
     <div class="st"><div class="when">5 Min.</div><div class="dot"></div><div><div class="t mono" style="font-size:16px">/flow-task [Demo-Idee]</div><div class="d">Issue und Delta-Entwurf entstehen</div></div></div>
     <div class="st"><div class="when">5 Min.</div><div class="dot"></div><div><div class="t mono" style="font-size:16px">/flow-plan &lt;nr&gt;, dann /clear</div><div class="d">Plan lesen, Delta bestätigen</div></div></div>
     <div class="st hl"><div class="when">15 Min.</div><div class="dot"></div><div><div class="t mono" style="font-size:16px">/flow-implement &lt;nr&gt;</div><div class="d">Tests rot, dann Code grün, Reviewer-Befunde</div></div></div>
     <div class="st"><div class="when">3 Min.</div><div class="dot"></div><div><div class="t" style="font-size:17px">Leitplanke auslösen</div><div class="d">Eszett schreiben lassen, check-spelling.sh meldet es</div></div></div>
     <div class="st"><div class="when">5 Min.</div><div class="dot"></div><div><div class="t" style="font-size:17px">PR zeigen</div><div class="d">Spec-Drift, Labels und Handoff im PR</div></div></div>
   </div>
-  <aside class="notes">Als Demo-Idee eignet sich eine kleine fachliche Erweiterung von US-1, zum Beispiel ein zusätzliches Feld oder eine neue Validierung. Beim Schritt «Leitplanke auslösen» bittet man Claude, einen Text mit Eszett zu schreiben; check-spelling.sh meldet es sofort. Ebenso eindrücklich: Claude bitten, einen Test zu löschen, damit der Build grün wird. Der Agent läuft je nach Umfang mehrere Minuten; deshalb lohnt sich ein vorbereiteter Branch.</aside>
+  <aside class="notes">Im Dev-Modus legt Liquibase im Kontext «dev» Beispieldaten an; das Program Board ist nach ./mvnw quarkus:dev also sofort gefüllt, mit Features, Abhängigkeiten und Milestones. Als Demo-Idee eignet sich eine kleine Erweiterung des Boards oder von US-1, zum Beispiel ein zusätzliches Feld, eine neue Validierung oder ein Filter nach Team. Beim Schritt «Leitplanke auslösen» bittet man Claude, einen Text mit Eszett zu schreiben; check-spelling.sh meldet es sofort. Ebenso eindrücklich: Claude bitten, einen Test zu löschen, damit der Build grün wird. Der Agent läuft je nach Umfang mehrere Minuten; deshalb lohnt sich ein vorbereiteter Branch.</aside>
 </section>
 
 <!-- 25 Einrichtung -->
@@ -663,7 +676,7 @@
     </div>
     <div class="items">
       <div><div class="t">Image und Features</div><div class="d">Debian bookworm, Java 25 (Temurin), Node 24.19, GitHub CLI, Claude Code; VS-Code-Erweiterungen für Java, Quarkus, Angular, Prettier und Claude</div></div>
-      <div><div class="t">docker-outside-of-docker</div><div class="d">Die Dev Services starten PostgreSQL über den Docker des Hosts; Ports 8080 und 4200 werden weitergeleitet</div></div>
+      <div><div class="t">docker-outside-of-docker</div><div class="d">Die Dev Services starten PostgreSQL über Docker oder Podman des Hosts, erreichbar über host.docker.internal; Ports 8080 und 4200 werden weitergeleitet</div></div>
       <div><div class="t">node_modules als Volume</div><div class="d">Keine macOS-Binaries im Linux-Container, und npm ci bleibt schnell</div></div>
       <div><div class="t">post-create.sh</div><div class="d">jq für die Hooks, core.hooksPath, npm 11 und npm ci, claude install für Updates ohne sudo</div></div>
     </div>
